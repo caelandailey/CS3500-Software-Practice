@@ -33,15 +33,17 @@ namespace FormulaEvaluator
                     intRead(value);
                 }
                 //check if token is a valid variable
-                else if(token == "")
+                //char.IsLetter(token.FirstOrDefault()) might be better?
+                else if (!String.IsNullOrEmpty(token)&&Char.IsLetter(token[0]))
                 {
-                    int varValue = variableEvaluator(token);
+                    int varValue = variableEvaluator(token); //do I need to write my own expression?
                     intRead(varValue);
                 }
+
                 //check if token is addition or subtrction
                 else if (token == "+" || token == "-")
                 {
-                    if (checkStackSize("operator"))
+                    if (checkStackSize("o"))
                     {
                         if(operators.Peek() == "+" || operators.Peek() == "-")
                         {
@@ -51,53 +53,69 @@ namespace FormulaEvaluator
                     operators.Push(token);
                     operatorsSize++;
                 }
+
                 //check if token is multiplication or division
                 else if (token == "*" || token == "/")
                 {
+ //                   if (checkStackSize("o"))
+   //                 {
+     //                   if(operators.Peek() == "*" || operators.Peek() == "/")
+       //                 {
+         //                   multiOrDiv();
+           //             }
+             //       }
                     operators.Push(token);
                     operatorsSize++;
                 }
+
                 //check left parathsis
                 else if(token == "(")
                 {
                     operators.Push(token);
                     operatorsSize++;
                 }
+
+                //check right parenthisis
                 else if(token == ")")
                 {
-                    if (checkStackSize("operator"))
-                    {
-                        if (operators.Peek() == "+" || operators.Peek() == "-")
-                        {
-                            sumOrSubtract();
-                        }
-                        if(operators.Peek() == "/" || operators.Peek() == "*")
-                        {
-                            multiOrDiv();
-                        }
-                        if(operators.Peek() == "(")
-                        {
-                            operators.Pop();
-                            operatorsSize--;
-                        }
-                    }
-                    if (checkStackSize("operator"))
-                    {
-                        if(operators.Peek() == "(")
-                        {
-                            operators.Pop();
-                            operatorsSize--;
-                        }
-                        else
-                        {
-                            throw System.Exception("ERROR: Paranthesis do not match.");
-                        }
-                    }
+                    readRightParanth();
+                }
+
+                //invalid token
+                else
+                {
+                    throw new System.Exception("ERROR: invalid token read");
                 }
             }
+
             //no more tokens to read, check stacks to get final answer
-            return 0;
+            //there is only one value to read and nothing in operators stack
+            if(valuesSize == 1 && operatorsSize == 0)
+            {
+                return values.Pop();
+            }
+            //there is one more operation to perform
+            else if((valuesSize == 2) && (operatorsSize == 1))
+            {
+                //it must be addition or subtraction
+                if(operators.Peek() == "+" || operators.Peek() == "-")
+                {
+                    sumOrSubtract();
+                    return values.Pop();
+                }
+                else
+                {
+                    throw new System.Exception("ERROR: invalid operation for final answer");
+                }
+            }
+            //if neither opptions are true the expression is invalid
+            else
+            {
+                throw new System.Exception("ERROR: expression is invalid");
+            }
         }
+
+
 
         /// <summary>
         /// Makes sure that there is at least one token in the stack
@@ -108,7 +126,7 @@ namespace FormulaEvaluator
         /// true if there is a token in the stack, false if not
         public static bool checkStackSize(string s)
         {
-            if(s == "operators")
+            if(s == "o")
             {
                 if(operatorsSize <= 0)
                 {
@@ -139,18 +157,21 @@ namespace FormulaEvaluator
         /// the integer that was just read
         public static void intRead(int x)
         {
-            if (checkStackSize("operators"))
+            if (checkStackSize("o"))
             {
                 if (operators.Peek() == "*" || operators.Peek() == "/")
                 {
-                    performOperation(x);
+                    values.Push(x);
+                    multiOrDiv();
                 }
+                return;
             }
             else
             {
                 values.Push(x);
                 valuesSize++;
             }
+            return;
         }
 
         /// <summary>
@@ -160,28 +181,11 @@ namespace FormulaEvaluator
         public static void sumOrSubtract()
         {
             //pop the two values
-            int valOne;
-            int valTwo;
-            if (checkStackSize("v"))
-            {
-                valOne = values.Pop();
-                valuesSize--;
-            }
-            else
-            {
-                //error
-            }
-            if (checkStackSize("v"))
-            {
-                valTwo = values.Pop();
-                valuesSize--;
-            }
-            else
-            {
-                //error
-            }
+            int valOne = popValue();
+            int valTwo = popValue();
+            
             //pop operator 
-            int newVal;
+            int newVal = 0;
             switch (operators.Pop())
             {
                 case "+":
@@ -204,27 +208,10 @@ namespace FormulaEvaluator
         public static void multiOrDiv()
         {
             //pop the two values
-            int valOne;
-            int valTwo;
-            if (checkStackSize("v"))
-            {
-                valOne = values.Pop();
-                valuesSize--;
-            }
-            else
-            {
-                //error
-            }
-            if (checkStackSize("v"))
-            {
-                valTwo = values.Pop();
-                valuesSize--;
-            }
-            else
-            {
-                //error
-            }
-            int newVal;
+            int valOne = popValue();
+            int valTwo = popValue();
+                       
+            int newVal=0;
             switch (operators.Pop())
             {
                 case "*":
@@ -233,7 +220,7 @@ namespace FormulaEvaluator
                 case "/":
                     if(valOne == 0)
                     {
-                        //error
+                        throw new System.Exception("ERROR: division by 0");
                     }
                     newVal = valTwo / valOne;
                     break;
@@ -242,9 +229,71 @@ namespace FormulaEvaluator
             values.Push(newVal);
             valuesSize++;
         }
+
+        /// <summary>
+        /// Pops off the integer at the top of the value stack.
+        /// </summary>
+        /// <returns></returns>
+        /// The integer at the top of the stack if there is one.
+        public static int popValue()
+        {
+            int val = 0;
+            if (checkStackSize("v"))
+            {
+                val = values.Pop();
+                valuesSize--;
+            }
+            else
+            {
+                throw new System.Exception("ERROR: can't retreive an integer from values stack");
+            }
+            return val;
+        }
+
+        public static void readRightParanth()
+        {
+            //read and perform the operations on stack until a given number of operands read
+            for (int i = 0; i < operatorsSize; i++)
+            {
+                if (operators.Peek() != "(")
+                {
+                    if (operators.Peek() == "+" || operators.Peek() == "-")
+                    {
+                        sumOrSubtract();
+                    }
+                    if (operators.Peek() == "/" || operators.Peek() == "*")
+                    {
+                        multiOrDiv();
+                    }
+                }
+                else
+                {
+                    break;
+                }
+            }
+            //check for left parenthesis or a multiply or divide operation
+            if (checkStackSize("o"))
+            {
+                if (operators.Peek() == "(")
+                {
+                    operators.Pop();
+                    operatorsSize--;
+                }
+                if (checkStackSize("o"))
+                {
+                    if (operators.Peek() == "/" || operators.Peek() == "*")
+                     {
+                          multiOrDiv();
+                     }
+                }
+            }
+            else
+            {
+                throw new System.Exception("ERROR: invalid use of parenthisis");
+            }
+            return;
+        }
        
     }
-
-
 
 }
