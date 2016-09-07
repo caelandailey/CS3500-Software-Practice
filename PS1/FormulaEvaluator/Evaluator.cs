@@ -16,12 +16,14 @@ namespace FormulaEvaluator
     {
         public delegate int Lookup(String v);
 
-
+        //the stack that will hold integer values from the expression
         static Stack<int> values = new Stack<int>();
+        //the stack that will hold operations from the expressions
+        //only valid expressions are (,+,-,*,/, or )
         static Stack<string> operators = new Stack<string>();
 
         /// <summary>
-        /// Reads and performs expressions if valid.
+        /// Reads and performs an expressions, if valid.
         /// </summary>
         /// <param name="exp"></param>
         /// The expression to be operated

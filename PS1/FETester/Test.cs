@@ -133,7 +133,7 @@ namespace FETester
                 Console.WriteLine(Evaluator.Evaluate("((1)(()))", tracker.LookupVariable));
 
                 //only parenthesis
-               // Console.WriteLine(Evaluator.Evaluate("(()(()))", tracker.LookupVariable));
+                // Console.WriteLine(Evaluator.Evaluate("(()(()))", tracker.LookupVariable));
 
                 //null
                 //Console.WriteLine(Evaluator.Evaluate("2+5 null", tracker.LookupVariable));
@@ -143,6 +143,10 @@ namespace FETester
 
                 //one too many numbers
                 //Console.WriteLine(Evaluator.Evaluate("7*2 + 4 (0)", tracker.LookupVariable));
+
+                //random 2
+                Console.WriteLine(Evaluator.Evaluate("(3)(4)(2)++", tracker.LookupVariable));
+
             }
 
             catch (ArgumentException e)
