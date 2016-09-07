@@ -5,30 +5,45 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-//namespace Stack 
-namespace FormulaEvaluator
 
-  
+namespace FormulaEvaluator
 {
+    /// <summary>
+    /// Made to perform simple algebraic expressions.
+    /// </summary>
+    /// Author: Karina Biancone
     public static class Evaluator
     {
         public delegate int Lookup(String v);
 
 
         static Stack<int> values = new Stack<int>();
-        static int valuesSize = 0;
         static Stack<string> operators = new Stack<string>();
-        static int operatorsSize = 0;
 
+        /// <summary>
+        /// Reads and performs expressions if valid.
+        /// </summary>
+        /// <param name="exp"></param>
+        /// The expression to be operated
+        /// <param name="variableEvaluator"></param>
+        /// The delegate that determines if a variable can be converted to a valid integer
+        /// <returns></returns>
+        /// returns the final value after expression has been succesfully operated on
         public static int Evaluate(String exp, Lookup variableEvaluator)
         {
+            exp = exp.Replace(" ", String.Empty);
+            exp = exp.Replace("\t", String.Empty);
             string[] substrings = Regex.Split(exp, "(\\()|(\\))|(-)|(\\+)|(\\*)|(/)");
 
             foreach (string token in substrings)
             {
+                int value = 0;
+                if (String.IsNullOrWhiteSpace(token))
+                {
+                    continue;
+                }
                 //check if token is an integer
-                int value;
-                if (Int32.TryParse(token, out value))
+                else if (Int32.TryParse(token, out value))
                 {
                     intRead(value);
                 }
@@ -45,34 +60,24 @@ namespace FormulaEvaluator
                 {
                     if (checkStackSize("o"))
                     {
-                        if(operators.Peek() == "+" || operators.Peek() == "-")
+                        if(checkAddOrMinus())
                         {
                             sumOrSubtract();
                         }
                     }
                     operators.Push(token);
-                    operatorsSize++;
                 }
 
                 //check if token is multiplication or division
                 else if (token == "*" || token == "/")
                 {
- //                   if (checkStackSize("o"))
-   //                 {
-     //                   if(operators.Peek() == "*" || operators.Peek() == "/")
-       //                 {
-         //                   multiOrDiv();
-           //             }
-             //       }
                     operators.Push(token);
-                    operatorsSize++;
                 }
 
                 //check left parathsis
                 else if(token == "(")
                 {
                     operators.Push(token);
-                    operatorsSize++;
                 }
 
                 //check right parenthisis
@@ -84,34 +89,34 @@ namespace FormulaEvaluator
                 //invalid token
                 else
                 {
-                    throw new System.Exception("ERROR: invalid token read");
+                    throw new System.ArgumentException("ERROR: invalid token read");
                 }
             }
 
             //no more tokens to read, check stacks to get final answer
             //there is only one value to read and nothing in operators stack
-            if(valuesSize == 1 && operatorsSize == 0)
+            if(values.Count == 1 && operators.Count == 0)
             {
                 return values.Pop();
             }
             //there is one more operation to perform
-            else if((valuesSize == 2) && (operatorsSize == 1))
+            else if((values.Count == 2) && (operators.Count == 1))
             {
                 //it must be addition or subtraction
-                if(operators.Peek() == "+" || operators.Peek() == "-")
+                if(checkAddOrMinus())
                 {
                     sumOrSubtract();
                     return values.Pop();
                 }
                 else
                 {
-                    throw new System.Exception("ERROR: invalid operation for final answer");
+                    throw new System.ArgumentException("ERROR: invalid operation for final answer");
                 }
             }
             //if neither opptions are true the expression is invalid
             else
             {
-                throw new System.Exception("ERROR: expression is invalid");
+                throw new System.ArgumentException("ERROR: expression is invalid");
             }
         }
 
@@ -126,9 +131,10 @@ namespace FormulaEvaluator
         /// true if there is a token in the stack, false if not
         public static bool checkStackSize(string s)
         {
+            //checks operation stack if string is o
             if(s == "o")
             {
-                if(operatorsSize <= 0)
+                if(operators.Count <= 0)
                 {
                     return false;
                 }
@@ -137,9 +143,10 @@ namespace FormulaEvaluator
                     return true;
                 }
             }
+            //it will check values stack if any other string is passed
             else
             {
-                if(valuesSize <= 0)
+                if(values.Count <= 0)
                 {
                     return false;
                 }
@@ -159,17 +166,20 @@ namespace FormulaEvaluator
         {
             if (checkStackSize("o"))
             {
-                if (operators.Peek() == "*" || operators.Peek() == "/")
+                if (checkMultiOrDiv())
                 {
                     values.Push(x);
                     multiOrDiv();
+                    return;
                 }
-                return;
+                else
+                {
+                    values.Push(x);
+                }
             }
             else
             {
                 values.Push(x);
-                valuesSize++;
             }
             return;
         }
@@ -196,9 +206,7 @@ namespace FormulaEvaluator
                     newVal = valTwo - valOne;
                     break;
             }
-            operatorsSize--;
             values.Push(newVal);
-            valuesSize++;
             return;
         }
 
@@ -220,14 +228,12 @@ namespace FormulaEvaluator
                 case "/":
                     if(valOne == 0)
                     {
-                        throw new System.Exception("ERROR: division by 0");
+                        throw new System.ArgumentException("ERROR: division by 0");
                     }
                     newVal = valTwo / valOne;
                     break;
             }
-            operatorsSize--;
             values.Push(newVal);
-            valuesSize++;
         }
 
         /// <summary>
@@ -241,11 +247,10 @@ namespace FormulaEvaluator
             if (checkStackSize("v"))
             {
                 val = values.Pop();
-                valuesSize--;
             }
             else
             {
-                throw new System.Exception("ERROR: can't retreive an integer from values stack");
+                throw new System.ArgumentException("ERROR: can't retreive an integer from values stack");
             }
             return val;
         }
@@ -253,15 +258,15 @@ namespace FormulaEvaluator
         public static void readRightParanth()
         {
             //read and perform the operations on stack until a given number of operands read
-            for (int i = 0; i < operatorsSize; i++)
+            for (int i = 0; i < operators.Count; i++)
             {
                 if (operators.Peek() != "(")
                 {
-                    if (operators.Peek() == "+" || operators.Peek() == "-")
+                    if (checkAddOrMinus())
                     {
                         sumOrSubtract();
                     }
-                    if (operators.Peek() == "/" || operators.Peek() == "*")
+                    if (checkMultiOrDiv())
                     {
                         multiOrDiv();
                     }
@@ -277,11 +282,10 @@ namespace FormulaEvaluator
                 if (operators.Peek() == "(")
                 {
                     operators.Pop();
-                    operatorsSize--;
                 }
                 if (checkStackSize("o"))
                 {
-                    if (operators.Peek() == "/" || operators.Peek() == "*")
+                    if (checkMultiOrDiv())
                      {
                           multiOrDiv();
                      }
@@ -289,9 +293,27 @@ namespace FormulaEvaluator
             }
             else
             {
-                throw new System.Exception("ERROR: invalid use of parenthisis");
+                throw new System.ArgumentException("ERROR: invalid use of parenthisis");
             }
             return;
+        }
+
+        public static bool checkAddOrMinus()
+        {
+           if(operators.Peek() == "+" || operators.Peek() == "-")
+            {
+                return true;
+            }
+            return false;
+        }
+
+        public static bool checkMultiOrDiv()
+        {
+            if(operators.Peek() == "*" || operators.Peek() == "/")
+            {
+                return true;
+            }
+            return false;
         }
        
     }
