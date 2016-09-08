@@ -145,7 +145,7 @@ namespace FETester
                 //Console.WriteLine(Evaluator.Evaluate("7*2 + 4 (0)", tracker.LookupVariable));
 
                 //random 2
-                Console.WriteLine(Evaluator.Evaluate("(3)(4)(2)++", tracker.LookupVariable));
+                Console.WriteLine(Evaluator.Evaluate("(3)++(4)", tracker.LookupVariable));
 
             }
 
