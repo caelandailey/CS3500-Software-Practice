@@ -38,94 +38,95 @@ namespace SpreadsheetUtilities
     /// </summary>
     public class DependencyGraph
     {
-        Dictionary<string, Node> graph;
-        /// <summary>
-        /// Creates an empty DependencyGraph.
-        /// </summary>
-        public DependencyGraph()
-        {
-            graph = new Dictionary<string, Node>();
-        }
-
-
-        /// <summary>
-        /// The number of ordered pairs in the DependencyGraph.
-        /// </summary>
-        public int Size
-        {
-            get
-            {
-                int sum = 0;
-                foreach(KeyValuePair<string, Node> pairs in graph)
-                {
-                   Node name = pairs.Value;
-                   sum += name.dependentsSize();
-                }
-                return sum;
+        Dictionary<string, HashSet<string>> dependeesGraph;
+         Dictionary<string, HashSet<string>> dependentsGraph;
+         /// <summary>
+         /// Creates an empty DependencyGraph.
+         /// </summary>
+         public DependencyGraph()
+         {
+             dependeesGraph = new Dictionary<string, HashSet<string>>();
+             dependentsGraph = new Dictionary<string, HashSet<string>>();
+         }
+ 
+ 
+         /// <summary>
+         /// The number of ordered pairs in the DependencyGraph.
+         /// </summary>
+         public int Size
+         {
+             get
+             {
+                 int sum = 0;
+                 foreach(KeyValuePair<string, HashSet<string>> pairs in dependeesGraph)
+                 {
+                     sum += pairs.Value.Count;
+                 }
+                 return sum;
+             }
+         }
+ 
+ 
+         /// <summary>
+         /// The size of dependees(s).
+         /// This property is an example of an indexer.  If dg is a DependencyGraph, you would
+         /// invoke it like this:
+         /// dg["a"]
+         /// It should return the size of dependees("a")
+         /// </summary>
+         public int this[string s]
+         {
+                get
+               {
+                       return dependeesGraph.Keys.Count;
+                   }
             }
-        }
-
-
-        /// <summary>
-        /// The size of dependees(s).
-        /// This property is an example of an indexer.  If dg is a DependencyGraph, you would
-        /// invoke it like this:
-        /// dg["a"]
-        /// It should return the size of dependees("a")
-        /// </summary>
-        public int this[string s]
-        {
-            get
-            {
-                return graph.Keys.Count;
-            }
-        }
-
-
-        /// <summary>
-        /// Reports whether dependents(s) is non-empty.
-        /// </summary>
-        public bool HasDependents(string s)
-        {
-           if(graph.ContainsKey(s))
-            {
-                if (graph[s].dependentsSize() >= 1)
-                {
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
-            }
-           else
-            {
-                return false;
-            }
-        }
-
-
-        /// <summary>
-        /// Reports whether dependees(s) is non-empty.
-        /// </summary>
-        public bool HasDependees(string s)
-        {
-            if (graph.ContainsKey(s))
-            {
-                if (graph[s].dependeesSize() >= 1)
-                {
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
-            }
+ 
+ 
+         /// <summary>
+         /// Reports whether dependents(s) is non-empty.
+         /// </summary>
+         public bool HasDependents(string s)
+         {
+            if(dependentsGraph.ContainsKey(s))
+             {
+                 if (dependentsGraph[s].Count >= 1)
+                 {
+                     return true;
+                 }
+                 else
+                 {
+                     return false;
+                 }
+             }
             else
-            {
-                return false;
-            }
-        }
+             {
+                 return false;
+             }
+         }
+ 
+ 
+         /// <summary>
+         /// Reports whether dependees(s) is non-empty.
+         /// </summary>
+         public bool HasDependees(string s)
+         {
+             if (dependeesGraph.ContainsKey(s))
+             {
+                 if (dependeesGraph[s].Count >= 1)
+                 {
+                     return true;
+                 }
+                 else
+                 {
+                     return false;
+                 }
+             }
+             else
+             {
+                 return false;
+             }
+         }
 
 
         /// <summary>
@@ -133,15 +134,35 @@ namespace SpreadsheetUtilities
         /// </summary>
         public IEnumerable<string> GetDependents(string s)
         {
-            return graph[s].getDependents(graph[s]);
-        }
+            if (dependeesGraph.ContainsKey(s))
+            {
+                // String allDependents = dependeesGraph[s].ToString();
+                //return allDependents;
 
+                IEnumerable<string> allDependents = dependeesGraph[s].ToList<string>();
+                return allDependents;
+            }
+            else
+            {
+                throw new System.ArgumentException(s + " does not have any dependents.");
+            }
+ 
+         }
+      
         /// <summary>
         /// Enumerates dependees(s).
         /// </summary>
         public IEnumerable<string> GetDependees(string s)
         {
-            return null;
+            if (dependentsGraph.ContainsKey(s))
+            {
+                IEnumerable<string> allDependees = dependentsGraph[s].ToList<string>();
+                return allDependees;
+            }
+            else
+            {
+                throw new System.ArgumentException(s + " does not have and dependees.");
+            }
         }
 
 
@@ -157,6 +178,24 @@ namespace SpreadsheetUtilities
         /// <param name="t"> t cannot be evaluated until s is</param>        /// 
         public void AddDependency(string s, string t)
         {
+            //check if there is no key for s in dependees dictionary
+            if (!dependeesGraph.ContainsKey(s))
+            {
+                //create a new key for the dependency dictionary 
+                dependeesGraph.Add(s, new HashSet<string>());
+            }
+            //add t to the hash set of dependees for s
+            dependeesGraph[s].Add(t);
+
+            //update dependents graph as well
+            //check if there is a key for t in dependents dictionary
+            if (!dependentsGraph.ContainsKey(t))
+            {
+                //create a new key for the dependents dictionaly
+                dependentsGraph.Add(s, new HashSet<string>);
+            }
+            //add s to the hash set of dependents for t
+            dependentsGraph[t].Add(s);
         }
 
 
@@ -167,6 +206,21 @@ namespace SpreadsheetUtilities
         /// <param name="t"></param>
         public void RemoveDependency(string s, string t)
         {
+            //check that s is a dependee
+            if (dependeesGraph.ContainsKey(s))
+            {
+                //check that t is a dependent of s
+                if (dependeesGraph[s].Contains(t))
+                {
+                    dependeesGraph[s].Remove(t);
+                    //check if s has any other dependents
+                    if(dependeesGraph[s].Count == 0)
+                    {
+                        dependeesGraph.Remove(s);
+                    }
+                }
+                //
+            }
         }
 
 
@@ -191,49 +245,6 @@ namespace SpreadsheetUtilities
         }
 
     }
-    public class Node
-    {
-        string name;
-        HashSet<Node> dependents = new HashSet<Node>();
-        HashSet<Node> dependees = new HashSet<Node>();
-
-        public void setName(string s)
-        {
-            name = s;
-        }
-        public string getName()
-        {
-            return name;
-        }
-        public void addDependent(Node depedent)
-        {
-            dependents.Add(depedent);
-        }
-        public void addDependees(Node depedees)
-        {
-            dependees.Add(depedees);
-        }
-        public int dependentsSize()
-        {
-            return dependents.Count;
-        }
-        public int dependeesSize()
-        {
-            return dependees.Count;
-        }
-
-
-        public List<string> getDependents(Node s)
-        {
-            List<string> allDependents = new List<string>();
-            foreach(Node y in s.dependents)
-            {
-                allDependents.Add(y.getName());
-            }
-            return allDependents;
-        }
-    }
-
-    
+     
     
 }
