@@ -38,15 +38,13 @@ namespace SpreadsheetUtilities
     /// </summary>
     public class DependencyGraph
     {
-        Dictionary<string, HashSet<string>> dependeesGraph;
-        Dictionary<string, HashSet<string>> dependentsGraph;
+        Dictionary<string, Node> graph;
         /// <summary>
         /// Creates an empty DependencyGraph.
         /// </summary>
         public DependencyGraph()
         {
-            dependeesGraph = new Dictionary<string, HashSet<string>>();
-            dependentsGraph = new Dictionary<string, HashSet<string>>();
+            graph = new Dictionary<string, Node>();
         }
 
 
@@ -58,9 +56,10 @@ namespace SpreadsheetUtilities
             get
             {
                 int sum = 0;
-                foreach(KeyValuePair<string, HashSet<string>> pairs in dependeeGraph)
+                foreach(KeyValuePair<string, Node> pairs in graph)
                 {
-                    sum += pairs.Value.Count;
+                   Node name = pairs.Value;
+                   sum += name.dependentsSize();
                 }
                 return sum;
             }
@@ -78,7 +77,7 @@ namespace SpreadsheetUtilities
         {
             get
             {
-                return dependeesGraph.Keys.Count;
+                return graph.Keys.Count;
             }
         }
 
@@ -88,9 +87,9 @@ namespace SpreadsheetUtilities
         /// </summary>
         public bool HasDependents(string s)
         {
-           if(dependentsGraph.ContainsKey(s))
+           if(graph.ContainsKey(s))
             {
-                if (dependentsGraph[s].Count >= 1)
+                if (graph[s].dependentsSize() >= 1)
                 {
                     return true;
                 }
@@ -111,9 +110,9 @@ namespace SpreadsheetUtilities
         /// </summary>
         public bool HasDependees(string s)
         {
-            if (dependeesGraph.ContainsKey(s))
+            if (graph.ContainsKey(s))
             {
-                if (dependeesGraph[s].Count >= 1)
+                if (graph[s].dependeesSize() >= 1)
                 {
                     return true;
                 }
@@ -134,8 +133,7 @@ namespace SpreadsheetUtilities
         /// </summary>
         public IEnumerable<string> GetDependents(string s)
         {
-            HashSet<string> dependentsList = new HashSet<string>();
-
+            return graph[s].getDependents(graph[s]);
         }
 
         /// <summary>
@@ -187,8 +185,55 @@ namespace SpreadsheetUtilities
         /// </summary>
         public void ReplaceDependees(string s, IEnumerable<string> newDependees)
         {
+
+    
+           
         }
 
     }
+    public class Node
+    {
+        string name;
+        HashSet<Node> dependents = new HashSet<Node>();
+        HashSet<Node> dependees = new HashSet<Node>();
 
+        public void setName(string s)
+        {
+            name = s;
+        }
+        public string getName()
+        {
+            return name;
+        }
+        public void addDependent(Node depedent)
+        {
+            dependents.Add(depedent);
+        }
+        public void addDependees(Node depedees)
+        {
+            dependees.Add(depedees);
+        }
+        public int dependentsSize()
+        {
+            return dependents.Count;
+        }
+        public int dependeesSize()
+        {
+            return dependees.Count;
+        }
+
+
+        public List<string> getDependents(Node s)
+        {
+            List<string> allDependents = new List<string>();
+            foreach(Node y in s.dependents)
+            {
+                allDependents.Add(y.getName());
+            }
+            return allDependents;
+        }
+    }
+
+    
+    
 }
