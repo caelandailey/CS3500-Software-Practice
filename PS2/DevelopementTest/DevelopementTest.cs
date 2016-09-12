@@ -242,7 +242,7 @@ namespace PS2GradingTests
             t.AddDependency("d", "c");
             t.ReplaceDependents("a", new HashSet<string>() { "x", "y", "z" });
             HashSet<String> aPends = new HashSet<string>(t.GetDependents("a"));
-            Assert.IsTrue(aPends.SetEquals(new HashSet<string>() { "x", "y", "z" }));
+            Assert.IsTrue(aPends.SetEquals(new HashSet<string>() { "x", "y", "z"}));
         }
 
         /// <summary>
@@ -478,5 +478,79 @@ namespace PS2GradingTests
                 Assert.IsTrue(dees[i].SetEquals(new HashSet<string>(t.GetDependees(letters[i]))));
             }
         }
+        //*********************ADDITIONAL TESTS***********************//
+        string a = "a";
+        string b = "b";
+        string c = "c";
+        string d = "d";
+        string e = "e";
+        string f = "f";
+        string g = "g";
+        string h = "h";
+        string i = "i";
+        string j = "j";
+        string kb = "karina biancone";
+
+        /// <summary>
+        ///Add and then remove same point and check size
+        ///</summary>
+        [TestMethod()]
+        public void afterRemove1()
+        {
+            DependencyGraph t = new DependencyGraph();
+            t.AddDependency(kb, f);
+            t.RemoveDependency(kb, f);
+            Assert.AreEqual(0, t.Size);
+        }
+
+        /// <summary>
+        /// check that dependents goes back to being false after add and remove function
+        /// </summary>
+        [TestMethod()]
+        public void afterRemove2()
+        {
+            DependencyGraph t = new DependencyGraph();
+            t.AddDependency("a", "b");
+            t.RemoveDependency(a, b);
+            Assert.IsFalse(t.HasDependents(a));
+        }
+
+        [TestMethod()]
+        public void tryRemove()
+        {
+            DependencyGraph k = new DependencyGraph();
+            k.AddDependency(g + a, h);
+            k.AddDependency(c, f);
+            k.AddDependency(kb, a);
+            k.AddDependency(h, g + a);
+
+            k.RemoveDependency(h, f);
+            Assert.AreEqual(4, k.Size);
+        }
+
+        [TestMethod()]
+        public void checkDependents()
+        {
+            DependencyGraph k = new DependencyGraph();
+            k.AddDependency(g + a, h);
+            k.AddDependency(c, f);
+            k.AddDependency(kb, a);
+            k.AddDependency(h, g + a);
+
+            Assert.IsFalse(k.HasDependents(g));
+        }
+
+        [TestMethod()]
+        public void checkDependees()
+        {
+            DependencyGraph k = new DependencyGraph();
+            k.AddDependency(g + a, h);
+            k.AddDependency(c, f);
+            k.AddDependency(kb, a);
+            k.AddDependency(h, g + a);
+
+            Assert.IsFalse(k.HasDependees(g));
+        }
+
     }
 }

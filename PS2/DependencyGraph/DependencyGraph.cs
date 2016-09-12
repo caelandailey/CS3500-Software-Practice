@@ -250,7 +250,7 @@ public class DependencyGraph
             if (dependeesGraph.ContainsKey(s))
             {
                 //remove all dependents of s
-            foreach(string r in dependeesGraph[s])
+            foreach(string r in dependeesGraph[s].ToList())
                 {
                     RemoveDependency(s, r);
                 }
@@ -275,7 +275,7 @@ public class DependencyGraph
             if (dependentsGraph.ContainsKey(s))
             {
                 //remove all values that s depends on
-                foreach(string r in dependentsGraph[s])
+                foreach(string r in dependentsGraph[s].ToList())
                 {
                     RemoveDependency(r, s);
                 }
