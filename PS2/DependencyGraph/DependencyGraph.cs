@@ -78,8 +78,15 @@ public class DependencyGraph
         {
             get
             {
-                    return dependeesGraph.Keys.Count;
+                if (dependentsGraph.ContainsKey(s))
+                {
+                    return dependentsGraph[s].Count;
                 }
+                else
+                {
+                    return 0;
+                }
+            }
         }
  
  
@@ -88,9 +95,11 @@ public class DependencyGraph
         /// </summary>
         public bool HasDependents(string s)
         {
-        if(dependentsGraph.ContainsKey(s))
+        //check that there is a dependent for s
+        if(dependeesGraph.ContainsKey(s))
             {
-                if (dependentsGraph[s].Count >= 1)
+                //if there are any values in the set for the key s, then s has dependents
+                if (dependeesGraph[s].Count >= 1)
                 {
                     return true;
                 }
@@ -111,9 +120,11 @@ public class DependencyGraph
         /// </summary>
         public bool HasDependees(string s)
         {
-            if (dependeesGraph.ContainsKey(s))
+            //checks that s is a dependent
+            if (dependentsGraph.ContainsKey(s))
             {
-                if (dependeesGraph[s].Count >= 1)
+                //checks that there are values in the set for s
+                if (dependentsGraph[s].Count >= 1)
                 {
                     return true;
                 }
@@ -134,19 +145,16 @@ public class DependencyGraph
     /// </summary>
     public IEnumerable<string> GetDependents(string s)
     {
+            //create an empty IEnumerable
+            IEnumerable<string> allDependents = new List<string> (0);
+        //checks that s has dependents
         if (dependeesGraph.ContainsKey(s))
         {
-            // String allDependents = dependeesGraph[s].ToString();
-            //return allDependents;
-
-            IEnumerable<string> allDependents = dependeesGraph[s].ToList<string>();
-            return allDependents;
+            //update list of dependents for s
+            allDependents = dependeesGraph[s].ToList<string>();
+            
         }
-        else
-        {
-            throw new System.ArgumentException(s + " does not have any dependents.");
-        }
- 
+            return allDependents; 
         }
       
     /// <summary>
@@ -154,16 +162,17 @@ public class DependencyGraph
     /// </summary>
     public IEnumerable<string> GetDependees(string s)
     {
-        if (dependentsGraph.ContainsKey(s))
+            //initialize an empty IEnumerable
+            IEnumerable<string> allDependees = new List<string>(0);
+            //check that s has dependees
+            if (dependentsGraph.ContainsKey(s))
         {
-            IEnumerable<string> allDependees = dependentsGraph[s].ToList<string>();
+            //update list with dependees for s
+            allDependees = dependentsGraph[s].ToList<string>();
+           
+        }
             return allDependees;
         }
-        else
-        {
-            throw new System.ArgumentException(s + " does not have any dependees.");
-        }
-    }
 
 
     /// <summary>
@@ -219,16 +228,13 @@ public class DependencyGraph
                     dependeesGraph.Remove(s);
                 }
                 //update dependent graph for t
-                   
-                    if (dependentsGraph[t].Contains(s))
-                    {
+                
                         dependentsGraph[t].Remove(s);
                         if(dependentsGraph[t].Count == 0)
                         {
-                            dependentsGraph.Remove(t);
+                           dependentsGraph.Remove(t);
                         }
-                    }
-                    
+                        
             }
         }
     }
@@ -240,13 +246,23 @@ public class DependencyGraph
     /// </summary>
     public void ReplaceDependents(string s, IEnumerable<string> newDependents)
     {
-            string r = "";
-            RemoveDependency(s, r);
-            foreach(string t in newDependents)
+            //check that s has dependents
+            if (dependeesGraph.ContainsKey(s))
+            {
+                //remove all dependents of s
+            foreach(string r in dependeesGraph[s])
+                {
+                    RemoveDependency(s, r);
+                }
+           
+            }
+            //add all new dependents to s
+            foreach (string t in newDependents)
             {
                 AddDependency(s, t);
             }
-    }
+
+        }
 
 
     /// <summary>
@@ -255,7 +271,20 @@ public class DependencyGraph
     /// </summary>
     public void ReplaceDependees(string s, IEnumerable<string> newDependees)
     {
-               
+            //check that s is a dependent
+            if (dependentsGraph.ContainsKey(s))
+            {
+                //remove all values that s depends on
+                foreach(string r in dependentsGraph[s])
+                {
+                    RemoveDependency(r, s);
+                }
+            }
+            //add new dependees for s
+            foreach(string t in newDependees)
+            {
+                AddDependency(t, s);
+            }       
     }
 
 }
