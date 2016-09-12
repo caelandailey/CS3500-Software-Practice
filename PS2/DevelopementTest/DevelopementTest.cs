@@ -492,27 +492,114 @@ namespace PS2GradingTests
         string kb = "karina biancone";
 
         /// <summary>
-        ///Add and then remove same point and check size
+        ///replacing dependents with an empty list making an empty graph should contain nothing
         ///</summary>
         [TestMethod()]
-        public void afterRemove1()
+        public void afterEmptyTest1()
         {
             DependencyGraph t = new DependencyGraph();
-            t.AddDependency(kb, f);
-            t.RemoveDependency(kb, f);
+            t.ReplaceDependents(a, new HashSet<string>());
             Assert.AreEqual(0, t.Size);
         }
 
         /// <summary>
-        /// check that dependents goes back to being false after add and remove function
-        /// </summary>
+        ///Add a point to the graph then replace a's dependents with and empy set, should contain nothing
+        ///</summary>
         [TestMethod()]
-        public void afterRemove2()
+        public void afterEmptyTest2()
+        {
+            DependencyGraph t = new DependencyGraph();
+            t.AddDependency(a, "abc");
+            t.ReplaceDependents(a, new HashSet<string>());
+            Assert.IsFalse(t.HasDependents("a"));
+        }
+
+        /// <summary>
+        ///replace on an empty graph, a should only have dependees
+        ///</summary>
+        [TestMethod()]
+        public void afterEmptyTest3()
+        {
+            DependencyGraph t = new DependencyGraph();
+            t.ReplaceDependees(a, new HashSet<string>() { b, f, kb });
+            Assert.IsFalse(t.HasDependents("a"));
+        }
+
+        /// <summary>
+        ///replace dependees on an empty graph, should contain number of a's dependees
+        ///</summary>
+        [TestMethod()]
+        public void afterEmptyTest4()
+        {
+            DependencyGraph t = new DependencyGraph();
+            t.ReplaceDependees(a, new HashSet<string>() { b, f, kb });
+            Assert.AreEqual(t.Size, 3);
+        }
+
+        /// <summary>
+        ///Empty graph should contain nothing
+        ///</summary>
+        [TestMethod()]
+        public void afterEmptyTest5()
+        {
+            DependencyGraph t = new DependencyGraph();
+            t.AddDependency(a, a);
+            t.ReplaceDependents(a, new HashSet<string>() { b,c,kb });
+            Assert.IsFalse(t.HasDependees(a));
+        }
+
+        /// <summary>
+        ///Empty graph should contain nothing
+        ///</summary>
+        [TestMethod()]
+        public void afterEmptyTest6()
+        {
+            DependencyGraph t = new DependencyGraph();
+            Assert.AreEqual(0, t["a"]);
+        }
+
+        /// <summary>
+        ///Removing from an empty DG shouldn't fail
+        ///</summary>
+        [TestMethod()]
+        public void afterEmptyTest7()
+        {
+            DependencyGraph t = new DependencyGraph();
+            t.AddDependency(a, b);
+            t.RemoveDependency("a", "b");
+            Assert.AreEqual(0, t.Size);
+        }
+
+        /// <summary>
+        ///Adding an empty DG shouldn't fail
+        ///</summary>
+        [TestMethod()]
+        public void afterEmptyTest8()
         {
             DependencyGraph t = new DependencyGraph();
             t.AddDependency("a", "b");
-            t.RemoveDependency(a, b);
-            Assert.IsFalse(t.HasDependents(a));
+        }
+
+        /// <summary>
+        ///Replace on an empty DG shouldn't fail
+        ///</summary>
+        [TestMethod()]
+        public void afterEmptyTest9()
+        {
+            DependencyGraph t = new DependencyGraph();
+            t.ReplaceDependents("a", new HashSet<string>());
+            Assert.AreEqual(0, t.Size);
+        }
+
+        /// <summary>
+        ///Replace on an empty DG shouldn't fail
+        ///</summary>
+        [TestMethod()]
+        public void afterEmptyTest10()
+        {
+            DependencyGraph t = new DependencyGraph();
+            t.ReplaceDependees("a", new HashSet<string>());
+            Assert.AreEqual(0, t.Size);
         }
 
         [TestMethod()]
@@ -524,8 +611,8 @@ namespace PS2GradingTests
             k.AddDependency(kb, a);
             k.AddDependency(h, g + a);
 
-            k.RemoveDependency(h, f);
-            Assert.AreEqual(4, k.Size);
+            k.RemoveDependency(c, f);
+            Assert.AreEqual(3, k.Size);
         }
 
         [TestMethod()]
@@ -537,7 +624,7 @@ namespace PS2GradingTests
             k.AddDependency(kb, a);
             k.AddDependency(h, g + a);
 
-            Assert.IsFalse(k.HasDependents(g));
+            Assert.IsTrue(k.HasDependents(g+a));
         }
 
         [TestMethod()]
@@ -551,6 +638,8 @@ namespace PS2GradingTests
 
             Assert.IsFalse(k.HasDependees(g));
         }
+
+
 
     }
 }
