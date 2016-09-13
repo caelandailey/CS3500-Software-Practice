@@ -307,7 +307,7 @@ namespace SpreadsheetUtilities
         /// </summary>
         /// <param name="s"></param>
         /// <returns></returns>
-        public bool checkDependentsGraph(string s)
+        private bool checkDependentsGraph(string s)
         {
             if (dependentsGraph.ContainsKey(s))
             {
