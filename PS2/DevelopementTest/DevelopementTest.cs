@@ -533,7 +533,7 @@ namespace PS2GradingTests
         {
             DependencyGraph t = new DependencyGraph();
             t.ReplaceDependees(a, new HashSet<string>() { b, f, kb });
-            Assert.AreEqual(t.Size, 3);
+            Assert.AreEqual(t[a], 3);
         }
 
         /// <summary>
@@ -549,13 +549,19 @@ namespace PS2GradingTests
         }
 
         /// <summary>
-        ///Empty graph should contain nothing
+        ///remove a point that does not exist
         ///</summary>
         [TestMethod()]
-        public void afterEmptyTest6()
+        public void RemoveTest()
         {
             DependencyGraph t = new DependencyGraph();
-            Assert.AreEqual(0, t["a"]);
+            t.AddDependency(a, b);
+            t.AddDependency(c, b);
+            t.AddDependency(kb, a);
+            t.AddDependency(g, a);
+
+            t.RemoveDependency(a, a);
+            Assert.AreEqual(2, t["a"]);
         }
 
         /// <summary>
@@ -571,27 +577,6 @@ namespace PS2GradingTests
         }
 
         /// <summary>
-        ///Adding an empty DG shouldn't fail
-        ///</summary>
-        [TestMethod()]
-        public void afterEmptyTest8()
-        {
-            DependencyGraph t = new DependencyGraph();
-            t.AddDependency("a", "b");
-        }
-
-        /// <summary>
-        ///Replace on an empty DG shouldn't fail
-        ///</summary>
-        [TestMethod()]
-        public void afterEmptyTest9()
-        {
-            DependencyGraph t = new DependencyGraph();
-            t.ReplaceDependents("a", new HashSet<string>());
-            Assert.AreEqual(0, t.Size);
-        }
-
-        /// <summary>
         ///Replace on an empty DG shouldn't fail
         ///</summary>
         [TestMethod()]
@@ -599,9 +584,13 @@ namespace PS2GradingTests
         {
             DependencyGraph t = new DependencyGraph();
             t.ReplaceDependees("a", new HashSet<string>());
+            t.ReplaceDependents("a", new HashSet<string>());
             Assert.AreEqual(0, t.Size);
         }
 
+        /// <summary>
+        /// Removes a point that does not exist
+        /// </summary>
         [TestMethod()]
         public void tryRemove()
         {
@@ -611,10 +600,13 @@ namespace PS2GradingTests
             k.AddDependency(kb, a);
             k.AddDependency(h, g + a);
 
-            k.RemoveDependency(c, f);
-            Assert.AreEqual(3, k.Size);
+            k.RemoveDependency(h, f);
+            Assert.AreEqual(4, k.Size);
         }
 
+        /// <summary>
+        /// uses two strings as one
+        /// </summary>
         [TestMethod()]
         public void checkDependents()
         {
@@ -627,6 +619,9 @@ namespace PS2GradingTests
             Assert.IsTrue(k.HasDependents(g+a));
         }
 
+        /// <summary>
+        /// adds multiple points and checks for g's dependees which is empty
+        /// </summary>
         [TestMethod()]
         public void checkDependees()
         {

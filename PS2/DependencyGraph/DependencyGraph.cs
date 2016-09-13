@@ -6,6 +6,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
+//Author: Karina Biancone
+
 namespace SpreadsheetUtilities
 {
 
@@ -38,8 +40,11 @@ namespace SpreadsheetUtilities
     /// </summary>
     public class DependencyGraph
     {
+        //dependees graph will use the dependee string as the key and stores all dependents in the key's values
         Dictionary<string, HashSet<string>> dependeesGraph;
+        //dependents graph will use the dependent as the key and store all dependees as the key's values
         Dictionary<string, HashSet<string>> dependentsGraph;
+
         /// <summary>
         /// Creates an empty DependencyGraph.
         /// </summary>
@@ -58,6 +63,7 @@ namespace SpreadsheetUtilities
             get
             {
                 int sum = 0;
+                //loop through each key's number of values
                 foreach (KeyValuePair<string, HashSet<string>> pairs in dependeesGraph)
                 {
                     sum += pairs.Value.Count;
@@ -78,7 +84,8 @@ namespace SpreadsheetUtilities
         {
             get
             {
-                if (dependentsGraph.ContainsKey(s))
+                //check if s has a dependee
+                if (checkDependentsGraph(s))
                 {
                     return dependentsGraph[s].Count;
                 }
@@ -96,22 +103,19 @@ namespace SpreadsheetUtilities
         public bool HasDependents(string s)
         {
             //check that there is a dependent for s
-            if (dependeesGraph.ContainsKey(s))
+            if (checkDependeesGraph(s))
             {
                 //if there are any values in the set for the key s, then s has dependents
-                if (dependeesGraph[s].Count >= 1)
-                {
-                    return true;
-                }
-                else
+                if (!(dependeesGraph[s].Count >= 1))
                 {
                     return false;
                 }
+                else
+                {
+                    return true;
+                }
             }
-            else
-            {
-                return false;
-            }
+            return false;
         }
 
 
@@ -121,7 +125,7 @@ namespace SpreadsheetUtilities
         public bool HasDependees(string s)
         {
             //checks that s is a dependent
-            if (dependentsGraph.ContainsKey(s))
+            if (checkDependentsGraph(s))
             {
                 //checks that there are values in the set for s
                 if (dependentsGraph[s].Count >= 1)
@@ -133,10 +137,7 @@ namespace SpreadsheetUtilities
                     return false;
                 }
             }
-            else
-            {
-                return false;
-            }
+            return false;
         }
 
 
@@ -147,8 +148,9 @@ namespace SpreadsheetUtilities
         {
             //create an empty IEnumerable
             IEnumerable<string> allDependents = new List<string>(0);
+
             //checks that s has dependents
-            if (dependeesGraph.ContainsKey(s))
+            if (checkDependeesGraph(s))
             {
                 //update list of dependents for s
                 allDependents = dependeesGraph[s].ToList<string>();
@@ -164,8 +166,9 @@ namespace SpreadsheetUtilities
         {
             //initialize an empty IEnumerable
             IEnumerable<string> allDependees = new List<string>(0);
+
             //check that s has dependees
-            if (dependentsGraph.ContainsKey(s))
+            if (checkDependentsGraph(s))
             {
                 //update list with dependees for s
                 allDependees = dependentsGraph[s].ToList<string>();
@@ -188,9 +191,9 @@ namespace SpreadsheetUtilities
         public void AddDependency(string s, string t)
         {
             //check if there is no key for s in dependees dictionary
-            if (!dependeesGraph.ContainsKey(s))
+            if (!checkDependeesGraph(s))
             {
-                //create a new key for the dependency dictionary 
+                //create a new key for the dependees dictionary 
                 dependeesGraph.Add(s, new HashSet<string>());
             }
             //add t to the hash set of dependees for s
@@ -198,12 +201,12 @@ namespace SpreadsheetUtilities
 
             //update dependents graph as well
             //check if there is a key for t in dependents dictionary
-            if (!dependentsGraph.ContainsKey(t))
+            if (!checkDependentsGraph(t))
             {
-                //create a new key for the dependents dictionaly
+                //create a new key for the dependents dictionary
                 dependentsGraph.Add(t, new HashSet<string>());
             }
-            //add s to the hash set of dependents for t
+            //add s to the hash set of dependees for t
             dependentsGraph[t].Add(s);
         }
 
@@ -216,7 +219,7 @@ namespace SpreadsheetUtilities
         public void RemoveDependency(string s, string t)
         {
             //check that s is a dependee and t is a dependent
-            if (dependeesGraph.ContainsKey(s) && dependentsGraph.ContainsKey(t))
+            if (checkDependeesGraph(s) && checkDependentsGraph(t))
             {
                 //check that t is a dependent of s
                 if (dependeesGraph[s].Contains(t))
@@ -228,7 +231,6 @@ namespace SpreadsheetUtilities
                         dependeesGraph.Remove(s);
                     }
                     //update dependent graph for t
-
                     dependentsGraph[t].Remove(s);
                     if (dependentsGraph[t].Count == 0)
                     {
@@ -247,14 +249,13 @@ namespace SpreadsheetUtilities
         public void ReplaceDependents(string s, IEnumerable<string> newDependents)
         {
             //check that s has dependents
-            if (dependeesGraph.ContainsKey(s))
+            if (checkDependeesGraph(s))
             {
                 //remove all dependents of s
                 foreach (string r in dependeesGraph[s].ToList())
                 {
                     RemoveDependency(s, r);
                 }
-
             }
             //add all new dependents to s
             foreach (string t in newDependents)
@@ -272,7 +273,7 @@ namespace SpreadsheetUtilities
         public void ReplaceDependees(string s, IEnumerable<string> newDependees)
         {
             //check that s is a dependent
-            if (dependentsGraph.ContainsKey(s))
+            if (checkDependentsGraph(s))
             {
                 //remove all values that s depends on
                 foreach (string r in dependentsGraph[s].ToList())
@@ -286,6 +287,35 @@ namespace SpreadsheetUtilities
                 AddDependency(t, s);
             }
         }
+
+        /// <summary>
+        /// Looks at dependees graph for the key s
+        /// </summary>
+        /// <param name="s"></param>
+        /// <returns></returns>
+        public bool checkDependeesGraph(string s)
+        {
+            if (dependeesGraph.ContainsKey(s))
+            {
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Looks at the dependents graph for the key s
+        /// </summary>
+        /// <param name="s"></param>
+        /// <returns></returns>
+        public bool checkDependentsGraph(string s)
+        {
+            if (dependentsGraph.ContainsKey(s))
+            {
+                return true;
+            }
+            return false;
+        }
+     
 
     }
 
