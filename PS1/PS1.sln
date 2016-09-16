@@ -7,6 +7,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FormulaEvaluator", "Formula
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FETester", "FETester\FETester.csproj", "{5E0BB3CE-7612-48AF-A2AE-5F761F3219A2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PS1GradingTest", "PS1GradingTest\PS1GradingTest.csproj", "{C3FEDB7A-3B46-4244-902A-B8E774DAECEA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTestProject1", "UnitTestProject1\UnitTestProject1.csproj", "{51593926-3F7C-495F-8139-47F960FE5B60}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +25,14 @@ Global
 		{5E0BB3CE-7612-48AF-A2AE-5F761F3219A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5E0BB3CE-7612-48AF-A2AE-5F761F3219A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5E0BB3CE-7612-48AF-A2AE-5F761F3219A2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C3FEDB7A-3B46-4244-902A-B8E774DAECEA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C3FEDB7A-3B46-4244-902A-B8E774DAECEA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C3FEDB7A-3B46-4244-902A-B8E774DAECEA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C3FEDB7A-3B46-4244-902A-B8E774DAECEA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{51593926-3F7C-495F-8139-47F960FE5B60}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{51593926-3F7C-495F-8139-47F960FE5B60}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{51593926-3F7C-495F-8139-47F960FE5B60}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{51593926-3F7C-495F-8139-47F960FE5B60}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

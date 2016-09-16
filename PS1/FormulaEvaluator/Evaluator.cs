@@ -16,11 +16,7 @@ namespace FormulaEvaluator
     {
         public delegate int Lookup(String v);
 
-        //the stack that will hold integer values from the expression
-        static Stack<int> values = new Stack<int>();
-        //the stack that will hold operations from the expressions
-        //only valid expressions are (,+,-,*,/, or )
-        static Stack<string> operators = new Stack<string>();
+
 
         /// <summary>
         /// Reads and performs an expressions, if valid.
@@ -33,6 +29,12 @@ namespace FormulaEvaluator
         /// returns the final value after expression has been succesfully operated on
         public static int Evaluate(String exp, Lookup variableEvaluator)
         {
+            //the stack that will hold integer values from the expression
+            Stack<int> values = new Stack<int>();
+            //the stack that will hold operations from the expressions
+            //only valid expressions are (,+,-,*,/, or )
+            Stack<string> operators = new Stack<string>();
+
             exp = exp.Replace(" ", String.Empty);
             exp = exp.Replace("\t", String.Empty);
             string[] substrings = Regex.Split(exp, "(\\()|(\\))|(-)|(\\+)|(\\*)|(/)");
@@ -47,24 +49,24 @@ namespace FormulaEvaluator
                 //check if token is an integer
                 else if (Int32.TryParse(token, out value))
                 {
-                    intRead(value);
+                    intRead(value,operators, values);
                 }
                 //check if token is a valid variable
                 //char.IsLetter(token.FirstOrDefault()) might be better?
-                else if (!String.IsNullOrEmpty(token)&&Char.IsLetter(token[0]))
+                else if (!String.IsNullOrEmpty(token)&&Char.IsLetter(token[0])&&Char.IsNumber(token[token.Length-1]))
                 {
                     int varValue = variableEvaluator(token); //do I need to write my own expression?
-                    intRead(varValue);
+                    intRead(varValue, operators, values);
                 }
 
                 //check if token is addition or subtrction
                 else if (token == "+" || token == "-")
                 {
-                    if (checkStackSize("o"))
+                    if (checkStackSize("o", operators, values))
                     {
-                        if(checkAddOrMinus())
+                        if(checkAddOrMinus(operators, values))
                         {
-                            sumOrSubtract();
+                            sumOrSubtract(operators, values);
                         }
                     }
                     operators.Push(token);
@@ -85,7 +87,7 @@ namespace FormulaEvaluator
                 //check right parenthisis
                 else if(token == ")")
                 {
-                    readRightParanth();
+                    readRightParanth(operators, values);
                 }
 
                 //invalid token
@@ -105,9 +107,9 @@ namespace FormulaEvaluator
             else if((values.Count == 2) && (operators.Count == 1))
             {
                 //it must be addition or subtraction
-                if(checkAddOrMinus())
+                if(checkAddOrMinus(operators, values))
                 {
-                    sumOrSubtract();
+                    sumOrSubtract(operators, values);
                     return values.Pop();
                 }
                 else
@@ -131,12 +133,12 @@ namespace FormulaEvaluator
         /// The key word to know whether to check the operators stack or the values stack
         /// <returns></returns>
         /// true if there is a token in the stack, false if not
-        public static bool checkStackSize(string s)
+        public static bool checkStackSize(string s, Stack<string> o, Stack<int> v)
         {
             //checks operation stack if string is o
             if(s == "o")
             {
-                if(operators.Count <= 0)
+                if(o.Count <= 0)
                 {
                     return false;
                 }
@@ -148,7 +150,7 @@ namespace FormulaEvaluator
             //it will check values stack if any other string is passed
             else
             {
-                if(values.Count <= 0)
+                if(v.Count <= 0)
                 {
                     return false;
                 }
@@ -164,24 +166,24 @@ namespace FormulaEvaluator
         /// </summary>
         /// <param name="x"></param>
         /// the integer that was just read
-        public static void intRead(int x)
+        public static void intRead(int x, Stack<string> o, Stack<int> v)
         {
-            if (checkStackSize("o"))
+            if (checkStackSize("o", o, v))
             {
-                if (checkMultiOrDiv())
+                if (checkMultiOrDiv(o,v))
                 {
-                    values.Push(x);
-                    multiOrDiv();
+                    v.Push(x);
+                    multiOrDiv(o,v);
                     return;
                 }
                 else
                 {
-                    values.Push(x);
+                    v.Push(x);
                 }
             }
             else
             {
-                values.Push(x);
+                v.Push(x);
             }
             return;
         }
@@ -190,15 +192,15 @@ namespace FormulaEvaluator
         /// Performs operation on two values already recorded. Checks that there are two values to pull and whether to call on addition 
         /// or subtraction.
         /// </summary>
-        public static void sumOrSubtract()
+        public static void sumOrSubtract(Stack<string> o, Stack<int> v)
         {
             //pop the two values
-            int valOne = popValue();
-            int valTwo = popValue();
+            int valOne = popValue(o,v);
+            int valTwo = popValue(o,v);
             
             //pop operator 
             int newVal = 0;
-            switch (operators.Pop())
+            switch (o.Pop())
             {
                 case "+":
                     newVal = valOne + valTwo;
@@ -208,21 +210,21 @@ namespace FormulaEvaluator
                     newVal = valTwo - valOne;
                     break;
             }
-            values.Push(newVal);
+            v.Push(newVal);
             return;
         }
 
         /// <summary>
         /// Muliplies or divides two values that have already been added to the stack.
         /// </summary>
-        public static void multiOrDiv()
+        public static void multiOrDiv(Stack<string> o, Stack<int> v)
         {
             //pop the two values
-            int valOne = popValue();
-            int valTwo = popValue();
+            int valOne = popValue(o,v);
+            int valTwo = popValue(o,v);
                        
             int newVal=0;
-            switch (operators.Pop())
+            switch (o.Pop())
             {
                 case "*":
                     newVal = valOne * valTwo;
@@ -235,7 +237,7 @@ namespace FormulaEvaluator
                     newVal = valTwo / valOne;
                     break;
             }
-            values.Push(newVal);
+            v.Push(newVal);
         }
 
         /// <summary>
@@ -243,12 +245,12 @@ namespace FormulaEvaluator
         /// </summary>
         /// <returns></returns>
         /// The integer at the top of the stack if there is one.
-        public static int popValue()
+        public static int popValue(Stack<string> o, Stack<int> v)
         {
             int val = 0;
-            if (checkStackSize("v"))
+            if (checkStackSize("v", o, v))
             {
-                val = values.Pop();
+                val = v.Pop();
             }
             else
             {
@@ -257,21 +259,25 @@ namespace FormulaEvaluator
             return val;
         }
 
-        public static void readRightParanth()
+        public static void readRightParanth(Stack<string> o, Stack<int> v)
         {
             //read and perform the operations on stack until a given number of operands read
-            for (int i = 0; i < operators.Count; i++)
+            for (int i = 0; i < o.Count; i++)
             {
-                if (operators.Peek() != "(")
+                if (o.Peek() != "(")
                 {
-                    if (checkAddOrMinus())
+                    if (checkAddOrMinus(o,v))
                     {
-                        sumOrSubtract();
+                        sumOrSubtract(o, v);
                     }
-                    if (checkMultiOrDiv())
+                    if(checkStackSize("o", o, v))
                     {
-                        multiOrDiv();
+                        if (checkMultiOrDiv(o,v))
+                        {
+                            multiOrDiv(o,v);
+                        }
                     }
+                   
                 }
                 else
                 {
@@ -279,17 +285,17 @@ namespace FormulaEvaluator
                 }
             }
             //check for left parenthesis or a multiply or divide operation
-            if (checkStackSize("o"))
+            if (checkStackSize("o", o, v))
             {
-                if (operators.Peek() == "(")
+                if (o.Peek() == "(")
                 {
-                    operators.Pop();
+                    o.Pop();
                 }
-                if (checkStackSize("o"))
+                if (checkStackSize("o", o, v))
                 {
-                    if (checkMultiOrDiv())
+                    if (checkMultiOrDiv(o,v))
                      {
-                          multiOrDiv();
+                          multiOrDiv(o, v);
                      }
                 }
             }
@@ -300,18 +306,18 @@ namespace FormulaEvaluator
             return;
         }
 
-        public static bool checkAddOrMinus()
+        public static bool checkAddOrMinus(Stack<string> o, Stack<int> v)
         {
-           if(operators.Peek() == "+" || operators.Peek() == "-")
+           if(o.Peek() == "+" || o.Peek() == "-")
             {
                 return true;
             }
             return false;
         }
 
-        public static bool checkMultiOrDiv()
+        public static bool checkMultiOrDiv(Stack<string> o, Stack<int> v)
         {
-            if(operators.Peek() == "*" || operators.Peek() == "/")
+            if(o.Peek() == "*" || o.Peek() == "/")
             {
                 return true;
             }
