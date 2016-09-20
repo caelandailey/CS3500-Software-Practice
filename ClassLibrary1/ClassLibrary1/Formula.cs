@@ -49,6 +49,7 @@ namespace SpreadsheetUtilities
         {
         }
 
+        List<string> tokens = new List<string>();
         /// <summary>
         /// Creates a Formula from a string that consists of an infix expression written as
         /// described in the class comment.  If the expression is syntactically incorrect,
@@ -76,7 +77,7 @@ namespace SpreadsheetUtilities
             //check that there is a formula to read
             checkEmpty(formula.Length);
 
-            List<string> tokens = GetTokens(formula).ToList();
+            tokens = GetTokens(formula).ToList();
 
             List<string> finalFormula = new List<string>();
 
@@ -85,7 +86,7 @@ namespace SpreadsheetUtilities
 
             int lParenthCount = 0;
             int rParenthCount = 0;
-            for (int i = 0; i < tokens.Count; i++)
+            for (int i = 0; i <= tokens.Count; i++)
             {
                 //check if a token is a double
                 if (isDouble(tokens[i]))
@@ -93,30 +94,31 @@ namespace SpreadsheetUtilities
                     if (i != 0)
                     {
                         //check that token is following an operator or left parenthesis
-                        previousOperatorOrLParanthToken(tokens[i--]);
+                        previousOperatorOrLParanthToken(tokens[i--], "Number");
                     }
+                    //converts and floating points into a double and then a string
+                    double value;
+                    Double.TryParse(tokens[i], out value);
 
-                    //finalFormula.Add(tokens[i]);
+                    finalFormula.Add(value.ToString());
                 }
 
                 //check for a variable
                 if (isVariable(tokens[i]))
                 {
+                    //check variable again
                     normalize(tokens[i]);
-                    //check token is valid
+                    
+                    //check normalized variable is valid
                     if (isValid(normalize(tokens[i])))
                     {
                         if (i != 0)
                         {
                             //check that token is following an operator or left parenthesis
-                            if (!(isOperator(tokens[i--]) || isLeftParenth(tokens[i--])))
-                            {
-                                throw new FormulaFormatException("Variable is following an invalid token. Check for a missing operation.");
-
-                            }
+                            previousOperatorOrLParanthToken(tokens[i--], "Variable");
                         }
 
-                        //finalFormula.Add(normalize(tokens[i]));
+                       finalFormula.Add(normalize(tokens[i]));
                     }
                     else
                     {
@@ -130,10 +132,10 @@ namespace SpreadsheetUtilities
                     if (i != 0)
                     {
                         //check if token is following an operator or another left parenthesis
-                        previousOperatorOrLParanthToken(tokens[i--]);
+                        previousOperatorOrLParanthToken(tokens[i--], "Open parenthesis");
                     }
 
-                    //finalFormula.Add(tokens[i]);
+                    finalFormula.Add(tokens[i]);
                     lParenthCount++;
                 }
 
@@ -141,7 +143,7 @@ namespace SpreadsheetUtilities
                 else if (isOperator(tokens[i]))
                 {
                     //check that the token prior to operator is double, variable, or right parenthesis
-                    checkPreviousToken(tokens[i--]);
+                    checkPreviousToken(tokens[i--], "operator");
                     finalFormula.Add(tokens[i]);
                 }
 
@@ -154,7 +156,7 @@ namespace SpreadsheetUtilities
                         throw new FormulaFormatException("There are more closing parenthesis than opening. Check that there is an opening for each closing parenthesis.");
                     }
                     //check that the token prior to operator is double, variable, or right parenthesis
-                    checkPreviousToken(tokens[i--]);
+                    checkPreviousToken(tokens[i--], "closing parenthesis");
                     finalFormula.Add(tokens[i]);
                     rParenthCount++;
                 }
@@ -177,8 +179,7 @@ namespace SpreadsheetUtilities
             {
                 throw new FormulaFormatException("Parenthesis do not match up. Check that there are the same number of closing and opening paranthesis. ");
             }
-
-
+            tokens = finalFormula;
         }
 
         /// <summary>
@@ -367,8 +368,17 @@ namespace SpreadsheetUtilities
         /// <returns></returns>
         private bool isVariable(string s)
         {
-            if (s == @"[a-zA-Z_](?: [a-zA-Z_]|\d)*")
+            //the fist character in the variable must be a letter or underscore
+            if(Char.IsLetter(s[0]) || (s[0] == '_'))
             {
+                //check that the rest of the variable is a letter, number, or variable
+                for(int i = 1; i <= s.Length; i++)
+                {
+                    if(!(Char.IsLetterOrDigit(s[i]) || (s[i] == '_')))
+                    {
+                        return false;
+                    }
+                }
                 return true;
             }
             return false;
@@ -421,11 +431,11 @@ namespace SpreadsheetUtilities
         /// Only called after a number, variable, or left parenthesis is read.
         /// </summary>
         /// <param name="s"></param>
-        private void previousOperatorOrLParanthToken(string s)
+        private void previousOperatorOrLParanthToken(string s, string t)
         {
             if (!(isOperator(s) || isLeftParenth(s)))
             {
-                throw new FormulaFormatException("Number is following an invalid token. Check for a missing operation.");
+                throw new FormulaFormatException(t + " is following an invalid token. Check for a missing operation.");
             }
         }
 
@@ -434,11 +444,11 @@ namespace SpreadsheetUtilities
         /// Only called after an operator or right parenthesis is read.
         /// </summary>
         /// <param name="s"></param>
-        private void checkPreviousToken(string s)
+        private void checkPreviousToken(string s, string t)
         {
             if (isOperator(s) || isLeftParenth(s))
             {
-                throw new FormulaFormatException("Invalid token before operator. Check that there are no operators next to one another.");
+                throw new FormulaFormatException("Invalid token before " + t + ". Check that there are no operators next to one another.");
             }
 
         }

@@ -33,7 +33,14 @@ namespace FormulaTester
         [ExpectedException(typeof(FormulaFormatException))]
         public void improperFirstToken3()
         {
-            Formula k = new Formula("x - 2 + 8");
+            Formula k = new Formula("3x - 2 + 8");
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(FormulaFormatException))]
+        public void improperFirstToken4()
+        {
+            Formula k = new Formula("_! - 2 + 8");
         }
 
         [TestMethod]
@@ -83,6 +90,125 @@ namespace FormulaTester
         public void parenthesisBalance3()
         {
             Formula k = new Formula("(7 + (1) - 3 + 8");
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(FormulaFormatException))]
+        public void beforeNumberError1()
+        {
+            Formula k = new Formula("(7 * 2) 3");
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(FormulaFormatException))]
+        public void beforeNumberError2()
+        {
+            Formula k = new Formula("7 * 2 3");
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(FormulaFormatException))]
+        public void beforeNumberError3()
+        {
+            Formula k = new Formula("(7 * 3) + x4 3");
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(FormulaFormatException))]
+        public void beforeVariableError1()
+        {
+            Formula k = new Formula("(7 * 2) + (6) x4");
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(FormulaFormatException))]
+        public void beforeVariableError2()
+        {
+            Formula k = new Formula("(7 * 2) + 6 x4");
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(FormulaFormatException))]
+        public void beforeVariableError3()
+        {
+            Formula k = new Formula("(7 * 2) + y4 x4");
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(FormulaFormatException))]
+        public void beforeLParenthesisError1()
+        {
+            Formula k = new Formula("(7 * 2)(3 - 4)");
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(FormulaFormatException))]
+        public void beforeLParenthesisError2()
+        {
+            Formula k = new Formula("7(3 - 4)");
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(FormulaFormatException))]
+        public void beforeLParenthesisError3()
+        {
+            Formula k = new Formula("(3 - 4) + x3 (2 + 3)");
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(FormulaFormatException))]
+        public void beforeRParenthesisError1()
+        {
+            Formula k = new Formula("(3 + 2) - (+)");
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(FormulaFormatException))]
+        public void beforeRParenthesisError2()
+        {
+            Formula k = new Formula("3 + ()");
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(FormulaFormatException))]
+        public void beforeOperator1()
+        {
+            Formula k = new Formula("( 3 + 2) - (* 2)");
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(FormulaFormatException))]
+        public void beforeOperator2()
+        {
+            Formula k = new Formula("( 3 + 2) + x3 - - 2)");
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(FormulaFormatException))]
+        public void lastToken1()
+        {
+            Formula k = new Formula("6 + 2 -");
+        }
+
+        [TestMethod]
+
+        public void lastToken2()
+        {
+            Formula k = new Formula("6 + 2 - x");
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(FormulaFormatException))]
+        public void lastToken3()
+        {
+            Formula k = new Formula("6 + 2 - (");
+        }
+
+        [TestMethod]
+
+        public void lastToken4()
+        {
+            Formula k = new Formula("6 + 2 - 6");
         }
     }
 }
