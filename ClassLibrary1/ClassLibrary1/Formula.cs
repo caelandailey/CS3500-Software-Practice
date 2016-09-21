@@ -86,7 +86,7 @@ namespace SpreadsheetUtilities
 
             int lParenthCount = 0;
             int rParenthCount = 0;
-            for (int i = 0; i <= tokens.Count; i++)
+            for (int i = 0; i < tokens.Count; i++)
             {
                 //check if a token is a double
                 if (isDouble(tokens[i]))
@@ -94,7 +94,7 @@ namespace SpreadsheetUtilities
                     if (i != 0)
                     {
                         //check that token is following an operator or left parenthesis
-                        previousOperatorOrLParanthToken(tokens[i--], "Number");
+                        previousOperatorOrLParanthToken(tokens[i - 1], "Number");
                     }
                     //converts and floating points into a double and then a string
                     double value;
@@ -104,25 +104,30 @@ namespace SpreadsheetUtilities
                 }
 
                 //check for a variable
-                if (isVariable(tokens[i]))
+                else if (isVariable(tokens[i]))
                 {
                     //check variable again
-                    normalize(tokens[i]);
-                    
-                    //check normalized variable is valid
-                    if (isValid(normalize(tokens[i])))
+                    if (isVariable(normalize(tokens[i])))
                     {
-                        if (i != 0)
+                        //check normalized variable is valid
+                        if (isValid(normalize(tokens[i])))
                         {
-                            //check that token is following an operator or left parenthesis
-                            previousOperatorOrLParanthToken(tokens[i--], "Variable");
-                        }
+                            if (i != 0)
+                            {
+                                //check that token is following an operator or left parenthesis
+                                previousOperatorOrLParanthToken(tokens[i - 1], "Variable");
+                            }
 
-                       finalFormula.Add(normalize(tokens[i]));
+                            finalFormula.Add(normalize(tokens[i]));
+                        }
+                        else
+                        {
+                            throw new FormulaFormatException("Variable is not valid after being normalized. Be sure that the vaiable begins with a letter or underscore.");
+                        }
                     }
                     else
                     {
-                        throw new FormulaFormatException("Variable is not valid. Be sure that the vaiable begins with a letter or underscore.");
+                        throw new FormulaFormatException("Normalizer changes variable to a non-variable. Be sure that the normalizer keeps the vaiable begining with a letter or underscore.");
                     }
                 }
 
@@ -132,7 +137,7 @@ namespace SpreadsheetUtilities
                     if (i != 0)
                     {
                         //check if token is following an operator or another left parenthesis
-                        previousOperatorOrLParanthToken(tokens[i--], "Open parenthesis");
+                        previousOperatorOrLParanthToken(tokens[i - 1], "Open parenthesis");
                     }
 
                     finalFormula.Add(tokens[i]);
@@ -143,12 +148,12 @@ namespace SpreadsheetUtilities
                 else if (isOperator(tokens[i]))
                 {
                     //check that the token prior to operator is double, variable, or right parenthesis
-                    checkPreviousToken(tokens[i--], "operator");
+                    checkPreviousToken(tokens[i - 1], "operator");
                     finalFormula.Add(tokens[i]);
                 }
 
                 //check if token is a right parenthesis
-                else if (isRightParenth(tokens[i--]))
+                else if (isRightParenth(tokens[i - 1]))
                 {
                     //check that the count is acurrate 
                     if (lParenthCount > rParenthCount++)
@@ -156,7 +161,7 @@ namespace SpreadsheetUtilities
                         throw new FormulaFormatException("There are more closing parenthesis than opening. Check that there is an opening for each closing parenthesis.");
                     }
                     //check that the token prior to operator is double, variable, or right parenthesis
-                    checkPreviousToken(tokens[i--], "closing parenthesis");
+                    checkPreviousToken(tokens[i - 1], "closing parenthesis");
                     finalFormula.Add(tokens[i]);
                     rParenthCount++;
                 }
@@ -368,13 +373,14 @@ namespace SpreadsheetUtilities
         /// <returns></returns>
         private bool isVariable(string s)
         {
+
             //the fist character in the variable must be a letter or underscore
-            if(Char.IsLetter(s[0]) || (s[0] == '_'))
+            if (Char.IsLetter(s[0]) || (s[0] == '_'))
             {
                 //check that the rest of the variable is a letter, number, or variable
-                for(int i = 1; i <= s.Length; i++)
+                for (int i = 1; i < s.Length; i++)
                 {
-                    if(!(Char.IsLetterOrDigit(s[i]) || (s[i] == '_')))
+                    if (!Char.IsLetterOrDigit(s[i]) && s[i] != '_')
                     {
                         return false;
                     }
@@ -526,8 +532,8 @@ namespace SpreadsheetUtilities
                 //check if token is a valid variable
                 //char.IsLetter(token.FirstOrDefault()) might be better?
                 //else if (isVariable(token))
-              //  {
-                  //  int varValue = variableEvaluator(token);
+                //  {
+                //  int varValue = variableEvaluator(token);
                 //    intRead(varValue, operators, values);
                 //}
 
