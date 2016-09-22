@@ -49,6 +49,7 @@ namespace SpreadsheetUtilities
         {
         }
 
+        //will store the formula
         List<string> tokens = new List<string>();
         /// <summary>
         /// Creates a Formula from a string that consists of an infix expression written as
@@ -77,15 +78,18 @@ namespace SpreadsheetUtilities
             //check that there is a formula to read
             checkEmpty(formula.Length);
 
+            //update list to hold tokenized formula
             tokens = GetTokens(formula).ToList();
 
+            //will hold checked tokens
             List<string> finalFormula = new List<string>();
 
             //check the first token is a variable, double, or lparenthesis
             checkFirstToken(tokens[0]);
-
+            
             int lParenthCount = 0;
             int rParenthCount = 0;
+            //check each token in formula is valid
             for (int i = 0; i < tokens.Count; i++)
             {
                 //check if a token is a double
@@ -95,12 +99,12 @@ namespace SpreadsheetUtilities
                     {
                         //check that token is following an operator or left parenthesis
                         previousOperatorOrLParanthToken(tokens[i - 1], "Number");
-                        //i += 1;
                     }
-                    //converts and floating points into a double and then a string
+                    //converts floating points into a double and then a string
                     double value;
                     Double.TryParse(tokens[i], out value);
 
+                    //add it to the checked list
                     finalFormula.Add(value.ToString());
                 }
 
@@ -117,16 +121,18 @@ namespace SpreadsheetUtilities
                             {
                                 //check that token is following an operator or left parenthesis
                                 previousOperatorOrLParanthToken(tokens[i - 1], "Variable");
-                                ///i += 1;
                             }
 
+                            //add to checked list
                             finalFormula.Add(normalize(tokens[i]));
                         }
+                        //the validation failed for the variable after being normalized
                         else
                         {
                             throw new FormulaFormatException("Variable is not valid after being normalized. Be sure that the vaiable begins with a letter or underscore.");
                         }
                     }
+                    //the normalizer changed the token to an invalid variable
                     else
                     {
                         throw new FormulaFormatException("Normalizer changes variable to a non-variable. Be sure that the normalizer keeps the vaiable begining with a letter or underscore.");
@@ -140,9 +146,9 @@ namespace SpreadsheetUtilities
                     {
                         //check if token is following an operator or another left parenthesis
                         previousOperatorOrLParanthToken(tokens[i - 1], "Open parenthesis");
-                        //i += 1;
                     }
 
+                    //add to checked list and update the count of left parenthesis
                     finalFormula.Add(tokens[i]);
                     lParenthCount++;
                 }
@@ -152,7 +158,7 @@ namespace SpreadsheetUtilities
                 {
                     //check that the token prior to operator is double, variable, or right parenthesis
                     checkPreviousToken(tokens[i - 1], "operator");
-                    //i += 1;
+                    //add to checked list
                     finalFormula.Add(tokens[i]);
                 }
 
@@ -164,9 +170,10 @@ namespace SpreadsheetUtilities
                     {
                         throw new FormulaFormatException("There are more closing parenthesis than opening. Check that there is an opening for each closing parenthesis.");
                     }
-                    //check that the token prior to operator is double, variable, or right parenthesis
+                    //check that the token prior to parenthesis is double, variable, or right parenthesis
                     checkPreviousToken(tokens[i - 1], "closing parenthesis");
-                    //i += 1;
+
+                    //add to checked list and update left parenthesis
                     finalFormula.Add(tokens[i]);
                     rParenthCount++;
                 }
@@ -188,6 +195,7 @@ namespace SpreadsheetUtilities
             {
                 throw new FormulaFormatException("Parenthesis do not match up. Check that there are the same number of closing and opening paranthesis. ");
             }
+            //update list that hold the formula with the checked list
             tokens = finalFormula;
         }
 
@@ -214,9 +222,7 @@ namespace SpreadsheetUtilities
         /// </summary>
         public object Evaluate(Func<string, double> lookup)
         {
-
             return Evaluator(tokens, lookup);
-
         }
 
         /// <summary>
@@ -232,11 +238,14 @@ namespace SpreadsheetUtilities
         /// </summary>
         public IEnumerable<String> GetVariables()
         {
+            //create a new hash set to hold all variables in formula
             HashSet<string> allVariables = new HashSet<string>();
+            //step through each string in the formula to find the variables
             foreach(string v in tokens)
             {
                 if (isVariable(v))
                 {
+                    //add it to the hash set
                     allVariables.Add(v);
                 }
             }
@@ -255,7 +264,9 @@ namespace SpreadsheetUtilities
         /// </summary>
         public override string ToString()
         {
+            //begin with an empty string
             string formula = "";
+            //step through each token/string in formula and add it to final string
             foreach(string s in tokens)
             {
                 formula += s;
@@ -286,17 +297,22 @@ namespace SpreadsheetUtilities
             {
                 return false;
             }
-            string one = this.ToString();
-            string two = obj.ToString();
 
-            if(one.Length != two.Length)
+            //make a single string out of the two formulas
+            string f1 = this.ToString();
+            string f2 = obj.ToString();
+
+            //check that they are the same length
+            if(f1.Length != f2.Length)
             {
                 return false;
             }
 
-            for(int i; i < one.Length; i++)
+            //step throuh each character in the string f1
+            for(int i; i < f1.Length; i++)
             {
-                if(one[i] != two[i])
+                //make sure that it matches the same character in the same place as f2
+                if(f1[i] != f2[i])
                 {
                     return false;
                 }
@@ -311,10 +327,13 @@ namespace SpreadsheetUtilities
         /// </summary>
         public static bool operator ==(Formula f1, Formula f2)
         {
+            //check if both formulas are null
             if(f1 == null && f2 == null)
             {
                 return true;
             }
+
+            //if f1 is not null than call Equals method on the two formulas
             if(f1 != null)
             {
                 return f1.Equals(f2);
@@ -329,10 +348,13 @@ namespace SpreadsheetUtilities
         /// </summary>
         public static bool operator !=(Formula f1, Formula f2)
         {
+            //check if both formulas are equal
             if (f1 == null && f2 == null)
             {
                 return false;
             }
+
+            //if f1 is not false then return the opposite of Equals method on the two formulas
             if (f1 != null)
             {
                 return !f1.Equals(f2);
@@ -347,7 +369,14 @@ namespace SpreadsheetUtilities
         /// </summary>
         public override int GetHashCode()
         {
-            return 0;
+            //total sum of hash codes for each token
+           int finalHash = 0;
+            //step through each token/string in the formula and add it to the final hash integer
+           foreach(string t in tokens)
+            {
+                finalHash = t.GetHashCode();
+            }
+            return finalHash;
         }
 
         /// <summary>
@@ -432,7 +461,7 @@ namespace SpreadsheetUtilities
             //the fist character in the variable must be a letter or underscore
             if (Char.IsLetter(s[0]) || (s[0] == '_'))
             {
-                //check that the rest of the variable is a letter, number, or variable
+                //check that the rest of the variable is a letter, number, or underscore
                 for (int i = 1; i < s.Length; i++)
                 {
                     if (!Char.IsLetterOrDigit(s[i]) && s[i] != '_')
@@ -531,6 +560,7 @@ namespace SpreadsheetUtilities
             //only valid expressions are (,+,-,*,/, or )
             Stack<string> operators = new Stack<string>();
 
+            //step through each token in the formula
             foreach (string token in exp)
             {
                 double value;
@@ -558,8 +588,9 @@ namespace SpreadsheetUtilities
                 //check if token is addition or subtrction
                 else if (token == "+" || token == "-")
                 {
+                    //check that there are operators in the stack
                     if (operators.Count > 0)
-                    {
+                    { 
                         if (checkAddOrMinus(operators, values))
                         {
                             sumOrSubtract(operators, values);
@@ -585,7 +616,6 @@ namespace SpreadsheetUtilities
                 {
                     readRightParanth(operators, values);
                 }
-
             }
             //no more tokens to read, check stacks to get final answer
             //there is one more operation to perform
@@ -597,7 +627,6 @@ namespace SpreadsheetUtilities
                     sumOrSubtract(operators, values);
                     return values.Pop();
                }
-
             }
             return values.Pop();
         }
@@ -621,10 +650,7 @@ namespace SpreadsheetUtilities
                     return;
                 }
             }
-
-
             v.Push(x);
-
             return;
         }
 
@@ -637,9 +663,8 @@ namespace SpreadsheetUtilities
             //pop the two values
             double valOne = v.Pop();
             double valTwo = v.Pop();
-
-            //pop operator 
             double newVal = 0;
+            //pop operator
             switch (o.Pop())
             {
                 case "+":
@@ -662,8 +687,8 @@ namespace SpreadsheetUtilities
             //pop the two values
             double valOne = v.Pop();
             double valTwo = v.Pop();
-
             double newVal = 0;
+            //pop operator
             switch (o.Pop())
             {
                 case "*":
@@ -681,7 +706,11 @@ namespace SpreadsheetUtilities
             return null;
         }
 
-
+        /// <summary>
+        /// Performs all operations in the parenthesis updating both operation and values stack
+        /// </summary>
+        /// <param name="o"></param>
+        /// <param name="v"></param>
         private void readRightParanth(Stack<string> o, Stack<double> v)
         {
             //read and perform the operations on stack until a given number of operands read
@@ -705,11 +734,11 @@ namespace SpreadsheetUtilities
                 }
             }
             //check for left parenthesis or a multiply or divide operation
-
             if (o.Peek() == "(")
             {
                 o.Pop();
             }
+            //check if multiply or divide is at the top of the stack now and perform that operation
             if (o.Count > 0)
             {
                 if (checkMultiOrDiv(o, v))
@@ -720,6 +749,12 @@ namespace SpreadsheetUtilities
             return;
         }
 
+        /// <summary>
+        /// Checks operation stack for either an addition or subtraction symbol
+        /// </summary>
+        /// <param name="o"></param>
+        /// <param name="v"></param>
+        /// <returns></returns>
         private bool checkAddOrMinus(Stack<string> o, Stack<double> v)
         {
             if (o.Peek() == "+" || o.Peek() == "-")
@@ -729,6 +764,12 @@ namespace SpreadsheetUtilities
             return false;
         }
 
+        /// <summary>
+        /// Checks operation stack for either a multiplication or division symbol
+        /// </summary>
+        /// <param name="o"></param>
+        /// <param name="v"></param>
+        /// <returns></returns>
         private bool checkMultiOrDiv(Stack<string> o, Stack<double> v)
         {
             if (o.Peek() == "*" || o.Peek() == "/")
