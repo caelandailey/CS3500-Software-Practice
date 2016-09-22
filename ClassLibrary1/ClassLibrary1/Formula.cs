@@ -95,6 +95,7 @@ namespace SpreadsheetUtilities
                     {
                         //check that token is following an operator or left parenthesis
                         previousOperatorOrLParanthToken(tokens[i - 1], "Number");
+                        //i += 1;
                     }
                     //converts and floating points into a double and then a string
                     double value;
@@ -116,6 +117,7 @@ namespace SpreadsheetUtilities
                             {
                                 //check that token is following an operator or left parenthesis
                                 previousOperatorOrLParanthToken(tokens[i - 1], "Variable");
+                                ///i += 1;
                             }
 
                             finalFormula.Add(normalize(tokens[i]));
@@ -138,6 +140,7 @@ namespace SpreadsheetUtilities
                     {
                         //check if token is following an operator or another left parenthesis
                         previousOperatorOrLParanthToken(tokens[i - 1], "Open parenthesis");
+                        //i += 1;
                     }
 
                     finalFormula.Add(tokens[i]);
@@ -149,19 +152,21 @@ namespace SpreadsheetUtilities
                 {
                     //check that the token prior to operator is double, variable, or right parenthesis
                     checkPreviousToken(tokens[i - 1], "operator");
+                    //i += 1;
                     finalFormula.Add(tokens[i]);
                 }
 
                 //check if token is a right parenthesis
-                else if (isRightParenth(tokens[i - 1]))
+                else if (isRightParenth(tokens[i]))
                 {
                     //check that the count is acurrate 
-                    if (lParenthCount > rParenthCount++)
+                    if (lParenthCount > rParenthCount+1)
                     {
                         throw new FormulaFormatException("There are more closing parenthesis than opening. Check that there is an opening for each closing parenthesis.");
                     }
                     //check that the token prior to operator is double, variable, or right parenthesis
                     checkPreviousToken(tokens[i - 1], "closing parenthesis");
+                    //i += 1;
                     finalFormula.Add(tokens[i]);
                     rParenthCount++;
                 }
@@ -173,11 +178,10 @@ namespace SpreadsheetUtilities
             }
 
             //check the last token is a variable, double, or rparenthesis
-            if (!(isDouble(tokens.Last()) || isVariable(tokens.Last()) || isLeftParenth(tokens.Last())))
+            if (!(isDouble(tokens[tokens.Count - 1]) || isVariable(tokens[tokens.Count - 1]) || isRightParenth(tokens[tokens.Count - 1])))
             {
                 throw new FormulaFormatException("The last token in the formula is invalid. Be sure that it is a number, valid variable, or closing parenthesis.");
             }
-            finalFormula.Add(tokens.Last());
 
             //check balanced parenthesis 
             if (!(lParenthCount == rParenthCount))
@@ -210,7 +214,9 @@ namespace SpreadsheetUtilities
         /// </summary>
         public object Evaluate(Func<string, double> lookup)
         {
-            return null;
+
+            return Evaluator(tokens, lookup);
+
         }
 
         /// <summary>
@@ -226,7 +232,15 @@ namespace SpreadsheetUtilities
         /// </summary>
         public IEnumerable<String> GetVariables()
         {
-            return null;
+            HashSet<string> allVariables = new HashSet<string>();
+            foreach(string v in tokens)
+            {
+                if (isVariable(v))
+                {
+                    allVariables.Add(v);
+                }
+            }
+            return allVariables;
         }
 
         /// <summary>
@@ -241,7 +255,12 @@ namespace SpreadsheetUtilities
         /// </summary>
         public override string ToString()
         {
-            return null;
+            string formula = "";
+            foreach(string s in tokens)
+            {
+                formula += s;
+            }
+            return formula;
         }
 
         /// <summary>
@@ -262,7 +281,27 @@ namespace SpreadsheetUtilities
         /// </summary>
         public override bool Equals(object obj)
         {
-            return false;
+            //check if obj is null or is not a formula
+            if(obj == null || !(FormulaClass)Formula(obj)))
+            {
+                return false;
+            }
+            string one = this.ToString();
+            string two = obj.ToString();
+
+            if(one.Length != two.Length)
+            {
+                return false;
+            }
+
+            for(int i; i < one.Length; i++)
+            {
+                if(one[i] != two[i])
+                {
+                    return false;
+                }
+            }
+            return true;
         }
 
         /// <summary>
@@ -272,6 +311,14 @@ namespace SpreadsheetUtilities
         /// </summary>
         public static bool operator ==(Formula f1, Formula f2)
         {
+            if(f1 == null && f2 == null)
+            {
+                return true;
+            }
+            if(f1 != null)
+            {
+                return f1.Equals(f2);
+            }
             return false;
         }
 
@@ -282,7 +329,15 @@ namespace SpreadsheetUtilities
         /// </summary>
         public static bool operator !=(Formula f1, Formula f2)
         {
-            return false;
+            if (f1 == null && f2 == null)
+            {
+                return false;
+            }
+            if (f1 != null)
+            {
+                return !f1.Equals(f2);
+            }
+            return true;
         }
 
         /// <summary>
@@ -459,6 +514,230 @@ namespace SpreadsheetUtilities
 
         }
 
+        /// <summary>
+        /// Reads and performs an expressions, if valid.
+        /// </summary>
+        /// <param name="exp"></param>
+        /// The expression to be operated
+        /// <param name="variableEvaluator"></param>
+        /// The delegate that determines if a variable can be converted to a valid integer
+        /// <returns></returns>
+        /// returns the final value after expression has been succesfully operated on
+        private object Evaluator(List<string> exp, Func<string, double> lookup)
+        {
+            //the stack that will hold integer values from the expression
+            Stack<double> values = new Stack<double>();
+            //the stack that will hold operations from the expressions
+            //only valid expressions are (,+,-,*,/, or )
+            Stack<string> operators = new Stack<string>();
+
+            foreach (string token in exp)
+            {
+                double value;
+                //check if token is a number
+                if (Double.TryParse(token, out value))
+                {
+                    intRead(value, operators, values);
+                }
+                //check if token is a valid variable
+                else if (isVariable(token))
+                {
+                    //check if the variable is in the dictionary
+                    try
+                    {
+                        double varValue = lookup(token);
+                    }
+                    catch (ArgumentException)
+                    {
+                        return new FormulaError("Could not find variable in the given dictionary.");
+                    }
+
+                    intRead(lookup(token), operators, values);
+                }
+
+                //check if token is addition or subtrction
+                else if (token == "+" || token == "-")
+                {
+                    if (operators.Count > 0)
+                    {
+                        if (checkAddOrMinus(operators, values))
+                        {
+                            sumOrSubtract(operators, values);
+                        }
+                    }
+                    operators.Push(token);
+                }
+
+                //check if token is multiplication or division
+                else if (token == "*" || token == "/")
+                {
+                    operators.Push(token);
+                }
+
+                //check left parathsis
+                else if (token == "(")
+                {
+                    operators.Push(token);
+                }
+
+                //check right parenthisis
+                else if (token == ")")
+                {
+                    readRightParanth(operators, values);
+                }
+
+            }
+            //no more tokens to read, check stacks to get final answer
+            //there is one more operation to perform
+            if ((values.Count == 2) && (operators.Count == 1))
+            {
+                //it must be addition or subtraction
+                if (checkAddOrMinus(operators, values))
+                {
+                    sumOrSubtract(operators, values);
+                    return values.Pop();
+               }
+
+            }
+            return values.Pop();
+        }
+
+
+
+
+        /// <summary>
+        /// An integer is read, there for check if it needs to be operated on or simply added to the values stack.
+        /// </summary>
+        /// <param name="x"></param>
+        /// the integer that was just read
+        private void intRead(double x, Stack<string> o, Stack<double> v)
+        {
+            if (o.Count > 0)
+            {
+                if (checkMultiOrDiv(o, v))
+                {
+                    v.Push(x);
+                    multiOrDiv(o, v);
+                    return;
+                }
+            }
+
+
+            v.Push(x);
+
+            return;
+        }
+
+        /// <summary>
+        /// Performs operation on two values already recorded. Checks that there are two values to pull and whether to call on addition 
+        /// or subtraction.
+        /// </summary>
+        private void sumOrSubtract(Stack<string> o, Stack<double> v)
+        {
+            //pop the two values
+            double valOne = v.Pop();
+            double valTwo = v.Pop();
+
+            //pop operator 
+            double newVal = 0;
+            switch (o.Pop())
+            {
+                case "+":
+                    newVal = valOne + valTwo;
+                    break;
+
+                case "-":
+                    newVal = valTwo - valOne;
+                    break;
+            }
+            v.Push(newVal);
+            return;
+        }
+
+        /// <summary>
+        /// Muliplies or divides two values that have already been added to the stack.
+        /// </summary>
+        private object multiOrDiv(Stack<string> o, Stack<double> v)
+        {
+            //pop the two values
+            double valOne = v.Pop();
+            double valTwo = v.Pop();
+
+            double newVal = 0;
+            switch (o.Pop())
+            {
+                case "*":
+                    newVal = valOne * valTwo;
+                    break;
+                case "/":
+                    if (valOne == 0)
+                    {
+                        return new FormulaError("ERROR: division by 0");
+                    }
+                    newVal = valTwo / valOne;
+                    break;
+            }
+            v.Push(newVal);
+            return null;
+        }
+
+
+        private void readRightParanth(Stack<string> o, Stack<double> v)
+        {
+            //read and perform the operations on stack until a given number of operands read
+            for (int i = 0; i < o.Count; i++)
+            {
+                if (o.Peek() != "(")
+                {
+                    if (checkAddOrMinus(o, v))
+                    {
+                        sumOrSubtract(o, v);
+                    }
+
+                    if (checkMultiOrDiv(o, v))
+                    {
+                        multiOrDiv(o, v);
+                    }
+                }
+                else
+                {
+                    break;
+                }
+            }
+            //check for left parenthesis or a multiply or divide operation
+
+            if (o.Peek() == "(")
+            {
+                o.Pop();
+            }
+            if (o.Count > 0)
+            {
+                if (checkMultiOrDiv(o, v))
+                {
+                    multiOrDiv(o, v);
+                }
+            }
+            return;
+        }
+
+        private bool checkAddOrMinus(Stack<string> o, Stack<double> v)
+        {
+            if (o.Peek() == "+" || o.Peek() == "-")
+            {
+                return true;
+            }
+            return false;
+        }
+
+        private bool checkMultiOrDiv(Stack<string> o, Stack<double> v)
+        {
+            if (o.Peek() == "*" || o.Peek() == "/")
+            {
+                return true;
+            }
+            return false;
+        }
+
     }
 
     /// <summary>
@@ -495,306 +774,6 @@ namespace SpreadsheetUtilities
         /// </summary>
         public string Reason { get; private set; }
 
-
-
-
-
-
-        /// <summary>
-        /// Reads and performs an expressions, if valid.
-        /// </summary>
-        /// <param name="exp"></param>
-        /// The expression to be operated
-        /// <param name="variableEvaluator"></param>
-        /// The delegate that determines if a variable can be converted to a valid integer
-        /// <returns></returns>
-        /// returns the final value after expression has been succesfully operated on
-        private double Evaluate(String exp)
-        {
-            //the stack that will hold integer values from the expression
-            Stack<double> values = new Stack<double>();
-            //the stack that will hold operations from the expressions
-            //only valid expressions are (,+,-,*,/, or )
-            Stack<string> operators = new Stack<string>();
-
-            exp = exp.Replace(" ", String.Empty);
-            exp = exp.Replace("\t", String.Empty);
-            string[] substrings = Regex.Split(exp, "(\\()|(\\))|(-)|(\\+)|(\\*)|(/)");
-
-            foreach (string token in substrings)
-            {
-                double value;
-                //check if token is an integer
-                if (Double.TryParse(token, out value))
-                {
-                    intRead(value, operators, values);
-                }
-                //check if token is a valid variable
-                //char.IsLetter(token.FirstOrDefault()) might be better?
-                //else if (isVariable(token))
-                //  {
-                //  int varValue = variableEvaluator(token);
-                //    intRead(varValue, operators, values);
-                //}
-
-                //check if token is addition or subtrction
-                else if (token == "+" || token == "-")
-                {
-                    if (checkStackSize("o", operators, values))
-                    {
-                        if (checkAddOrMinus(operators, values))
-                        {
-                            sumOrSubtract(operators, values);
-                        }
-                    }
-                    operators.Push(token);
-                }
-
-                //check if token is multiplication or division
-                else if (token == "*" || token == "/")
-                {
-                    operators.Push(token);
-                }
-
-                //check left parathsis
-                else if (token == "(")
-                {
-                    operators.Push(token);
-                }
-
-                //check right parenthisis
-                else if (token == ")")
-                {
-                    readRightParanth(operators, values);
-                }
-
-            }
-            //no more tokens to read, check stacks to get final answer
-            //there is only one value to read and nothing in operators stack
-            if (values.Count == 1 && operators.Count == 0)
-            {
-                return values.Pop();
-            }
-            //there is one more operation to perform
-            else if ((values.Count == 2) && (operators.Count == 1))
-            {
-                //it must be addition or subtraction
-                if (checkAddOrMinus(operators, values))
-                {
-                    sumOrSubtract(operators, values);
-                    return values.Pop();
-                }
-                else
-                {
-                    throw new FormatException("ERROR: invalid operation for final answer");
-                }
-            }
-            //if neither opptions are true the expression is invalid
-            else
-            {
-                throw new FormatException("ERROR: expression is invalid");
-            }
-        }
-
-
-
-        /// <summary>
-        /// Makes sure that there is at least one token in the stack
-        /// </summary>
-        /// <param name="s"></param>
-        /// The key word to know whether to check the operators stack or the values stack
-        /// <returns></returns>
-        /// true if there is a token in the stack, false if not
-        public static bool checkStackSize(string s, Stack<string> o, Stack<double> v)
-        {
-            //checks operation stack if string is o
-            if (s == "o")
-            {
-                if (o.Count <= 0)
-                {
-                    return false;
-                }
-                else
-                {
-                    return true;
-                }
-            }
-            //it will check values stack if any other string is passed
-            else
-            {
-                if (v.Count <= 0)
-                {
-                    return false;
-                }
-                else
-                {
-                    return true;
-                }
-            }
-        }
-
-        /// <summary>
-        /// An integer is read, there for check if it needs to be operated on or simply added to the values stack.
-        /// </summary>
-        /// <param name="x"></param>
-        /// the integer that was just read
-        public static void intRead(double x, Stack<string> o, Stack<double> v)
-        {
-            if (checkStackSize("o", o, v))
-            {
-                if (checkMultiOrDiv(o, v))
-                {
-                    v.Push(x);
-                    multiOrDiv(o, v);
-                    return;
-                }
-                else
-                {
-                    v.Push(x);
-                }
-            }
-            else
-            {
-                v.Push(x);
-            }
-            return;
-        }
-
-        /// <summary>
-        /// Performs operation on two values already recorded. Checks that there are two values to pull and whether to call on addition 
-        /// or subtraction.
-        /// </summary>
-        public static void sumOrSubtract(Stack<string> o, Stack<double> v)
-        {
-            //pop the two values
-            double valOne = popValue(o, v);
-            double valTwo = popValue(o, v);
-
-            //pop operator 
-            double newVal = 0;
-            switch (o.Pop())
-            {
-                case "+":
-                    newVal = valOne + valTwo;
-                    break;
-
-                case "-":
-                    newVal = valTwo - valOne;
-                    break;
-            }
-            v.Push(newVal);
-            return;
-        }
-
-        /// <summary>
-        /// Muliplies or divides two values that have already been added to the stack.
-        /// </summary>
-        public static void multiOrDiv(Stack<string> o, Stack<double> v)
-        {
-            //pop the two values
-            double valOne = popValue(o, v);
-            double valTwo = popValue(o, v);
-
-            double newVal = 0;
-            switch (o.Pop())
-            {
-                case "*":
-                    newVal = valOne * valTwo;
-                    break;
-                case "/":
-                    if (valOne == 0)
-                    {
-                        throw new FormatException("ERROR: division by 0");
-                    }
-                    newVal = valTwo / valOne;
-                    break;
-            }
-            v.Push(newVal);
-        }
-
-        /// <summary>
-        /// Pops off the integer at the top of the value stack.
-        /// </summary>
-        /// <returns></returns>
-        /// The integer at the top of the stack if there is one.
-        public static double popValue(Stack<string> o, Stack<double> v)
-        {
-            double val = 0;
-            if (checkStackSize("v", o, v))
-            {
-                val = v.Pop();
-            }
-            else
-            {
-                throw new FormatException("ERROR: Too many operations for numbers read.");
-            }
-            return val;
-        }
-
-        public static void readRightParanth(Stack<string> o, Stack<double> v)
-        {
-            //read and perform the operations on stack until a given number of operands read
-            for (int i = 0; i < o.Count; i++)
-            {
-                if (o.Peek() != "(")
-                {
-                    if (checkAddOrMinus(o, v))
-                    {
-                        sumOrSubtract(o, v);
-                    }
-                    if (checkStackSize("o", o, v))
-                    {
-                        if (checkMultiOrDiv(o, v))
-                        {
-                            multiOrDiv(o, v);
-                        }
-                    }
-
-                }
-                else
-                {
-                    break;
-                }
-            }
-            //check for left parenthesis or a multiply or divide operation
-            if (checkStackSize("o", o, v))
-            {
-                if (o.Peek() == "(")
-                {
-                    o.Pop();
-                }
-                if (checkStackSize("o", o, v))
-                {
-                    if (checkMultiOrDiv(o, v))
-                    {
-                        multiOrDiv(o, v);
-                    }
-                }
-            }
-            else
-            {
-                throw new FormatException("ERROR: invalid use of parenthisis");
-            }
-            return;
-        }
-
-        public static bool checkAddOrMinus(Stack<string> o, Stack<double> v)
-        {
-            if (o.Peek() == "+" || o.Peek() == "-")
-            {
-                return true;
-            }
-            return false;
-        }
-
-        public static bool checkMultiOrDiv(Stack<string> o, Stack<double> v)
-        {
-            if (o.Peek() == "*" || o.Peek() == "/")
-            {
-                return true;
-            }
-            return false;
-        }
 
     }
 }

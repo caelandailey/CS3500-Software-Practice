@@ -2,6 +2,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SpreadsheetUtilities;
 
+
 namespace FormulaTester
 {
     [TestClass]
@@ -45,7 +46,7 @@ namespace FormulaTester
         [ExpectedException(typeof(FormulaFormatException))]
         public void improperFirstToken3()
         {
-            Formula k = new Formula("3x - 2 + 8");
+            Formula k = new Formula("x! - 2 + 8");
         }
 
         /// <summary>
@@ -55,7 +56,7 @@ namespace FormulaTester
         [ExpectedException(typeof(FormulaFormatException))]
         public void improperFirstToken4()
         {
-            Formula k = new Formula("=6+2-8");
+            Formula k = new Formula("= 6 +2-8");
         }
 
         /// <summary>
@@ -259,12 +260,13 @@ namespace FormulaTester
         }
 
         /// <summary>
-        /// Valid code.
+        /// Last token is an invalid variable.
         /// </summary>
         [TestMethod]
+        [ExpectedException(typeof(FormulaFormatException))]
         public void lastToken2()
         {
-            Formula k = new Formula("6 + 2 - x");
+            Formula k = new Formula("6 + 2 - 3x");
         }
 
         /// <summary>
@@ -277,14 +279,125 @@ namespace FormulaTester
             Formula k = new Formula("6 + 2 - (");
         }
 
+        /// <summary>
+        /// Performs a simple formula.
+        /// </summary>
         [TestMethod]
-
-        public void lastToken4()
+        public void simpleEvaluate1()
         {
             Formula k = new Formula("6 + 2 - 6");
+            Assert.AreEqual(2.0, k.Evaluate(lookup));
         }
+
+        [TestMethod]
+        public void simpleEvaluate2()
+        {
+            Formula k = new Formula("( 6 + 2 - 6 )");
+            Assert.AreEqual(2.0, k.Evaluate(lookup));
+        }
+
+        [TestMethod]
+        public void simpleEvaluate3()
+        {
+            Formula k = new Formula("( 2 )");
+            Assert.AreEqual(2.0, k.Evaluate(lookup));
+        }
+
+        [TestMethod]
+        public void simpleEvaluate4()
+        {
+            Formula k = new Formula("( 6 + 3.01 )");
+            Assert.AreEqual(9.01, k.Evaluate(lookup));
+        }
+
+        [TestMethod]
+        public void simpleEvaluate5()
+        {
+            Formula k = new Formula("6 * 6 / 6");
+            Assert.AreEqual(6.0, k.Evaluate(lookup));
+        }
+
+        [TestMethod]
+        public void simpleEvaluate6()
+        {
+            Formula k = new Formula("( 6 * 6 / 6 )");
+            Assert.AreEqual(6.0, k.Evaluate(lookup));
+        }
+
 
         //catch error after variable is normalized and isn't a variable anymore
         //catch error after checking isValid
+
+        [TestMethod]
+        public void checkNormalizer1()
+        {
+            Formula k = new Formula("a6 + 2", normalizeUpper, isValidLastDigit);
+            Assert.AreEqual(6.0, k.Evaluate(lookup));
+        }
+
+        [TestMethod]
+        public void checkLookup1()
+        {
+            Formula k = new Formula("a6 + 2");
+            Assert.AreEqual(4.0, k.Evaluate(lookup));
+        }
+
+
+        [TestMethod]
+        public void checkNormalizer2()
+        {
+
+        }
+
+
+
+        private string normalizeUpper(string s)
+        {
+            return s.ToUpper();
+        }
+
+        private bool isValidLastDigit(string s)
+        {
+            if (char.IsDigit(s[s.Length-1]))
+            {
+                return true;
+            }
+            return false;
+        }
+
+        private double lookup(string s)
+        {
+            if (s == "A6")
+            {
+                return 4;
+            }
+            else if(s == "a6")
+            {
+                return 2;
+            }
+            else if(s == "x9")
+            {
+                return 6.6;
+            }
+            else if(s == "_999")
+            {
+                return 666;
+            }
+            else if (s == "Px")
+            {
+                return 68;
+            }
+            else if ( s == "PX")
+            {
+                return 6;
+            }
+            else if(s == "pX")
+            {
+                return 1.004;
+            }
+            return 0;
+        }
+
     }
+
 }
