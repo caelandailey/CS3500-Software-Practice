@@ -9,6 +9,8 @@
 //  (Version 1.1) Changed specification of second constructor to
 //                clarify description of how validation works
 
+//Completed the rest of the class, adding multiple helper methods, by Karina Biancone
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -50,7 +52,7 @@ namespace SpreadsheetUtilities
         }
 
         //will store the formula
-        List<string> tokens = new List<string>();
+        private List<string> tokens = new List<string>();
         /// <summary>
         /// Creates a Formula from a string that consists of an infix expression written as
         /// described in the class comment.  If the expression is syntactically incorrect,
@@ -86,7 +88,7 @@ namespace SpreadsheetUtilities
 
             //check the first token is a variable, double, or lparenthesis
             checkFirstToken(tokens[0]);
-            
+
             int lParenthCount = 0;
             int rParenthCount = 0;
             //check each token in formula is valid
@@ -111,11 +113,13 @@ namespace SpreadsheetUtilities
                 //check for a variable
                 else if (isVariable(tokens[i]))
                 {
+                    //normalize token
+                    tokens[i] = normalize(tokens[i]);
                     //check variable again
-                    if (isVariable(normalize(tokens[i])))
+                    if (isVariable(tokens[i]))
                     {
                         //check normalized variable is valid
-                        if (isValid(normalize(tokens[i])))
+                        if (isValid(tokens[i]))
                         {
                             if (i != 0)
                             {
@@ -124,7 +128,7 @@ namespace SpreadsheetUtilities
                             }
 
                             //add to checked list
-                            finalFormula.Add(normalize(tokens[i]));
+                            finalFormula.Add(tokens[i]);
                         }
                         //the validation failed for the variable after being normalized
                         else
@@ -166,7 +170,7 @@ namespace SpreadsheetUtilities
                 else if (isRightParenth(tokens[i]))
                 {
                     //check that the count is acurrate 
-                    if (lParenthCount > rParenthCount+1)
+                    if (lParenthCount < rParenthCount + 1)
                     {
                         throw new FormulaFormatException("There are more closing parenthesis than opening. Check that there is an opening for each closing parenthesis.");
                     }
@@ -241,7 +245,7 @@ namespace SpreadsheetUtilities
             //create a new hash set to hold all variables in formula
             HashSet<string> allVariables = new HashSet<string>();
             //step through each string in the formula to find the variables
-            foreach(string v in tokens)
+            foreach (string v in tokens)
             {
                 if (isVariable(v))
                 {
@@ -267,7 +271,7 @@ namespace SpreadsheetUtilities
             //begin with an empty string
             string formula = "";
             //step through each token/string in formula and add it to final string
-            foreach(string s in tokens)
+            foreach (string s in tokens)
             {
                 formula += s;
             }
@@ -293,26 +297,27 @@ namespace SpreadsheetUtilities
         public override bool Equals(object obj)
         {
             //check if obj is null or is not a formula
-            if(obj == null || !(FormulaClass)Formula(obj)))
+            if ((object.ReferenceEquals(obj, null)) || !(obj is Formula))
             {
                 return false;
             }
 
             //make a single string out of the two formulas
             string f1 = this.ToString();
-            string f2 = obj.ToString();
+            Formula secondFormula = new Formula(obj.ToString());
+            string f2 = secondFormula.ToString();
 
             //check that they are the same length
-            if(f1.Length != f2.Length)
+            if (f1.Length != f2.Length)
             {
                 return false;
             }
 
             //step throuh each character in the string f1
-            for(int i; i < f1.Length; i++)
+            for (int i = 0; i < f1.Length; i++)
             {
                 //make sure that it matches the same character in the same place as f2
-                if(f1[i] != f2[i])
+                if (f1[i] != f2[i])
                 {
                     return false;
                 }
@@ -328,13 +333,13 @@ namespace SpreadsheetUtilities
         public static bool operator ==(Formula f1, Formula f2)
         {
             //check if both formulas are null
-            if(f1 == null && f2 == null)
+            if (object.ReferenceEquals(f1, null) && object.ReferenceEquals(f2, null))
             {
                 return true;
             }
 
             //if f1 is not null than call Equals method on the two formulas
-            if(f1 != null)
+            if (!(object.ReferenceEquals(f1, null)))
             {
                 return f1.Equals(f2);
             }
@@ -349,13 +354,13 @@ namespace SpreadsheetUtilities
         public static bool operator !=(Formula f1, Formula f2)
         {
             //check if both formulas are equal
-            if (f1 == null && f2 == null)
+            if (object.ReferenceEquals(f1, null) && object.ReferenceEquals(f2, null))
             {
                 return false;
             }
 
             //if f1 is not false then return the opposite of Equals method on the two formulas
-            if (f1 != null)
+            if (!(object.ReferenceEquals(f1, null)))
             {
                 return !f1.Equals(f2);
             }
@@ -369,13 +374,7 @@ namespace SpreadsheetUtilities
         /// </summary>
         public override int GetHashCode()
         {
-            //total sum of hash codes for each token
-           int finalHash = 0;
-            //step through each token/string in the formula and add it to the final hash integer
-           foreach(string t in tokens)
-            {
-                finalHash = t.GetHashCode();
-            }
+            int finalHash = this.ToString().GetHashCode();
             return finalHash;
         }
 
@@ -567,7 +566,14 @@ namespace SpreadsheetUtilities
                 //check if token is a number
                 if (Double.TryParse(token, out value))
                 {
+                    try
+                    {
                     intRead(value, operators, values);
+                    }
+                    catch
+                    {
+                        return new FormulaError("ERROR: division by 0");
+                    }
                 }
                 //check if token is a valid variable
                 else if (isVariable(token))
@@ -577,12 +583,18 @@ namespace SpreadsheetUtilities
                     {
                         double varValue = lookup(token);
                     }
-                    catch (ArgumentException)
+                    catch (Exception)
                     {
                         return new FormulaError("Could not find variable in the given dictionary.");
                     }
-
-                    intRead(lookup(token), operators, values);
+                    try
+                    {
+                        intRead(lookup(token), operators, values);
+                    }
+                    catch
+                    {
+                        return new FormulaError("ERROR: division by 0");
+                    }
                 }
 
                 //check if token is addition or subtrction
@@ -590,7 +602,7 @@ namespace SpreadsheetUtilities
                 {
                     //check that there are operators in the stack
                     if (operators.Count > 0)
-                    { 
+                    {
                         if (checkAddOrMinus(operators, values))
                         {
                             sumOrSubtract(operators, values);
@@ -614,7 +626,15 @@ namespace SpreadsheetUtilities
                 //check right parenthisis
                 else if (token == ")")
                 {
-                    readRightParanth(operators, values);
+                    try
+                    {
+                        readRightParanth(operators, values);
+                    }
+                    catch (Exception)
+                    {
+                       return new FormulaError("ERROR: division by 0");
+                    }
+
                 }
             }
             //no more tokens to read, check stacks to get final answer
@@ -626,7 +646,7 @@ namespace SpreadsheetUtilities
                 {
                     sumOrSubtract(operators, values);
                     return values.Pop();
-               }
+                }
             }
             return values.Pop();
         }
@@ -646,7 +666,14 @@ namespace SpreadsheetUtilities
                 if (checkMultiOrDiv(o, v))
                 {
                     v.Push(x);
-                    multiOrDiv(o, v);
+                    try
+                    {
+                        multiOrDiv(o, v);
+                    }
+                    catch (Exception)
+                    {
+                        throw new Exception();
+                    }
                     return;
                 }
             }
@@ -682,7 +709,7 @@ namespace SpreadsheetUtilities
         /// <summary>
         /// Muliplies or divides two values that have already been added to the stack.
         /// </summary>
-        private object multiOrDiv(Stack<string> o, Stack<double> v)
+        private void multiOrDiv(Stack<string> o, Stack<double> v)
         {
             //pop the two values
             double valOne = v.Pop();
@@ -697,13 +724,12 @@ namespace SpreadsheetUtilities
                 case "/":
                     if (valOne == 0)
                     {
-                        return new FormulaError("ERROR: division by 0");
+                        throw new Exception();
                     }
                     newVal = valTwo / valOne;
                     break;
             }
             v.Push(newVal);
-            return null;
         }
 
         /// <summary>
@@ -725,7 +751,14 @@ namespace SpreadsheetUtilities
 
                     if (checkMultiOrDiv(o, v))
                     {
-                        multiOrDiv(o, v);
+                        try
+                        {
+                            multiOrDiv(o, v);
+                        }
+                        catch (Exception)
+                        {
+                            throw new Exception();
+                        }
                     }
                 }
                 else
@@ -743,7 +776,14 @@ namespace SpreadsheetUtilities
             {
                 if (checkMultiOrDiv(o, v))
                 {
-                    multiOrDiv(o, v);
+                    try
+                    {
+                        multiOrDiv(o, v);
+                    }
+                    catch (Exception)
+                    {
+                        throw new Exception();
+                    }
                 }
             }
             return;
