@@ -41,9 +41,9 @@ namespace SpreadsheetUtilities
     public class DependencyGraph
     {
         //dependees graph will use the dependee string as the key and stores all dependents in the key's values
-        Dictionary<string, HashSet<string>> dependeesGraph;
+        private Dictionary<string, HashSet<string>> dependeesGraph;
         //dependents graph will use the dependent as the key and store all dependees as the key's values
-        Dictionary<string, HashSet<string>> dependentsGraph;
+        private Dictionary<string, HashSet<string>> dependentsGraph;
 
         /// <summary>
         /// Creates an empty DependencyGraph.
