@@ -81,20 +81,27 @@ namespace SS
                 throw new NotImplementedException();
             }
 
-
             //check for circular dependencee
-            
+            if (!checkFormulaDependents(formula, name))
+            {
+                throw new CircularException();
+            }
 
-            //get formulas variables, for each of those varibles get a set of all its dependents, check if
-            //each set contains 'name', if not move on
+            //update dependency graph
+            updateDependency(formula, name);
 
-            HashSet<string> dependeesDependents = new HashSet<string>();
-            // get direct and indirect dependents for name
-             dependeesDependents = directAndIndirectDependents(name, dependeesDependents);
             //make new cell with contents as formula
             Cell newCell = new Cell(formula);
+            //add to cell graph
+            addToCellGraph(name, newCell);
 
-
+            //make a set to hold all dependents
+            HashSet<string> dependeesDependents = new HashSet<string>();
+            //add the new cell name first
+            dependeesDependents.Add(name);
+            // get direct and indirect dependents for name
+            dependeesDependents = directAndIndirectDependents(name, dependeesDependents);
+            return dependeesDependents;
         }
 
         /// <summary>
@@ -173,10 +180,27 @@ namespace SS
             return dependeesDependents;
         }
 
+        /// <summary>
+        /// If name is null, throws an ArgumentNullException.
+        /// 
+        /// Otherwise, if name isn't a valid cell name, throws an InvalidNameException.
+        /// 
+        /// Otherwise, returns an enumeration, without duplicates, of the names of all cells whose
+        /// values depend directly on the value of the named cell.  In other words, returns
+        /// an enumeration, without duplicates, of the names of all cells that contain
+        /// formulas containing name.
+        /// 
+        /// For example, suppose that
+        /// A1 contains 3
+        /// B1 contains the formula A1 * A1
+        /// C1 contains the formula B1 + A1
+        /// D1 contains the formula B1 - C1
+        /// The direct dependents of A1 are B1 and C1
+        /// </summary>
         protected override IEnumerable<string> GetDirectDependents(string name)
         {
             //check that the name is valid
-            if (name == null || name != "")
+            if (checkName(name))
             {
                 throw new InvalidNameException();
             }
@@ -184,31 +208,61 @@ namespace SS
             return cellDependents.GetDependents(name);
         }
 
+        /// <summary>
+        /// Creates an object that holds a string, double, or formula as its content
+        /// </summary>
         private class Cell
         {
             private object content;
 
-            public Cell(string tent)
+            /// <summary>
+            /// Constructor for a string
+            /// </summary>
+            /// <param name="cellContent"></param>
+            /// the string that will be that cell's content
+            public Cell(string cellContent)
             {
-                content = tent;
+                content = cellContent;
             }
 
-            public Cell(double tent)
+            /// <summary>
+            /// Constructor for a double
+            /// </summary>
+            /// <param name="cellContent"></param>
+            /// the double that will be the cell's content
+            public Cell(double cellContent)
             {
-                content = tent;
+                content = cellContent;
             }
 
-            public Cell(Formula tent)
+            /// <summary>
+            /// Constructor for a formula
+            /// </summary>
+            /// <param name="cellContent"></param>
+            /// the formula that will be that cell's content
+            public Cell(Formula cellContent)
             {
-                content = tent;
+                content = cellContent;
             }
         }
 
+        /// <summary>
+        /// Retreives any cell that depends on 'name'. First it retrieves any cell that depends on 'name' and adds it to the list of
+        /// dependents. It then will go into each one of the dependents' dependents and so on.
+        /// </summary>
+        /// <param name="name"></param>
+        /// the name of the cell that is being checked for dependents
+        /// <param name="allDependents"></param>
+        /// the set that will hold all dependents for 'name'
+        /// <returns></returns>
         private HashSet<string> directAndIndirectDependents(string name, HashSet<string> allDependents)
         {
+            //loop through each dependents for name
             foreach (string direct in GetDirectDependents(name))
             {
+                //add to set
                 allDependents.Add(direct);
+                //go into thos dependents' dependents
                 directAndIndirectDependents(direct, allDependents);
             }
             return allDependents;
@@ -236,6 +290,13 @@ namespace SS
             }
         }
 
+        /// <summary>
+        /// Checks that name is not null and is a valid variable. For a valid variable the string must begin with a letter or underscore
+        /// and can be followed by any letter, digit, or underscore. It is also case sensitive
+        /// </summary>
+        /// <param name="name"></param>
+        /// the string that will be checked
+        /// <returns></returns>
         private bool checkName(string name)
         {
             if (name == null || Regex.IsMatch(name, @"[a-zA-Z_](?: [a-zA-Z_]|\d)*$", RegexOptions.IgnorePatternWhitespace))
@@ -243,6 +304,48 @@ namespace SS
                 return false;
             }
             return true;
+        }
+
+        /// <summary>
+        /// Checks for circular dependency by retreiving a list of variables 
+        /// </summary>
+        /// <param name="formula"></param>
+        /// The formula that may hold variables
+        /// <param name="name"></param>
+        /// the cell' name
+        /// <returns></returns>
+        private bool checkFormulaDependents(Formula formula, string name)
+        {
+            //create a set of variables that are in the formula, therefor the cell depends on those variables
+            HashSet<string> formulaVariables = (HashSet<string>)formula.GetVariables();
+            //for each variable grab a list of all its dependents and see if the new cell name is in that set
+            //if it is there is a circular error
+            foreach (string s in formulaVariables)
+            {
+                HashSet<string> variablesDependents = new HashSet<string>();
+                variablesDependents = directAndIndirectDependents(name, variablesDependents);
+                if (variablesDependents.Contains(name))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Adds each of the variable in the formula as a dependee for the cell's name that contains the formula
+        /// </summary>
+        /// <param name="formula"></param>
+        /// The content of the cell
+        /// <param name="name"></param>
+        /// the name of the cell
+        private void updateDependency(Formula formula, string name)
+        {
+            HashSet<string> formulaVariables = (HashSet<string>)formula.GetVariables();
+            foreach(string s in formulaVariables)
+            {
+                cellDependents.AddDependency(s, name);
+            }
         }
     }
 }
