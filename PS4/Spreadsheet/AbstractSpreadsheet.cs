@@ -174,8 +174,11 @@ namespace SS
         /// </summary>
         protected IEnumerable<String> GetCellsToRecalculate(ISet<String> names)
         {
+            //the cells that will be need to be changed, in order
             LinkedList<String> changed = new LinkedList<String>();
+            //a list of cells that have been checked for circular dependencies
             HashSet<String> visited = new HashSet<String>();
+            //look at each cell name in the list passed in
             foreach (String name in names)
             {
                 if (!visited.Contains(name))
@@ -204,18 +207,26 @@ namespace SS
         /// </summary>
         private void Visit(String start, String name, ISet<String> visited, LinkedList<String> changed)
         {
+            //add the cell name to visited so that you aren't double checking the same cell
             visited.Add(name);
+            //check each dependent in that one cell
             foreach (String n in GetDirectDependents(name))
             {
+                //if there is a name in the dependents list that matches the original cell name that
+                //we wish to alter, there is a circular dependency
                 if (n.Equals(start))
                 {
                     throw new CircularException();
                 }
+                //if there is a cell name that has not been checked yet, recurse through the function again to check 
+                //for its dependents as well, this will insure that it finds indirect dependents
                 else if (!visited.Contains(n))
                 {
                     Visit(start, n, visited, changed);
                 }
             }
+            //if the cell had to be checked to see if it matches the original name it means that it is a dependent of some kind
+            //adds 'first' so that the last thing to be added to the list is the start cell
             changed.AddFirst(name);
         }
 

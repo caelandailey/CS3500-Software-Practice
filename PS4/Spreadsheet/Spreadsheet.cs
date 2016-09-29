@@ -6,24 +6,38 @@ using System.Threading.Tasks;
 using SpreadsheetUtilities;
 using System.Text.RegularExpressions;
 
+
 namespace SS
 {
-    class Spreadsheet : AbstractSpreadsheet
+    /// <summary>
+    /// Inherets Abstract Spreadsheet functions
+    /// </summary>
+    public class Spreadsheet : AbstractSpreadsheet
     {
         //a dictionary to hold existing cells, uses the valid name as its key and Cell class as value(which holds the content)
-        private Dictionary<string, Cell> cellGraph = new Dictionary<string, Cell>();
+        Dictionary<string, Cell> cellGraph;
         //create an empty dependency graph
-        private DependencyGraph cellDependents = new DependencyGraph();
+        DependencyGraph cellDependents;
+
+        /// <summary>
+        /// Constructor for spreadsheet. Makes a fresh Dictionary and depencyGraph
+        /// </summary>
+        public Spreadsheet()
+        {
+            cellGraph = new Dictionary<string, Cell>();
+            cellDependents = new DependencyGraph();
+        }
 
         /// <summary>
         /// If name is null or invalid, throws an InvalidNameException.
         /// 
         /// Otherwise, returns the contents (as opposed to the value) of the named cell.  The return
         /// value should be either a string, a double, or a Formula.
+        /// </summary>
         public override object GetCellContents(string name)
         {
             //check that name is valid
-            if (name == null || name != "")
+            if (!checkName(name))
             {
                 throw new InvalidNameException();
             }
@@ -71,36 +85,54 @@ namespace SS
         public override ISet<string> SetCellContents(string name, Formula formula)
         {
             //check for null formula
-            if(formula == null)
+            if (formula == null)
             {
                 throw new ArgumentNullException();
             }
             //check for valid name
-            if (checkName(name))
+            if (!checkName(name))
             {
-                throw new NotImplementedException();
+                throw new InvalidNameException();
             }
 
-            //check for circular dependencee
-            if (!checkFormulaDependents(formula, name))
-            {
-                throw new CircularException();
-            }
+            ////check for circular dependencee
+            //if (!checkFormulaDependents(formula, name))
+            //{
+            //    throw new CircularException();
+            //}
 
             //update dependency graph
             updateDependency(formula, name);
+
+            //make a set to hold all dependents
+            HashSet<string> dependeesDependents = new HashSet<string>();
+
+            //find if there are circular dependents
+            try
+            {
+                dependeesDependents = (HashSet<string>)GetCellsToRecalculate(name);
+            }
+            catch (Exception)
+            {
+                //if exception is found you must remove all dependents that were just added to the dependecy graph 
+                foreach (string s in formula.GetVariables())
+                {
+                    cellDependents.RemoveDependency(s, name);
+                }
+                throw new CircularException();
+            }
 
             //make new cell with contents as formula
             Cell newCell = new Cell(formula);
             //add to cell graph
             addToCellGraph(name, newCell);
 
-            //make a set to hold all dependents
-            HashSet<string> dependeesDependents = new HashSet<string>();
-            //add the new cell name first
-            dependeesDependents.Add(name);
-            // get direct and indirect dependents for name
-            dependeesDependents = directAndIndirectDependents(name, dependeesDependents);
+
+            ////add the new cell name first
+            //dependeesDependents.Add(name);
+            //// get direct and indirect dependents for name
+            //dependeesDependents = directAndIndirectDependents(name, dependeesDependents);
+
             return dependeesDependents;
         }
 
@@ -142,7 +174,7 @@ namespace SS
             //add the dependee to the top of the list
             dependeesDependents.Add(name);
             //get direct and indirect dependents for name
-            dependeesDependents = directAndIndirectDependents(name, dependeesDependents);     
+            dependeesDependents = directAndIndirectDependents(name, dependeesDependents);
             return dependeesDependents;
         }
 
@@ -159,7 +191,7 @@ namespace SS
         public override ISet<string> SetCellContents(string name, double number)
         {
             //check that the name is valid
-            if (checkName(name))
+            if (!checkName(name))
             {
                 throw new InvalidNameException();
             }
@@ -200,11 +232,11 @@ namespace SS
         protected override IEnumerable<string> GetDirectDependents(string name)
         {
             //check that the name is valid
-            if (checkName(name))
+            if (!checkName(name))
             {
                 throw new InvalidNameException();
             }
-
+            //use dependency graph to get direct dependents
             return cellDependents.GetDependents(name);
         }
 
@@ -299,7 +331,11 @@ namespace SS
         /// <returns></returns>
         private bool checkName(string name)
         {
-            if (name == null || Regex.IsMatch(name, @"[a-zA-Z_](?: [a-zA-Z_]|\d)*$", RegexOptions.IgnorePatternWhitespace))
+            if (name == "" || name == null)
+            {
+                return false;
+            }
+            if (!Regex.IsMatch(name, @"[a-zA-Z_](?: [a-zA-Z_]|\d)*$", RegexOptions.IgnorePatternWhitespace))
             {
                 return false;
             }
@@ -341,8 +377,10 @@ namespace SS
         /// the name of the cell
         private void updateDependency(Formula formula, string name)
         {
+            //get all variables in the formula
             HashSet<string> formulaVariables = (HashSet<string>)formula.GetVariables();
-            foreach(string s in formulaVariables)
+            //any variable that shows up in the formula means that it is a dependee for name
+            foreach (string s in formulaVariables)
             {
                 cellDependents.AddDependency(s, name);
             }
