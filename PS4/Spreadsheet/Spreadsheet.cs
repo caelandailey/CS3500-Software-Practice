@@ -6,6 +6,13 @@ using System.Threading.Tasks;
 using SpreadsheetUtilities;
 using System.Text.RegularExpressions;
 
+/// <summary>
+/// This project extends Abstract's methods to form a graph that holds a group of cell's. The name for each cell 
+/// must begin with a letter or underscore and may be followed by more letters, underscores, or digits. Each cell
+/// holds content information which is either a string, doule, or a Formula. The Spreadsheet keeps track of what cells
+/// rely on one another to insure there is no Circular Dependents.
+/// Author: Karina Biancone
+/// </summary>
 
 namespace SS
 {
@@ -44,7 +51,8 @@ namespace SS
             //check if the name is an existing cell
             if (cellGraph.ContainsKey(name))
             {
-                return cellGraph[name];
+                Cell wanted = cellGraph[name];
+                return wanted.getContents();
             }
             //there is no such cell
             else
@@ -95,44 +103,28 @@ namespace SS
                 throw new InvalidNameException();
             }
 
-            ////check for circular dependencee
-            //if (!checkFormulaDependents(formula, name))
-            //{
-            //    throw new CircularException();
-            //}
-
-            //update dependency graph
-            updateDependency(formula, name);
-
-            //make a set to hold all dependents
+            //create an empty hashset to hold dependents
             HashSet<string> dependeesDependents = new HashSet<string>();
 
-            //find if there are circular dependents
-            try
+            //check if cell name exists
+            if (cellGraph.ContainsKey(name))
             {
-                dependeesDependents = (HashSet<string>)GetCellsToRecalculate(name);
-            }
-            catch (Exception)
-            {
-                //if exception is found you must remove all dependents that were just added to the dependecy graph 
-                foreach (string s in formula.GetVariables())
+                if (!checkExistingCellNewContents(name, formula))
                 {
-                    cellDependents.RemoveDependency(s, name);
+                    throw new CircularException();
                 }
-                throw new CircularException();
+
             }
-
-            //make new cell with contents as formula
-            Cell newCell = new Cell(formula);
-            //add to cell graph
-            addToCellGraph(name, newCell);
-
-
-            ////add the new cell name first
-            //dependeesDependents.Add(name);
-            //// get direct and indirect dependents for name
-            //dependeesDependents = directAndIndirectDependents(name, dependeesDependents);
-
+            else
+            {
+                //it is a new cell
+                if (!checkNewCellContents(name, formula))
+                {
+                    throw new CircularException();
+                }
+            }
+            //get final list of dependents
+            dependeesDependents = new HashSet<string>(GetCellsToRecalculate(name));
             return dependeesDependents;
         }
 
@@ -162,10 +154,10 @@ namespace SS
                 throw new InvalidNameException();
             }
 
-            //make a new set to hold names' dependents
+            //create an empty hashset to hold dependents
             HashSet<string> dependeesDependents = new HashSet<string>();
 
-            //create a cell with the names' content, which will be a string in this case
+            //make a cell that hold a double as its content
             Cell newCell = new Cell(text);
 
             //update cellGraph
@@ -173,9 +165,11 @@ namespace SS
 
             //add the dependee to the top of the list
             dependeesDependents.Add(name);
-            //get direct and indirect dependents for name
+            //get all direct and indirect dependents
             dependeesDependents = directAndIndirectDependents(name, dependeesDependents);
             return dependeesDependents;
+
+
         }
 
         /// <summary>
@@ -276,6 +270,12 @@ namespace SS
             {
                 content = cellContent;
             }
+
+            public object getContents()
+            {
+                return content;
+            }
+
         }
 
         /// <summary>
@@ -343,46 +343,71 @@ namespace SS
         }
 
         /// <summary>
-        /// Checks for circular dependency by retreiving a list of variables 
+        /// Tries to add new content to a cell that already exists, if it throws and error and changes the cell
+        /// back to its original state. Returns true if there is no circular dependencies.
         /// </summary>
-        /// <param name="formula"></param>
-        /// The formula that may hold variables
         /// <param name="name"></param>
-        /// the cell' name
+        /// The name of the cell that already exist
+        /// <param name="formula"></param>
+        /// The new content
         /// <returns></returns>
-        private bool checkFormulaDependents(Formula formula, string name)
+        private bool checkExistingCellNewContents(string name, Formula formula)
         {
-            //create a set of variables that are in the formula, therefor the cell depends on those variables
-            HashSet<string> formulaVariables = (HashSet<string>)formula.GetVariables();
-            //for each variable grab a list of all its dependents and see if the new cell name is in that set
-            //if it is there is a circular error
-            foreach (string s in formulaVariables)
+            HashSet<string> oldDependees = new HashSet<string>();
+            //save the content that already exists in the existing cell
+            oldDependees = new HashSet<string>(cellDependents.GetDependees(name));
+            //replace old dependees with new dependees
+            cellDependents.ReplaceDependees(name, formula.GetVariables());
+            try
             {
-                HashSet<string> variablesDependents = new HashSet<string>();
-                variablesDependents = directAndIndirectDependents(name, variablesDependents);
-                if (variablesDependents.Contains(name))
-                {
-                    return false;
-                }
+                GetCellsToRecalculate(name);
+                //it is a valid cell
+                Cell newCell = new Cell(formula);
+                //update spreadsheet
+                cellGraph[name] = newCell;
+                return true;
             }
-            return true;
+            catch (Exception)
+            {
+                //remove just added dependents
+                cellDependents.ReplaceDependees(name, oldDependees);
+                return false;
+            }
         }
 
         /// <summary>
-        /// Adds each of the variable in the formula as a dependee for the cell's name that contains the formula
+        /// Makes sure that a new cell's content will not throw a circulation error, if it does it will return false.
         /// </summary>
-        /// <param name="formula"></param>
-        /// The content of the cell
         /// <param name="name"></param>
-        /// the name of the cell
-        private void updateDependency(Formula formula, string name)
+        /// The name for the new cell
+        /// <param name="formula"></param>
+        /// The new contents for that cell
+        /// <returns></returns>
+        public bool checkNewCellContents(string name, Formula formula)
         {
-            //get all variables in the formula
-            HashSet<string> formulaVariables = (HashSet<string>)formula.GetVariables();
-            //any variable that shows up in the formula means that it is a dependee for name
-            foreach (string s in formulaVariables)
+            //add the new dependees in the new formula
+            foreach (string dependee in formula.GetVariables())
             {
-                cellDependents.AddDependency(s, name);
+                cellDependents.AddDependency(dependee, name);
+            }
+            //check circulation
+            try
+            {
+                GetCellsToRecalculate(name);
+                //it is a valid cell
+                Cell newCell = new Cell(formula);
+                //update spreadsheet
+                cellGraph.Add(name, newCell);
+                return true;
+            }
+            catch (Exception)
+            {
+                //remove dependents and don't make a new cell for the spreadsheet
+                foreach (string dependee in formula.GetVariables())
+                {
+                    cellDependents.RemoveDependency(dependee, name);
+                }
+                return false;
             }
         }
     }

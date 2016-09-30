@@ -7,8 +7,8 @@
     <ProjectGuid>{4350CE77-74B3-4025-942E-4633794FFBF6}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>DependencyGraph</RootNamespace>
-    <AssemblyName>DependencyGraph</AssemblyName>
+    <RootNamespace>SpreadsheetUtilities</RootNamespace>
+    <AssemblyName>SpreadsheetUtilities</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -20,7 +20,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Debug\DependencyGraph.XML</DocumentationFile>
+    <DocumentationFile>bin\Debug\SpreadsheetUtilities.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>

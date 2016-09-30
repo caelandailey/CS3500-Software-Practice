@@ -3,7 +3,11 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SpreadsheetUtilities;
 using SS;
 using System.Collections.Generic;
-
+/// <summary>
+/// Checks all methods in Spreadsheet project. Throws errors for invalid names for cells, invalid content, and
+/// circular dependencies on multiple cells.
+/// Author: Karina Biancone
+/// </summary>
 namespace SpreadsheetTest
 {
     [TestClass]
@@ -85,24 +89,8 @@ namespace SpreadsheetTest
         public void emptySpreadsheetGetNames1()
         {
             Spreadsheet k = new Spreadsheet();
-            List<string> b = new List<string>();
-            Assert.AreEqual(b, k.GetNamesOfAllNonemptyCells());
-        }
-
-        /// <summary>
-        /// Add cells to the spreadsheet, delete them, check if there are existing cells
-        /// </summary>
-        [TestMethod]
-        public void emptySpreadsheetGetNames2()
-        {
-            Spreadsheet k = new Spreadsheet();
-            k.SetCellContents("A1", 2);
-            k.SetCellContents("a1", "YA");
-            k.SetCellContents("_1", new Formula("6+2"));
-
-            //remove those items
-            //check that get names is empty
-
+            HashSet<string> b = new HashSet<string>();
+            Assert.IsTrue(b.SetEquals(k.GetNamesOfAllNonemptyCells()));
         }
 
         /// <summary>
@@ -117,8 +105,8 @@ namespace SpreadsheetTest
             k.SetCellContents("_1", new Formula("6+2"));
 
             //expected list to be returned
-            List<string> b = new List<string> { "A1", "a1", "_1" };
-            Assert.AreEqual(b, k.GetNamesOfAllNonemptyCells());
+            HashSet<string> b = new HashSet<string> { "A1", "a1", "_1" };
+            Assert.IsTrue(b.SetEquals(k.GetNamesOfAllNonemptyCells()));
         }
 
         /// <summary>
@@ -135,8 +123,8 @@ namespace SpreadsheetTest
             k.SetCellContents("A1", new Formula("1"));
 
             //expected list to be returned
-            List<string> b = new List<string> { "A1", "a1", "_1" };
-            Assert.AreEqual(b, k.GetNamesOfAllNonemptyCells());
+            HashSet<string> b = new HashSet<string> { "A1", "a1", "_1" };
+            Assert.IsTrue(b.SetEquals(k.GetNamesOfAllNonemptyCells()));
         }
 
         /// <summary>
@@ -354,7 +342,123 @@ namespace SpreadsheetTest
             Assert.IsTrue(b.Equals(k.GetCellContents("RE2")));
         }
 
+        /// <summary>
+        /// check the dependents for a cell with content as a double
+        /// </summary>
+        [TestMethod]
+        public void doubleDependentsCircular1()
+        {
+            Spreadsheet k = new Spreadsheet();
+            k.SetCellContents("A2", new Formula("B1"));
+            k.SetCellContents("B1", new Formula("D2 * 3"));
+            k.SetCellContents("D2", new Formula("C2"));
+
+            Assert.IsTrue(new HashSet<string> { "C2", "D2", "B1", "A2" }.SetEquals(k.SetCellContents("C2", 3)));
+        }
+
+        /// <summary>
+        /// check dependents for a cell with a string as its contents
+        /// </summary>
+        [TestMethod]
+        public void stringDependentsCircular1()
+        {
+            Spreadsheet k = new Spreadsheet();
+            k.SetCellContents("A2", new Formula("B1"));
+            k.SetCellContents("B1", new Formula("D2 * 3"));
+            k.SetCellContents("D2", new Formula("C2"));
+
+            Assert.IsTrue(new HashSet<string> { "C2", "D2", "B1", "A2" }.SetEquals(k.SetCellContents("C2", "3")));
+        }
+
+        /// <summary>
+        /// Check the dependents on a cell with a formula 
+        /// </summary>
+        [TestMethod]
+        public void formulaDependentsCircular1()
+        {
+            Spreadsheet k = new Spreadsheet();
+            k.SetCellContents("A2", new Formula("B1"));
+            k.SetCellContents("B1", new Formula("D2 * 3"));
+            k.SetCellContents("D2", new Formula("C2"));
+
+            Assert.IsTrue(new HashSet<string> { "C2", "D2", "B1", "A2" }.SetEquals(k.SetCellContents("C2", new Formula("3+3"))));
+        }
+
+        /// <summary>
+        /// Has two cell names in one cell, check one of the cell dependents
+        /// </summary>
+        [TestMethod]
+        public void formulaDependentsCircular2()
+        {
+            Spreadsheet k = new Spreadsheet();
+            k.SetCellContents("A2", new Formula("B1"));
+            k.SetCellContents("B1", new Formula("D2 * 3"));
+            k.SetCellContents("D2", new Formula("C2"));
+            k.SetCellContents("D3", new Formula("A2"));
+            k.SetCellContents("C2", new Formula("E1 + A1"));
+
+            Assert.IsTrue(new HashSet<string> { "A1","C2", "D2", "B1", "A2", "D3" }.SetEquals(k.SetCellContents("A1", "9")));
+        }
+
+        /// <summary>
+        /// Replaces a cell that has a string as a content to a formula as its content
+        /// </summary>
+        [TestMethod]
+        public void replaceFormula()
+        {
+            Spreadsheet k = new Spreadsheet();
+            k.SetCellContents("A2", new Formula("B1"));
+            k.SetCellContents("B1", new Formula("D2 * 3"));
+            k.SetCellContents("D2", new Formula("C2"));
+            k.SetCellContents("D3", new Formula("A2"));
+            k.SetCellContents("C2", 3);
+
+            Assert.IsTrue(new HashSet<string> { "C2", "D2", "B1", "A2", "D3" }.SetEquals(k.SetCellContents("C2", new Formula("E1 + A1"))));
+        }
+
+        /// <summary>
+        /// Finds a circular dependents
+        /// </summary>
+        [TestMethod]
+        [ExpectedException(typeof(CircularException))]
+        public void dependentsCircularFail1()
+        {
+            Spreadsheet k = new Spreadsheet();
+            k.SetCellContents("a1", new Formula("b1 * 2"));
+            k.SetCellContents("b1", new Formula("c1 * 2"));
+            k.SetCellContents("c1", new Formula("a1 * 2"));
+        }
+
+        /// <summary>
+        /// Change a cell's content from a double to a formula, makes it a circular dependents
+        /// </summary>
+        [TestMethod]
+        [ExpectedException(typeof(CircularException))]
+        public void dependentsCircularFail2()
+        {
+            Spreadsheet k = new Spreadsheet();
+            k.SetCellContents("a1", new Formula("b1 * 2"));
+            k.SetCellContents("b1", new Formula("c1 * 2"));
+            k.SetCellContents("c1", 4.20);
+            k.SetCellContents("c1", new Formula("a1 * 2"));
+        }
+
+        /// <summary>
+        /// Change a cell's content from a double to a formula, makes it a circular dependents
+        /// </summary>
+        [TestMethod]
+        [ExpectedException(typeof(CircularException))]
+        public void dependentsCircularFail3()
+        {
+            Spreadsheet k = new Spreadsheet();
+            k.SetCellContents("a1", new Formula("b1 * 2"));
+            k.SetCellContents("b1", new Formula("c1 * 2"));
+            k.SetCellContents("c1", "poo");
+            k.SetCellContents("c1", new Formula("a1 * 2"));
+        }
 
 
     }
+
+    
 }

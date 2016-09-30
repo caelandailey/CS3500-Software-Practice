@@ -35,14 +35,15 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="DependencyGraph">
-      <HintPath>..\Resources\Libraries\DependencyGraph.dll</HintPath>
-    </Reference>
     <Reference Include="Formula">
       <HintPath>..\Resources\Libraries\Formula.dll</HintPath>
     </Reference>
     <Reference Include="Spreadsheet">
       <HintPath>..\Spreadsheet\bin\Debug\Spreadsheet.dll</HintPath>
+    </Reference>
+    <Reference Include="SpreadsheetUtilities, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Resources\Libraries\SpreadsheetUtilities.dll</HintPath>
     </Reference>
     <Reference Include="System" />
   </ItemGroup>

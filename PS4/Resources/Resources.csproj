@@ -39,10 +39,10 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Libraries\DependencyGraph.dll" />
-    <Content Include="Libraries\DependencyGraph.XML" />
     <Content Include="Libraries\Formula.dll" />
     <Content Include="Libraries\Formula.xml" />
+    <Content Include="Libraries\SpreadsheetUtilities.dll" />
+    <Content Include="Libraries\SpreadsheetUtilities.xml" />
     <Content Include="README.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
