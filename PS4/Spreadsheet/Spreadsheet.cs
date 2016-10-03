@@ -5,6 +5,8 @@
 //Revision History:
 //  1.1     10/2/16     1:10 PM   Implemented the new setCellContents, getValue, and commented plans for Changed
 //                                  Added isValid and Normalizer to Tester class, as well as some additional tests
+//
+// 1.2      10/3/16     12:45 PM
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,36 +26,7 @@ using System.Text.RegularExpressions;
 namespace SS
 {
 
-    /// <summary>
-    /// Thrown to indicate that a change to a cell will cause a circular dependency.
-    /// </summary>
-    public class CircularException : Exception
-    {
-    }
-
-
-    /// <summary>
-    /// Thrown to indicate that a name parameter was either null or invalid.
-    /// </summary>
-    public class InvalidNameException : Exception
-    {
-    }
-
-
-    // ADDED FOR PS5
-    /// <summary>
-    /// Thrown to indicate that a read or write attempt has failed.
-    /// </summary>
-    public class SpreadsheetReadWriteException : Exception
-    {
-        /// <summary>
-        /// Creates the exception with a message
-        /// </summary>
-        public SpreadsheetReadWriteException(string msg)
-            : base(msg)
-        {
-        }
-    }
+   
 
     /// <summary>
     /// Inherets Abstract Spreadsheet functions
@@ -71,39 +44,15 @@ namespace SS
         /// </summary>
         public override bool Changed
         {
-
-            get
-            {
-                //make sure that there is a version to get
-                //retreive the most recently saved version getSavedVersion(file)
-                throw new NotImplementedException();
-            }
-
-            protected set
-            {
-                //check that there are the same number of cells
-                int currentCellCount = cellGraph.Keys.Count();
-                int savedCellCount;
-                if (currentCellCount != savedCellCount)
-                {
-                    Changed = true;
-                }
-
-                //loop through current cellGraph name/content to see if anything is different
-                foreach (KeyValuePair<string, Cell> pair in cellGraph)
-                {
-                    //if(!savedName contains pair.key) { Changed = true; break? }
-                    //if(!savedName.getContents contains pair[key].value) { Changed = true; break? }
-                }
-                throw new NotImplementedException();
-            }
+            get;
+            protected set;           
 
         }
 
         /// <summary>
         /// Constructor for spreadsheet. Makes a fresh Dictionary and depencyGraph
         /// </summary>
-        public Spreadsheet()
+        public Spreadsheet() 
         {
             cellGraph = new Dictionary<string, Cell>();
             cellDependents = new DependencyGraph();
@@ -162,7 +111,7 @@ namespace SS
             else if (content is Formula)
             {
                 Formula formula = new Formula((string)content);
-                return formula.Evaluate(Func < string, double > lookup);
+                return formula.Evaluate(lookup);
             }
             //return the content as a string
             return (string)content;
@@ -198,7 +147,7 @@ namespace SS
         /// For example, if name is A1, B1 contains A1*2, and C1 contains B1+A1, the
         /// set {A1, B1, C1} is returned.
         /// </summary>
-        private override ISet<string> SetCellContents(string name, Formula formula)
+        protected override ISet<string> SetCellContents(string name, Formula formula)
         {
             //check for null formula
             if (formula == null)
@@ -290,7 +239,7 @@ namespace SS
         /// For example, if name is A1, B1 contains A1*2, and C1 contains B1+A1, the
         /// set {A1, B1, C1} is returned.
         /// </summary>
-        public override ISet<string> SetCellContents(string name, double number)
+        protected override ISet<string> SetCellContents(string name, double number)
         {
             //check that the name is valid
             if (!checkName(name))
@@ -530,7 +479,7 @@ namespace SS
         public override string GetSavedVersion(string filename)
         {
 
-            throw new SreadsheetReadWriteException("Can't find a certain file.");
+            throw new SpreadsheetReadWriteException("Can't find a certain file.");
         }
 
         public override void Save(string filename)
@@ -538,10 +487,6 @@ namespace SS
             throw new NotImplementedException();
         }
 
-        public override object GetCellValue(string name)
-        {
-            throw new NotImplementedException();
-        }
 
         /// <summary>
         /// If content is null, throws an ArgumentNullException.
@@ -593,13 +538,14 @@ namespace SS
             double outputDouble;
             if (Double.TryParse(content, out outputDouble))
             {
-                dependeesDependents = SetCellContents(name, outputDouble);
+                dependeesDependents = (HashSet<string>)SetCellContents(name, outputDouble);
             }
             //check if content starts with an '='
             else if (content.First() == '=')
             {
+                //take the = out of content
                 //try to make the content a formula                
-                Formula formula = new Formula(content, nomalize, isValid);
+                Formula formula = new Formula(content, Normalize, IsValid);
                 //try add the formula to the cell graph
                 SetCellContents(name, formula);
             }

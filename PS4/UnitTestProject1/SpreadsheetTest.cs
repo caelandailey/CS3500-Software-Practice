@@ -180,7 +180,7 @@ namespace SpreadsheetTest
         {
             Spreadsheet k = new Spreadsheet();
             k.SetCellContents("ok", "NOT");
-            k.SetCellContents("okk", 5.44);
+            k.SetCellContents("okk", "5.44");
             k.SetCellContents("ook", "=not");
             k.SetCellContents("OOk", "=ces");
 
@@ -437,113 +437,8 @@ namespace SpreadsheetTest
 
     }
 
-    /// <summary>
-    /// Takes a string and converts all the letter to uppercase
-    /// </summary>
-    /// <param name="s"></param>
-    /// The token that has been read as a variable in the evaluate method
-    /// <returns></returns>
-    private string normalizeUpper(string s)
-    {
-        return s.ToUpper();
-    }
-
-    /// <summary>
-    /// Takes a string and converts it to read backwards
-    /// </summary>
-    /// <param name="s"></param>
-    /// The token that has been read as a variable in the evaluate method
-    /// <returns></returns>
-    private string normalizeReverse(string s)
-    {
-        //start a new string
-        string reverse = "";
-        //starting from the last character in s, building a string to the first character in s
-        for (int i = s.Length - 1; i >= 0; i--)
-        {
-            reverse += s[i];
-        }
-        return reverse;
-    }
-
-    /// <summary>
-    /// Checks that the last character in the string is a number
-    /// </summary>
-    /// <param name="s"></param>
-    /// The token that is read as a variable in the Evaluate method
-    /// <returns></returns>
-    private bool isValidLastDigit(string s)
-    {
-        if (char.IsDigit(s[s.Length - 1]))
-        {
-            return true;
-        }
-        return false;
-    }
-
-    /// <summary>
-    /// Checks that a string does not contain any numbers
-    /// </summary>
-    /// <param name="s"></param>
-    /// The token that is read as a variable in the Evaluate method
-    /// <returns></returns>
-    private bool isValidNoDigits(string s)
-    {
-        foreach (char c in s)
-        {
-            if (char.IsDigit(c))
-            {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /// <summary>
-    /// Creates a number that matches a specific variable, return an exception and the variable passed in is not 
-    /// found in the dictionary provided
-    /// </summary>
-    /// <param name="s"></param>
-    /// The variable to be searched for
-    /// <returns></returns>
-    private double lookup(string s)
-    {
-        if (s == "A6")
-        {
-            return 4;
-        }
-        else if (s == "a6")
-        {
-            return 2;
-        }
-        else if (s == "x9")
-        {
-            return 6.6;
-        }
-        else if (s == "_999")
-        {
-            return 666;
-        }
-        else if (s == "Px")
-        {
-            return 68;
-        }
-        else if (s == "PX")
-        {
-            return 6;
-        }
-        else if (s == "pX")
-        {
-            return 1.004;
-        }
-        else if (s == "zz")
-        {
-            return 0.0;
-        }
-        throw new Exception();
-    }
 
 }
 
     
-}
+
