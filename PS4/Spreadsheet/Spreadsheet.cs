@@ -57,7 +57,7 @@ namespace SS
             //there is no such cell
             else
             {
-                throw new InvalidNameException();
+                return "";
             }
         }
 
@@ -154,8 +154,29 @@ namespace SS
                 throw new InvalidNameException();
             }
 
+            //check if cell name already exists
+            if (cellGraph.ContainsKey(name))
+            {
+                //check if the content is a formula
+                object cellContents = GetCellContents(name);
+                if(cellContents is Formula)
+                {
+                    Formula f = (Formula) cellContents;
+                    foreach(string variable in f.GetVariables())
+                    {
+                        cellDependents.RemoveDependency(variable, name);
+                    }
+                }
+            }
+
             //create an empty hashset to hold dependents
             HashSet<string> dependeesDependents = new HashSet<string>();
+
+            //check that the string has something
+            if (text == "")
+            {
+                return dependeesDependents;
+            }
 
             //make a cell that hold a double as its content
             Cell newCell = new Cell(text);
@@ -188,6 +209,21 @@ namespace SS
             if (!checkName(name))
             {
                 throw new InvalidNameException();
+            }
+
+            //check if cell name already exists
+            if (cellGraph.ContainsKey(name))
+            {
+                //check if the content is a formula
+                object cellContents = GetCellContents(name);
+                if (cellContents is Formula)
+                {
+                    Formula f = (Formula)cellContents;
+                    foreach (string variable in f.GetVariables())
+                    {
+                        cellDependents.RemoveDependency(variable, name);
+                    }
+                }
             }
 
             //make a set to hold all dependents
@@ -335,7 +371,7 @@ namespace SS
             {
                 return false;
             }
-            if (!Regex.IsMatch(name, @"[a-zA-Z_](?: [a-zA-Z_]|\d)*$", RegexOptions.IgnorePatternWhitespace))
+            if (!Regex.IsMatch(name, @"^[a-zA-Z_](?: [a-zA-Z_]|\d)*$", RegexOptions.IgnorePatternWhitespace))
             {
                 return false;
             }
