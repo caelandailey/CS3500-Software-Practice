@@ -6,7 +6,7 @@
 //  1.1     10/2/16     1:10 PM   Implemented the new setCellContents, getValue, and commented plans for Changed
 //                                  Added isValid and Normalizer to Tester class, as well as some additional tests
 //
-// 1.2      10/3/16     12:45 PM
+// 1.2      10/3/16     12:45 PM    Added changes from PS4 and built 2/3 constructors
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -49,14 +49,21 @@ namespace SS
 
         }
 
-        /// <summary>
-        /// Constructor for spreadsheet. Makes a fresh Dictionary and depencyGraph
-        /// </summary>
-        public Spreadsheet() 
+        public Spreadsheet(Func<string, bool> isValid, Func<string, string> normalize, string version) : base(isValid, normalize, version)
         {
             cellGraph = new Dictionary<string, Cell>();
             cellDependents = new DependencyGraph();
         }
+
+
+        /// <summary>
+        /// Constructor for spreadsheet. Makes a fresh Dictionary and depencyGraph
+        /// </summary>
+        public Spreadsheet() : this(s => true, n => n, "default") 
+        {            
+        }
+
+
 
         /// <summary>
         /// If name is null or invalid, throws an InvalidNameException.
@@ -80,7 +87,7 @@ namespace SS
             //there is no such cell
             else
             {
-                throw new InvalidNameException();
+                return "";
             }
         }
 
@@ -531,9 +538,17 @@ namespace SS
                 throw new InvalidNameException();
             }
 
+            //check if the cell already has content
+            ifCellExists(name);
+
             //make an empty set to hold all dependents
             HashSet<string> dependeesDependents = new HashSet<string>();
 
+            //if the string is empty
+            if(content == "")
+            {
+                return dependeesDependents;
+            }
             //check if the content is a double
             double outputDouble;
             if (Double.TryParse(content, out outputDouble))
@@ -551,6 +566,7 @@ namespace SS
             }
             else
             {
+                
                 //make a cell that hold a string as its content
                 Cell newCell = new Cell(content);
                 //update cellGraph
@@ -561,6 +577,29 @@ namespace SS
                 dependeesDependents = directAndIndirectDependents(name, dependeesDependents);
             }
             return dependeesDependents;
+        }
+
+        /// <summary>
+        /// Checks if a cell already exists and if it's contents is a forula. Looks at the formula and deletes
+        /// all variables that it contains in dependencies dependees.
+        /// </summary>
+        /// <param name="name"></param>
+        private void ifCellExists(string name)
+        {
+            //check if cell name already exists
+            if (cellGraph.ContainsKey(name))
+            {
+                //check if the content is a formula
+                object cellContents = GetCellContents(name);
+                if (cellContents is Formula)
+                {
+                    Formula f = (Formula)cellContents;
+                    foreach (string variable in f.GetVariables())
+                    {
+                        cellDependents.RemoveDependency(variable, name);
+                    }
+                }
+            }
         }
     }
 }
