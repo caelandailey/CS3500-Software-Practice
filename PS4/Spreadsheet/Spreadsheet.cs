@@ -1,4 +1,11 @@
-﻿using System;
+﻿//Written by Karina Biancone, implementing the provided Abstract class for Spreadsheet, October 2016
+//
+//Version 1.1
+//
+//Revision History:
+//  1.1     10/2/16     1:10 PM   Implemented the new setCellContents, getValue, and commented plans for Changed
+//                                  Added isValid and Normalizer to Tester class, as well as some additional tests
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -16,15 +23,82 @@ using System.Text.RegularExpressions;
 
 namespace SS
 {
+
+    /// <summary>
+    /// Thrown to indicate that a change to a cell will cause a circular dependency.
+    /// </summary>
+    public class CircularException : Exception
+    {
+    }
+
+
+    /// <summary>
+    /// Thrown to indicate that a name parameter was either null or invalid.
+    /// </summary>
+    public class InvalidNameException : Exception
+    {
+    }
+
+
+    // ADDED FOR PS5
+    /// <summary>
+    /// Thrown to indicate that a read or write attempt has failed.
+    /// </summary>
+    public class SpreadsheetReadWriteException : Exception
+    {
+        /// <summary>
+        /// Creates the exception with a message
+        /// </summary>
+        public SpreadsheetReadWriteException(string msg)
+            : base(msg)
+        {
+        }
+    }
+
     /// <summary>
     /// Inherets Abstract Spreadsheet functions
     /// </summary>
     public class Spreadsheet : AbstractSpreadsheet
     {
         //a dictionary to hold existing cells, uses the valid name as its key and Cell class as value(which holds the content)
-        Dictionary<string, Cell> cellGraph;
+        private Dictionary<string, Cell> cellGraph;
         //create an empty dependency graph
-        DependencyGraph cellDependents;
+        private DependencyGraph cellDependents;
+
+        /// <summary>
+        /// True if this spreadsheet has been modified since it was created or saved                  
+        /// (whichever happened most recently); false otherwise.
+        /// </summary>
+        public override bool Changed
+        {
+
+            get
+            {
+                //make sure that there is a version to get
+                //retreive the most recently saved version getSavedVersion(file)
+                throw new NotImplementedException();
+            }
+
+            protected set
+            {
+                //check that there are the same number of cells
+                int currentCellCount = cellGraph.Keys.Count();
+                int savedCellCount;
+                if (currentCellCount != savedCellCount)
+                {
+                    Changed = true;
+                }
+
+                //loop through current cellGraph name/content to see if anything is different
+                foreach (KeyValuePair<string, Cell> pair in cellGraph)
+                {
+                    //if(!savedName contains pair.key) { Changed = true; break? }
+                    //if(!savedName.getContents contains pair[key].value) { Changed = true; break? }
+                }
+                throw new NotImplementedException();
+            }
+
+        }
 
         /// <summary>
         /// Constructor for spreadsheet. Makes a fresh Dictionary and depencyGraph
@@ -62,6 +136,40 @@ namespace SS
         }
 
         /// <summary>
+        /// If name is null or invalid, throws an InvalidNameException.
+        /// 
+        /// Otherwise, returns the value (as opposed to the contents) of the named cell.  The return
+        /// value should be either a string, a double, or a SpreadsheetUtilities.FormulaError.
+        /// </summary>
+        public override object GetCellValue(String name)
+        {
+            object content;
+            //try to get cell content wich will check if the name is null or inalid
+            try
+            {
+                content = GetCellContents(name);
+            }
+            catch (Exception)
+            {
+                throw new InvalidNameException();
+            }
+            //check if content is a double
+            if (content is double)
+            {
+                return content;
+            }
+            //check if the content is a Formula
+            else if (content is Formula)
+            {
+                Formula formula = new Formula((string)content);
+                return formula.Evaluate(Func < string, double > lookup);
+            }
+            //return the content as a string
+            return (string)content;
+        }
+
+
+        /// <summary>
         /// Enumerates the names of all the non-empty cells in the spreadsheet.
         /// </summary>
         public override IEnumerable<string> GetNamesOfAllNonemptyCells()
@@ -90,7 +198,7 @@ namespace SS
         /// For example, if name is A1, B1 contains A1*2, and C1 contains B1+A1, the
         /// set {A1, B1, C1} is returned.
         /// </summary>
-        public override ISet<string> SetCellContents(string name, Formula formula)
+        private override ISet<string> SetCellContents(string name, Formula formula)
         {
             //check for null formula
             if (formula == null)
@@ -335,7 +443,7 @@ namespace SS
             {
                 return false;
             }
-            if (!Regex.IsMatch(name, @"[a-zA-Z_](?: [a-zA-Z_]|\d)*$", RegexOptions.IgnorePatternWhitespace))
+            if (!Regex.IsMatch(name, @"[a-zA-Z](?: [a-zA-Z]|\d)*$", RegexOptions.IgnorePatternWhitespace))
             {
                 return false;
             }
@@ -409,6 +517,104 @@ namespace SS
                 }
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Returns the version information of the spreadsheet saved in the named file.
+        /// If there are any problems opening, reading, or closing the file, the method
+        /// should throw a SpreadsheetReadWriteException with an explanatory message.
+        /// </summary>
+        /// <param name="filename"></param>
+        /// 
+        /// <returns></returns>
+        public override string GetSavedVersion(string filename)
+        {
+
+            throw new SreadsheetReadWriteException("Can't find a certain file.");
+        }
+
+        public override void Save(string filename)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override object GetCellValue(string name)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// If content is null, throws an ArgumentNullException.
+        /// 
+        /// Otherwise, if name is null or invalid, throws an InvalidNameException.
+        /// 
+        /// Otherwise, if content parses as a double, the contents of the named
+        /// cell becomes that double.
+        /// 
+        /// Otherwise, if content begins with the character '=', an attempt is made
+        /// to parse the remainder of content into a Formula f using the Formula
+        /// constructor.  There are then three possibilities:
+        /// 
+        ///   (1) If the remainder of content cannot be parsed into a Formula, a 
+        ///       SpreadsheetUtilities.FormulaFormatException is thrown.
+        ///       
+        ///   (2) Otherwise, if changing the contents of the named cell to be f
+        ///       would cause a circular dependency, a CircularException is thrown.
+        ///       
+        ///   (3) Otherwise, the contents of the named cell becomes f.
+        /// 
+        /// Otherwise, the contents of the named cell becomes content.
+        /// 
+        /// If an exception is not thrown, the method returns a set consisting of
+        /// name plus the names of all other cells whose value depends, directly
+        /// or indirectly, on the named cell.
+        /// 
+        /// For example, if name is A1, B1 contains A1*2, and C1 contains B1+A1, the
+        /// set {A1, B1, C1} is returned.
+        /// </summary>
+        public override ISet<string> SetContentsOfCell(string name, string content)
+        {
+            //check that the string is not null
+            if (content == null)
+            {
+                throw new ArgumentNullException();
+            }
+
+            //check that the name is valid
+            if (!checkName(name))
+            {
+                throw new InvalidNameException();
+            }
+
+            //make an empty set to hold all dependents
+            HashSet<string> dependeesDependents = new HashSet<string>();
+
+            //check if the content is a double
+            double outputDouble;
+            if (Double.TryParse(content, out outputDouble))
+            {
+                dependeesDependents = SetCellContents(name, outputDouble);
+            }
+            //check if content starts with an '='
+            else if (content.First() == '=')
+            {
+                //try to make the content a formula                
+                Formula formula = new Formula(content, nomalize, isValid);
+                //try add the formula to the cell graph
+                SetCellContents(name, formula);
+            }
+            else
+            {
+                //make a cell that hold a string as its content
+                Cell newCell = new Cell(content);
+                //update cellGraph
+                addToCellGraph(name, newCell);
+                //add the dependee to the list
+                dependeesDependents.Add(name);
+                //get all direct and indirect dependents
+                dependeesDependents = directAndIndirectDependents(name, dependeesDependents);
+            }
+            return dependeesDependents;
         }
     }
 }

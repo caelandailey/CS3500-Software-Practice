@@ -36,18 +36,6 @@ namespace SpreadsheetTest
         }
 
         /// <summary>
-        /// Names a cell with a formula using null, throws invalid name exception
-        /// </summary>
-        [TestMethod]
-        [ExpectedException(typeof(InvalidNameException))]
-        public void nullNameSet3()
-        {
-            Spreadsheet k = new Spreadsheet();
-            Formula b = new Formula("x2");
-            k.SetCellContents(null, b);
-        }
-
-        /// <summary>
         /// Names a cell with an double as its content, using an invalid string,throws invalid name exception
         /// </summary>
         [TestMethod]
@@ -67,18 +55,6 @@ namespace SpreadsheetTest
         {
             Spreadsheet k = new Spreadsheet();
             k.SetCellContents("____3@", "____3@");
-        }
-
-        /// <summary>
-        /// Names a cell with an formula as its content, using an invalid string, throws invalid name exception
-        /// </summary>
-        [TestMethod]
-        [ExpectedException(typeof(InvalidNameException))]
-        public void invalidNameSet3()
-        {
-            Spreadsheet k = new Spreadsheet();
-            Formula b = new Formula("3 + x4");
-            k.SetCellContents("", b);
         }
 
 
@@ -102,7 +78,7 @@ namespace SpreadsheetTest
             Spreadsheet k = new Spreadsheet();
             k.SetCellContents("A1", 2);
             k.SetCellContents("a1", "YA");
-            k.SetCellContents("_1", new Formula("6+2"));
+            k.SetCellContents("_1", "=6+2");
 
             //expected list to be returned
             HashSet<string> b = new HashSet<string> { "A1", "a1", "_1" };
@@ -118,9 +94,9 @@ namespace SpreadsheetTest
             Spreadsheet k = new Spreadsheet();
             k.SetCellContents("A1", 2);
             k.SetCellContents("a1", "YA");
-            k.SetCellContents("_1", new Formula("6+2"));
+            k.SetCellContents("_1", "=6+2");
             //replace A1 contents with a formula
-            k.SetCellContents("A1", new Formula("1"));
+            k.SetCellContents("A1", "=1");
 
             //expected list to be returned
             HashSet<string> b = new HashSet<string> { "A1", "a1", "_1" };
@@ -173,7 +149,7 @@ namespace SpreadsheetTest
             k.SetCellContents("ok", "NOT");
             k.SetCellContents("mk", "nOT");
             k.SetCellContents("okk", 5.44);
-            k.SetCellContents("ook", new Formula("not"));
+            k.SetCellContents("ook", "=not");
 
             string b = "NOT";
 
@@ -189,7 +165,7 @@ namespace SpreadsheetTest
             Spreadsheet k = new Spreadsheet();
             k.SetCellContents("ok", "NOT");
             k.SetCellContents("okk", 5.44);
-            k.SetCellContents("ook", new Formula("not"));
+            k.SetCellContents("ook", "=not");
 
             double b = 5.44;
 
@@ -205,8 +181,8 @@ namespace SpreadsheetTest
             Spreadsheet k = new Spreadsheet();
             k.SetCellContents("ok", "NOT");
             k.SetCellContents("okk", 5.44);
-            k.SetCellContents("ook", new Formula("not"));
-            k.SetCellContents("OOk", new Formula("ces"));
+            k.SetCellContents("ook", "=not");
+            k.SetCellContents("OOk", "=ces");
 
             Formula b = new Formula("not");
 
@@ -322,7 +298,7 @@ namespace SpreadsheetTest
         public void setFormula1()
         {
             Spreadsheet k = new Spreadsheet();
-            k.SetCellContents("_", new Formula("6+6+6"));
+            k.SetCellContents("_", "=6+6+6");
             Formula b = new Formula("6+6+6");
 
             Assert.IsTrue(b.Equals(k.GetCellContents("_")));
@@ -336,7 +312,7 @@ namespace SpreadsheetTest
         {
             Spreadsheet k = new Spreadsheet();
             k.SetCellContents("RE2", "RE2");
-            k.SetCellContents("RE2", new Formula("3"));
+            k.SetCellContents("RE2", "=3");
             Formula b = new Formula("3");
 
             Assert.IsTrue(b.Equals(k.GetCellContents("RE2")));
@@ -349,9 +325,9 @@ namespace SpreadsheetTest
         public void doubleDependentsCircular1()
         {
             Spreadsheet k = new Spreadsheet();
-            k.SetCellContents("A2", new Formula("B1"));
-            k.SetCellContents("B1", new Formula("D2 * 3"));
-            k.SetCellContents("D2", new Formula("C2"));
+            k.SetCellContents("A2", "=B1");
+            k.SetCellContents("B1", "=D2 * 3");
+            k.SetCellContents("D2", "=C2");
 
             Assert.IsTrue(new HashSet<string> { "C2", "D2", "B1", "A2" }.SetEquals(k.SetCellContents("C2", 3)));
         }
@@ -363,9 +339,9 @@ namespace SpreadsheetTest
         public void stringDependentsCircular1()
         {
             Spreadsheet k = new Spreadsheet();
-            k.SetCellContents("A2", new Formula("B1"));
-            k.SetCellContents("B1", new Formula("D2 * 3"));
-            k.SetCellContents("D2", new Formula("C2"));
+            k.SetCellContents("A2", "=B1");
+            k.SetCellContents("B1", "=D2 * 3");
+            k.SetCellContents("D2", "=C2");
 
             Assert.IsTrue(new HashSet<string> { "C2", "D2", "B1", "A2" }.SetEquals(k.SetCellContents("C2", "3")));
         }
@@ -377,11 +353,11 @@ namespace SpreadsheetTest
         public void formulaDependentsCircular1()
         {
             Spreadsheet k = new Spreadsheet();
-            k.SetCellContents("A2", new Formula("B1"));
-            k.SetCellContents("B1", new Formula("D2 * 3"));
-            k.SetCellContents("D2", new Formula("C2"));
+            k.SetCellContents("A2", "=B1");
+            k.SetCellContents("B1", "=D2 * 3");
+            k.SetCellContents("D2", "=C2");
 
-            Assert.IsTrue(new HashSet<string> { "C2", "D2", "B1", "A2" }.SetEquals(k.SetCellContents("C2", new Formula("3+3"))));
+            Assert.IsTrue(new HashSet<string> { "C2", "D2", "B1", "A2" }.SetEquals(k.SetCellContents("C2", "=3+3")));
         }
 
         /// <summary>
@@ -391,11 +367,11 @@ namespace SpreadsheetTest
         public void formulaDependentsCircular2()
         {
             Spreadsheet k = new Spreadsheet();
-            k.SetCellContents("A2", new Formula("B1"));
-            k.SetCellContents("B1", new Formula("D2 * 3"));
-            k.SetCellContents("D2", new Formula("C2"));
-            k.SetCellContents("D3", new Formula("A2"));
-            k.SetCellContents("C2", new Formula("E1 + A1"));
+            k.SetCellContents("A2", "=B1");
+            k.SetCellContents("B1", "=D2 * 3");
+            k.SetCellContents("D2", "=C2");
+            k.SetCellContents("D3", "=A2");
+            k.SetCellContents("C2", "=E1 + A1");
 
             Assert.IsTrue(new HashSet<string> { "A1","C2", "D2", "B1", "A2", "D3" }.SetEquals(k.SetCellContents("A1", "9")));
         }
@@ -407,13 +383,14 @@ namespace SpreadsheetTest
         public void replaceFormula()
         {
             Spreadsheet k = new Spreadsheet();
-            k.SetCellContents("A2", new Formula("B1"));
-            k.SetCellContents("B1", new Formula("D2 * 3"));
-            k.SetCellContents("D2", new Formula("C2"));
-            k.SetCellContents("D3", new Formula("A2"));
+            k.SetCellContents("A2", "=B1");
+            k.SetCellContents("B1", "=D2 * 3");
+            k.SetCellContents("D2", "=C2");
+            k.SetCellContents("D3", "=A2");
+            k.SetCellContents("D3", "=A2");
             k.SetCellContents("C2", 3);
 
-            Assert.IsTrue(new HashSet<string> { "C2", "D2", "B1", "A2", "D3" }.SetEquals(k.SetCellContents("C2", new Formula("E1 + A1"))));
+            Assert.IsTrue(new HashSet<string> { "C2", "D2", "B1", "A2", "D3" }.SetEquals(k.SetCellContents("C2", "=E1 + A1")));
         }
 
         /// <summary>
@@ -424,9 +401,9 @@ namespace SpreadsheetTest
         public void dependentsCircularFail1()
         {
             Spreadsheet k = new Spreadsheet();
-            k.SetCellContents("a1", new Formula("b1 * 2"));
-            k.SetCellContents("b1", new Formula("c1 * 2"));
-            k.SetCellContents("c1", new Formula("a1 * 2"));
+            k.SetCellContents("a1", "=b1 * 2");
+            k.SetCellContents("b1", "=c1 * 2");
+            k.SetCellContents("c1", "=a1 * 2");
         }
 
         /// <summary>
@@ -437,10 +414,10 @@ namespace SpreadsheetTest
         public void dependentsCircularFail2()
         {
             Spreadsheet k = new Spreadsheet();
-            k.SetCellContents("a1", new Formula("b1 * 2"));
-            k.SetCellContents("b1", new Formula("c1 * 2"));
+            k.SetCellContents("a1", "=b1 * 2");
+            k.SetCellContents("b1", "=c1 * 2");
             k.SetCellContents("c1", 4.20);
-            k.SetCellContents("c1", new Formula("a1 * 2"));
+            k.SetCellContents("c1", "=a1 * 2");
         }
 
         /// <summary>
@@ -451,14 +428,122 @@ namespace SpreadsheetTest
         public void dependentsCircularFail3()
         {
             Spreadsheet k = new Spreadsheet();
-            k.SetCellContents("a1", new Formula("b1 * 2"));
-            k.SetCellContents("b1", new Formula("c1 * 2"));
+            k.SetCellContents("a1", "=b1 * 2");
+            k.SetCellContents("b1", "=c1 * 2");
             k.SetCellContents("c1", "poo");
-            k.SetCellContents("c1", new Formula("a1 * 2"));
+            k.SetCellContents("c1", "=a1 * 2");
         }
 
 
     }
+
+    /// <summary>
+    /// Takes a string and converts all the letter to uppercase
+    /// </summary>
+    /// <param name="s"></param>
+    /// The token that has been read as a variable in the evaluate method
+    /// <returns></returns>
+    private string normalizeUpper(string s)
+    {
+        return s.ToUpper();
+    }
+
+    /// <summary>
+    /// Takes a string and converts it to read backwards
+    /// </summary>
+    /// <param name="s"></param>
+    /// The token that has been read as a variable in the evaluate method
+    /// <returns></returns>
+    private string normalizeReverse(string s)
+    {
+        //start a new string
+        string reverse = "";
+        //starting from the last character in s, building a string to the first character in s
+        for (int i = s.Length - 1; i >= 0; i--)
+        {
+            reverse += s[i];
+        }
+        return reverse;
+    }
+
+    /// <summary>
+    /// Checks that the last character in the string is a number
+    /// </summary>
+    /// <param name="s"></param>
+    /// The token that is read as a variable in the Evaluate method
+    /// <returns></returns>
+    private bool isValidLastDigit(string s)
+    {
+        if (char.IsDigit(s[s.Length - 1]))
+        {
+            return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Checks that a string does not contain any numbers
+    /// </summary>
+    /// <param name="s"></param>
+    /// The token that is read as a variable in the Evaluate method
+    /// <returns></returns>
+    private bool isValidNoDigits(string s)
+    {
+        foreach (char c in s)
+        {
+            if (char.IsDigit(c))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// Creates a number that matches a specific variable, return an exception and the variable passed in is not 
+    /// found in the dictionary provided
+    /// </summary>
+    /// <param name="s"></param>
+    /// The variable to be searched for
+    /// <returns></returns>
+    private double lookup(string s)
+    {
+        if (s == "A6")
+        {
+            return 4;
+        }
+        else if (s == "a6")
+        {
+            return 2;
+        }
+        else if (s == "x9")
+        {
+            return 6.6;
+        }
+        else if (s == "_999")
+        {
+            return 666;
+        }
+        else if (s == "Px")
+        {
+            return 68;
+        }
+        else if (s == "PX")
+        {
+            return 6;
+        }
+        else if (s == "pX")
+        {
+            return 1.004;
+        }
+        else if (s == "zz")
+        {
+            return 0.0;
+        }
+        throw new Exception();
+    }
+
+}
 
     
 }
