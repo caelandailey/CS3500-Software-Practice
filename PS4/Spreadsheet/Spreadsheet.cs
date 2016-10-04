@@ -1,12 +1,17 @@
 ﻿//Written by Karina Biancone, implementing the provided Abstract class for Spreadsheet, October 2016
 //
-//Version 1.1
+//Version 1.4
 //
 //Revision History:
 //  1.1     10/2/16     1:10 PM   Implemented the new setCellContents, getValue, and commented plans for Changed
 //                                  Added isValid and Normalizer to Tester class, as well as some additional tests
 //
-// 1.2      10/3/16     12:45 PM    Added changes from PS4 and built 2/3 constructors
+//  1.2     10/3/16     12:45 PM    Added changes from PS4 and built 2/3 constructors
+//
+//  1.3                 7:20 PM     Added is valid and normalize
+//
+//  1.4                 11:00 PM    Started saved and get version functions
+//                      
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,6 +19,7 @@ using System.Text;
 using System.Threading.Tasks;
 using SpreadsheetUtilities;
 using System.Text.RegularExpressions;
+using System.Xml;
 
 /// <summary>
 /// This project extends Abstract's methods to form a graph that holds a group of cell's. The name for each cell 
@@ -26,7 +32,7 @@ using System.Text.RegularExpressions;
 namespace SS
 {
 
-   
+
 
     /// <summary>
     /// Inherets Abstract Spreadsheet functions
@@ -38,16 +44,24 @@ namespace SS
         //create an empty dependency graph
         private DependencyGraph cellDependents;
 
-        /// <summary>
-        /// True if this spreadsheet has been modified since it was created or saved                  
-        /// (whichever happened most recently); false otherwise.
-        /// </summary>
-        public override bool Changed
+        private bool IsValid(string variable)
         {
-            get;
-            protected set;           
-
+            if (Regex.IsMatch(variable, @"^[a-zA-Z]+[a-zA-Z]|\d+$", RegexOptions.IgnorePatternWhitespace))
+            {
+                return true;
+            }
+            return false;
         }
+
+        private string Normalize(string variable)
+        {
+            return variable.ToUpper();
+        }
+
+        /// <summary>
+        /// Version information
+        /// </summary>
+        public string Version { get; protected set; }
 
         public Spreadsheet(Func<string, bool> isValid, Func<string, string> normalize, string version) : base(isValid, normalize, version)
         {
@@ -59,11 +73,172 @@ namespace SS
         /// <summary>
         /// Constructor for spreadsheet. Makes a fresh Dictionary and depencyGraph
         /// </summary>
-        public Spreadsheet() : this(s => true, n => n, "default") 
-        {            
+        public Spreadsheet() : this(s => true, n => n, "default")
+        {
+        }
+
+        /// <summary>
+        /// True if this spreadsheet has been modified since it was created or saved                  
+        /// (whichever happened most recently); false otherwise.
+        /// </summary>
+        public override bool Changed
+        {
+            get;
+            protected set;
+
         }
 
 
+        /// <summary>
+        /// Returns the version information of the spreadsheet saved in the named file.
+        /// If there are any problems opening, reading, or closing the file, the method
+        /// should throw a SpreadsheetReadWriteException with an explanatory message.
+        /// </summary>
+        /// <param name="filename"></param>
+        /// 
+        /// <returns></returns>
+        public override string GetSavedVersion(string filename)
+        {
+            using(XmlReader read = XmlReader.Create(filename))
+            {
+                while (read.Read())
+                {
+                    if (read.IsStartElement())
+                    {
+                        switch (read.Name)
+                        {
+                            case "Spreadsheet":
+                                read.Read();
+                                return read.Value;
+                        }
+                    }
+                }
+            }
+            throw new SpreadsheetReadWriteException("Can't find a certain file.");
+        }
+
+        /// <summary>
+        /// Writes the contents of this spreadsheet to the named file using an XML format.
+        /// </summary>
+        /// <param name="filename"></param>
+        public override void Save(string filename)
+        {
+            XmlWriterSettings settings = new XmlWriterSettings();
+            settings.Indent = true;
+            settings.IndentChars = (" ");
+
+            using(XmlWriter write = XmlWriter.Create(Version + ".xml", settings))
+            {
+                write.WriteStartDocument();
+                write.WriteStartElement("Spreadsheet");
+                write.WriteStartElement("Cells");
+
+                //loop through current dependency graph and write it to the file
+                foreach(KeyValuePair<string, Cell> pair in cellGraph)
+                {
+                    write.WriteElementString("Name", pair.Key);
+                    object content = GetCellContents(pair.Key);
+                    double whoKnows;
+                    if(double.TryParse((string)content, out whoKnows)|| (content is Formula))
+                    {
+                        write.WriteElementString("Content", content.ToString());
+                    }
+                    else
+                    {
+                        write.WriteElementString("Content", content);
+                    }
+                }
+                write.WriteEndElement();
+                write.WriteEndElement();
+                write.WriteEndDocument();
+            }
+        }
+
+
+        /// <summary>
+        /// If content is null, throws an ArgumentNullException.
+        /// 
+        /// Otherwise, if name is null or invalid, throws an InvalidNameException.
+        /// 
+        /// Otherwise, if content parses as a double, the contents of the named
+        /// cell becomes that double.
+        /// 
+        /// Otherwise, if content begins with the character '=', an attempt is made
+        /// to parse the remainder of content into a Formula f using the Formula
+        /// constructor.  There are then three possibilities:
+        /// 
+        ///   (1) If the remainder of content cannot be parsed into a Formula, a 
+        ///       SpreadsheetUtilities.FormulaFormatException is thrown.
+        ///       
+        ///   (2) Otherwise, if changing the contents of the named cell to be f
+        ///       would cause a circular dependency, a CircularException is thrown.
+        ///       
+        ///   (3) Otherwise, the contents of the named cell becomes f.
+        /// 
+        /// Otherwise, the contents of the named cell becomes content.
+        /// 
+        /// If an exception is not thrown, the method returns a set consisting of
+        /// name plus the names of all other cells whose value depends, directly
+        /// or indirectly, on the named cell.
+        /// 
+        /// For example, if name is A1, B1 contains A1*2, and C1 contains B1+A1, the
+        /// set {A1, B1, C1} is returned.
+        /// </summary>
+        public override ISet<string> SetContentsOfCell(string name, string content)
+        {
+            //check that the string is not null
+            if (content == null)
+            {
+                throw new ArgumentNullException();
+            }
+
+            //check that the name is valid
+            if (!checkName(name))
+            {
+                throw new InvalidNameException();
+            }
+
+            //if the cell already has contents that is a formula, remove dependees
+            ifCellExists(name);
+
+            //make an empty set to hold all dependents
+            HashSet<string> dependeesDependents = new HashSet<string>();
+
+            //if the string is empty
+            if (content == "")
+            {
+                return dependeesDependents;
+            }
+            //check if the content is a double
+            double outputDouble;
+            if (Double.TryParse(content, out outputDouble))
+            {
+                dependeesDependents = (HashSet<string>)SetCellContents(name, outputDouble);
+            }
+            //check if content starts with an '='
+            else if (content.First() == '=')
+            {
+                //take the = out of content
+                content.TrimStart('=');
+                //try to make the content a formula                
+                Formula formula = new Formula(content, Normalize, IsValid);
+                //try add the formula to the cell graph
+                SetCellContents(name, formula);
+            }
+            else
+            {
+                //make a cell that hold a string as its content
+                Cell newCell = new Cell(content);
+                //update cellGraph
+                addToCellGraph(name, newCell);
+                //add the dependee to the list
+                dependeesDependents.Add(name);
+                //get all direct and indirect dependents
+                dependeesDependents = directAndIndirectDependents(name, dependeesDependents);
+            }
+            Changed = true;
+            return dependeesDependents;
+        }
 
         /// <summary>
         /// If name is null or invalid, throws an InvalidNameException.
@@ -177,7 +352,6 @@ namespace SS
                 {
                     throw new CircularException();
                 }
-
             }
             else
             {
@@ -192,49 +366,7 @@ namespace SS
             return dependeesDependents;
         }
 
-        /// <summary>
-        /// If text is null, throws an ArgumentNullException.
-        /// 
-        /// Otherwise, if name is null or invalid, throws an InvalidNameException.
-        /// 
-        /// Otherwise, the contents of the named cell becomes text.  The method returns a
-        /// set consisting of name plus the names of all other cells whose value depends, 
-        /// directly or indirectly, on the named cell.
-        /// 
-        /// For example, if name is A1, B1 contains A1*2, and C1 contains B1+A1, the
-        /// set {A1, B1, C1} is returned.
-        /// </summary>
-        public override ISet<string> SetCellContents(string name, string text)
-        {
-            //check if text is null
-            if (text == null)
-            {
-                throw new ArgumentNullException();
-            }
 
-            //check that name is valid
-            if (!checkName(name))
-            {
-                throw new InvalidNameException();
-            }
-
-            //create an empty hashset to hold dependents
-            HashSet<string> dependeesDependents = new HashSet<string>();
-
-            //make a cell that hold a double as its content
-            Cell newCell = new Cell(text);
-
-            //update cellGraph
-            addToCellGraph(name, newCell);
-
-            //add the dependee to the top of the list
-            dependeesDependents.Add(name);
-            //get all direct and indirect dependents
-            dependeesDependents = directAndIndirectDependents(name, dependeesDependents);
-            return dependeesDependents;
-
-
-        }
 
         /// <summary>
         /// If name is null or invalid, throws an InvalidNameException.
@@ -253,7 +385,6 @@ namespace SS
             {
                 throw new InvalidNameException();
             }
-
             //make a set to hold all dependents
             HashSet<string> dependeesDependents = new HashSet<string>();
 
@@ -399,7 +530,7 @@ namespace SS
             {
                 return false;
             }
-            if (!Regex.IsMatch(name, @"[a-zA-Z](?: [a-zA-Z]|\d)*$", RegexOptions.IgnorePatternWhitespace))
+            if (!Regex.IsMatch(name, @"^[a-zA-Z](?: [a-zA-Z]|\d)*$", RegexOptions.IgnorePatternWhitespace))
             {
                 return false;
             }
@@ -440,6 +571,31 @@ namespace SS
         }
 
         /// <summary>
+        /// Checks if a cell already exists and if it's contents is a forula. Looks at the formula and deletes
+        /// all variables that it contains in dependencies dependees.
+        /// </summary>
+        /// <param name="name"></param>
+        private void ifCellExists(string name)
+        {
+            //check if cell name already exists
+            if (cellGraph.ContainsKey(name))
+            {
+                //check if the content is a formula
+                object cellContents = GetCellContents(name);
+                if (cellContents is Formula)
+                {
+                    Formula f = (Formula)cellContents;
+                    foreach (string variable in f.GetVariables())
+                    {
+                        cellDependents.RemoveDependency(variable, name);
+                    }
+                }
+            }
+        }
+
+
+
+        /// <summary>
         /// Makes sure that a new cell's content will not throw a circulation error, if it does it will return false.
         /// </summary>
         /// <param name="name"></param>
@@ -472,133 +628,6 @@ namespace SS
                     cellDependents.RemoveDependency(dependee, name);
                 }
                 return false;
-            }
-        }
-
-        /// <summary>
-        /// Returns the version information of the spreadsheet saved in the named file.
-        /// If there are any problems opening, reading, or closing the file, the method
-        /// should throw a SpreadsheetReadWriteException with an explanatory message.
-        /// </summary>
-        /// <param name="filename"></param>
-        /// 
-        /// <returns></returns>
-        public override string GetSavedVersion(string filename)
-        {
-
-            throw new SpreadsheetReadWriteException("Can't find a certain file.");
-        }
-
-        public override void Save(string filename)
-        {
-            throw new NotImplementedException();
-        }
-
-
-        /// <summary>
-        /// If content is null, throws an ArgumentNullException.
-        /// 
-        /// Otherwise, if name is null or invalid, throws an InvalidNameException.
-        /// 
-        /// Otherwise, if content parses as a double, the contents of the named
-        /// cell becomes that double.
-        /// 
-        /// Otherwise, if content begins with the character '=', an attempt is made
-        /// to parse the remainder of content into a Formula f using the Formula
-        /// constructor.  There are then three possibilities:
-        /// 
-        ///   (1) If the remainder of content cannot be parsed into a Formula, a 
-        ///       SpreadsheetUtilities.FormulaFormatException is thrown.
-        ///       
-        ///   (2) Otherwise, if changing the contents of the named cell to be f
-        ///       would cause a circular dependency, a CircularException is thrown.
-        ///       
-        ///   (3) Otherwise, the contents of the named cell becomes f.
-        /// 
-        /// Otherwise, the contents of the named cell becomes content.
-        /// 
-        /// If an exception is not thrown, the method returns a set consisting of
-        /// name plus the names of all other cells whose value depends, directly
-        /// or indirectly, on the named cell.
-        /// 
-        /// For example, if name is A1, B1 contains A1*2, and C1 contains B1+A1, the
-        /// set {A1, B1, C1} is returned.
-        /// </summary>
-        public override ISet<string> SetContentsOfCell(string name, string content)
-        {
-            //check that the string is not null
-            if (content == null)
-            {
-                throw new ArgumentNullException();
-            }
-
-            //check that the name is valid
-            if (!checkName(name))
-            {
-                throw new InvalidNameException();
-            }
-
-            //check if the cell already has content
-            ifCellExists(name);
-
-            //make an empty set to hold all dependents
-            HashSet<string> dependeesDependents = new HashSet<string>();
-
-            //if the string is empty
-            if(content == "")
-            {
-                return dependeesDependents;
-            }
-            //check if the content is a double
-            double outputDouble;
-            if (Double.TryParse(content, out outputDouble))
-            {
-                dependeesDependents = (HashSet<string>)SetCellContents(name, outputDouble);
-            }
-            //check if content starts with an '='
-            else if (content.First() == '=')
-            {
-                //take the = out of content
-                //try to make the content a formula                
-                Formula formula = new Formula(content, Normalize, IsValid);
-                //try add the formula to the cell graph
-                SetCellContents(name, formula);
-            }
-            else
-            {
-                
-                //make a cell that hold a string as its content
-                Cell newCell = new Cell(content);
-                //update cellGraph
-                addToCellGraph(name, newCell);
-                //add the dependee to the list
-                dependeesDependents.Add(name);
-                //get all direct and indirect dependents
-                dependeesDependents = directAndIndirectDependents(name, dependeesDependents);
-            }
-            return dependeesDependents;
-        }
-
-        /// <summary>
-        /// Checks if a cell already exists and if it's contents is a forula. Looks at the formula and deletes
-        /// all variables that it contains in dependencies dependees.
-        /// </summary>
-        /// <param name="name"></param>
-        private void ifCellExists(string name)
-        {
-            //check if cell name already exists
-            if (cellGraph.ContainsKey(name))
-            {
-                //check if the content is a formula
-                object cellContents = GetCellContents(name);
-                if (cellContents is Formula)
-                {
-                    Formula f = (Formula)cellContents;
-                    foreach (string variable in f.GetVariables())
-                    {
-                        cellDependents.RemoveDependency(variable, name);
-                    }
-                }
             }
         }
     }
