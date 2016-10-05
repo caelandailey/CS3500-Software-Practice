@@ -67,11 +67,33 @@ namespace SS
         /// Tries to add a cell with a name that is null, throws invalid name
         /// </summary>
         [TestMethod]
-        [ExpectedException(typeof (ArgumentNullException))]
+        [ExpectedException(typeof (InvalidNameException))]
         public void invalidName5()
         {
             Spreadsheet k = new Spreadsheet();
             k.SetContentsOfCell(null, "ya");
+        }
+
+        /// <summary>
+        /// Adds a cell with a valid name but normalizer makes it invalid, throws invalid name
+        /// </summary>
+        [TestMethod]
+        [ExpectedException(typeof (InvalidNameException))]
+        public void invalidName6()
+        {
+            Spreadsheet k = new Spreadsheet(isValidLastDigit, normalizeReverse, "1.2");
+            k.SetContentsOfCell("e2", "=3");
+        }
+
+        /// <summary>
+        /// Test a name that is all letters, thows invalid name exception
+        /// </summary>
+        [TestMethod]
+        [ExpectedException(typeof(InvalidNameException))]
+        public void invalidName7()
+        {
+            Spreadsheet k = new Spreadsheet();
+            k.SetContentsOfCell("eeee", "EEEE");
         }
 
         /// <summary>
@@ -148,6 +170,80 @@ namespace SS
             k.Save("1.2.xml");
             Assert.IsFalse(k.Changed);
         }
+
+        [TestMethod]
+        public void changed8()
+        {
+            Spreadsheet k = new Spreadsheet();
+            k.SetContentsOfCell("RE2", "");
+            Assert.IsFalse(k.Changed);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [TestMethod()]
+        public void getEmptyCell1()
+        {
+            Spreadsheet s = new Spreadsheet();
+            Assert.AreEqual("", s.GetCellContents("A2"));
+        }
+
+        [TestMethod()]
+        public void getEmptyCell2()
+        {
+            Spreadsheet s = new Spreadsheet();
+            Assert.AreEqual("", s.GetCellValue("A2"));
+        }
+
+        [TestMethod()]
+        [ExpectedException(typeof(InvalidNameException))]
+        public void getNullCell1()
+        {
+            Spreadsheet s = new Spreadsheet();
+            s.GetCellContents(null);
+        }
+
+        [TestMethod()]
+        [ExpectedException(typeof(InvalidNameException))]
+        public void getNullCell2()
+        {
+            Spreadsheet s = new Spreadsheet();
+            s.GetCellValue(null);
+        }
+
+        [TestMethod()]
+        [ExpectedException(typeof(InvalidNameException))]
+        public void invalidGetCellName1()
+        {
+            Spreadsheet s = new Spreadsheet();
+            s.GetCellContents("1AA");
+        }
+
+        [TestMethod()]
+        [ExpectedException(typeof(InvalidNameException))]
+        public void invalidGetCellName2()
+        {
+            Spreadsheet s = new Spreadsheet();
+            s.GetCellValue("1AA");
+        }
+
+        [TestMethod()]
+        public void testRead1()
+        {
+            Spreadsheet k = new Spreadsheet();
+            k.SetContentsOfCell("A2", "4");
+            k.SetContentsOfCell("RE2", "");
+            k.SetContentsOfCell("QI2", "NO");
+
+            k.Save("saveToRead.xml");
+
+            Spreadsheet b = new Spreadsheet("saveToRead.xml", isValidLastDigit, normalizeUpper, "1.2");
+
+            Assert.IsTrue(new HashSet<string>(k.GetNamesOfAllNonemptyCells()).SetEquals(new HashSet<string>(b.GetNamesOfAllNonemptyCells())));
+
+        }
+    
 
         /// <summary>
         /// Takes a string and converts all the letter to uppercase
