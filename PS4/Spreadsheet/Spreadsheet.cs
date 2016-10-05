@@ -11,7 +11,10 @@
 //  1.3                 7:20 PM     Added is valid and normalize
 //
 //  1.4                 11:00 PM    Started saved and get version functions
-//                      
+//
+//  1.5     10/4/16     4:00 PM 
+//
+//                      8:00 PM                          
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -44,9 +47,14 @@ namespace SS
         //create an empty dependency graph
         private DependencyGraph cellDependents;
 
+        /// <summary>
+        /// Checks that a variable name for formula begins with one or more letter and ends with one or more numbers
+        /// </summary>
+        /// <param name="variable"></param>
+        /// <returns></returns>
         private bool IsValid(string variable)
         {
-            if (Regex.IsMatch(variable, @"^[a-zA-Z]+[a-zA-Z]|\d+$", RegexOptions.IgnorePatternWhitespace))
+            if (Regex.IsMatch(variable, @"^[a-zA-Z]+\d+$", RegexOptions.IgnorePatternWhitespace))
             {
                 return true;
             }
@@ -78,6 +86,22 @@ namespace SS
         }
 
         /// <summary>
+        /// Creates a spreadsheet with the information from the file passed in.
+        /// </summary>
+        /// <param name="pathfile"></param>
+        /// <param name="isValid"></param>
+        /// <param name="normalize"></param>
+        /// <param name="version"></param>
+        public Spreadsheet(String pathfile, Func<string, bool> isValid, Func<string, string> normalize, string version) : base(isValid, normalize, version)
+        {
+            cellGraph = new Dictionary<string, Cell>();
+            cellDependents = new DependencyGraph();
+            //read the file
+            readFile(pathfile);
+            Changed = false;
+        }
+
+        /// <summary>
         /// True if this spreadsheet has been modified since it was created or saved                  
         /// (whichever happened most recently); false otherwise.
         /// </summary>
@@ -86,6 +110,23 @@ namespace SS
             get;
             protected set;
 
+        }
+
+        private double Lookup(string variable)
+        {
+            if (cellGraph.ContainsKey(variable))
+            {
+                if ((cellGraph[variable].getContents() is string) || (cellGraph[variable].getValue() is FormulaError))
+                {
+                    throw new ArgumentException();
+                }
+                return (double)GetCellValue(variable);
+            }
+            else
+            {
+                //the variable is not in the spreadsheet, therefor does not have a value
+                throw new ArgumentException();
+            }
         }
 
 
@@ -99,22 +140,39 @@ namespace SS
         /// <returns></returns>
         public override string GetSavedVersion(string filename)
         {
-            using(XmlReader read = XmlReader.Create(filename))
+            string newVersion = "";
+            try
             {
-                while (read.Read())
+                //create a file to read
+                using (XmlReader read = XmlReader.Create(filename))
                 {
-                    if (read.IsStartElement())
+                    //while there is still something to read
+                    while (read.Read())
                     {
-                        switch (read.Name)
+                        //the beginning of the spreadsheet
+                        if (read.IsStartElement())
                         {
-                            case "Spreadsheet":
-                                read.Read();
-                                return read.Value;
+                            //find spreadsheets name
+                            switch (read.Name)
+                            {
+                                //read the spreadsheet element
+                                case "spreadsheet":
+                                    //read the attribute
+                                    newVersion = read.GetAttribute("version");
+                                    break;
+                            }
                         }
+                        break;
                     }
                 }
             }
-            throw new SpreadsheetReadWriteException("Can't find a certain file.");
+            catch (Exception)
+            {
+                //the file could not open
+                throw new SpreadsheetReadWriteException("Invalid file.");
+            }
+
+            return newVersion;
         }
 
         /// <summary>
@@ -123,34 +181,82 @@ namespace SS
         /// <param name="filename"></param>
         public override void Save(string filename)
         {
-            XmlWriterSettings settings = new XmlWriterSettings();
-            settings.Indent = true;
-            settings.IndentChars = (" ");
-
-            using(XmlWriter write = XmlWriter.Create(Version + ".xml", settings))
+            try
             {
-                write.WriteStartDocument();
-                write.WriteStartElement("Spreadsheet");
-                write.WriteStartElement("Cells");
+                //set up xml settings
+                XmlWriterSettings settings = new XmlWriterSettings();
+                settings.Indent = true;
+                settings.IndentChars = (" ");
 
-                //loop through current dependency graph and write it to the file
-                foreach(KeyValuePair<string, Cell> pair in cellGraph)
+                //create the xml file
+                using (XmlWriter write = XmlWriter.Create(filename, settings))
                 {
-                    write.WriteElementString("Name", pair.Key);
-                    object content = GetCellContents(pair.Key);
-                    double whoKnows;
-                    if(double.TryParse((string)content, out whoKnows)|| (content is Formula))
+                    write.WriteStartDocument();
+                    //Spreadsheet element
+                    write.WriteStartElement("Spreadsheet");
+                    write.WriteAttributeString("Version", Version);
+
+
+                    //loop through current dependency graph and write it to the file
+                    foreach (KeyValuePair<string, Cell> pair in cellGraph)
                     {
-                        write.WriteElementString("Content", content.ToString());
+                        //name of the cell
+                        write.WriteElementString("Name", pair.Key);
+                        //get the content of that cell
+                        object content = GetCellContents(pair.Key);
+                        //depending on what type the content is, add it to the xml file                       
+                        if ((content is double) || (content is Formula))
+                        {
+                            write.WriteElementString("Content", content.ToString());
+                        }
+                        else
+                        {
+                            write.WriteElementString("Content", (string)content);
+                        }
                     }
-                    else
+                    write.WriteEndElement();
+
+                    write.WriteEndDocument();
+                    Changed = false;
+                }
+            }
+            catch (Exception)
+            {
+                throw new SpreadsheetReadWriteException("Invalid file");
+            }
+
+        }
+
+        private void readFile(string filename)
+        {
+
+            using (XmlReader read = XmlReader.Create(filename))
+            {
+                while (read.Read())
+                {
+                    if (read.IsStartElement())
                     {
-                        write.WriteElementString("Content", content);
+                        switch (read.Name)
+                        {
+                            //read the spreadsheet element
+                            case "spreadsheet":
+                                //read the attribute
+                                Version = read.GetAttribute("version");
+                                break;
+
+                            case "cell":
+                                read.MoveToElement();
+                                string name = read.Value;
+                                read.MoveToElement();
+                                string content = read.Value;
+
+                                //add this information to spreadsheet
+                                SetContentsOfCell(name, content);
+                                break;
+
+                        }
                     }
                 }
-                write.WriteEndElement();
-                write.WriteEndElement();
-                write.WriteEndDocument();
             }
         }
 
@@ -192,6 +298,15 @@ namespace SS
                 throw new ArgumentNullException();
             }
 
+            //check name is not null
+            if(name == null)
+            {
+                throw new ArgumentNullException();
+            }
+
+            //normalize the name
+            name = Normalize(name);
+
             //check that the name is valid
             if (!checkName(name))
             {
@@ -228,13 +343,8 @@ namespace SS
             else
             {
                 //make a cell that hold a string as its content
-                Cell newCell = new Cell(content);
-                //update cellGraph
-                addToCellGraph(name, newCell);
-                //add the dependee to the list
-                dependeesDependents.Add(name);
-                //get all direct and indirect dependents
-                dependeesDependents = directAndIndirectDependents(name, dependeesDependents);
+                dependeesDependents = (HashSet<string>)SetCellContents(name, (string)content);
+
             }
             Changed = true;
             return dependeesDependents;
@@ -248,6 +358,15 @@ namespace SS
         /// </summary>
         public override object GetCellContents(string name)
         {
+            //check if name is null
+            if (name == null)
+            {
+                throw new ArgumentNullException();
+            }
+
+            //normalize
+            name = Normalize(name);
+
             //check that name is valid
             if (!checkName(name))
             {
@@ -274,29 +393,23 @@ namespace SS
         /// </summary>
         public override object GetCellValue(String name)
         {
-            object content;
-            //try to get cell content wich will check if the name is null or inalid
-            try
+            if (name == null)
             {
-                content = GetCellContents(name);
+                throw new ArgumentNullException();
             }
-            catch (Exception)
+
+            if (!checkName(name))
             {
                 throw new InvalidNameException();
             }
-            //check if content is a double
-            if (content is double)
+            if (cellGraph.ContainsKey(name))
             {
-                return content;
+                return cellGraph[name].getValue();
             }
-            //check if the content is a Formula
-            else if (content is Formula)
+            else
             {
-                Formula formula = new Formula((string)content);
-                return formula.Evaluate(lookup);
+                return "";
             }
-            //return the content as a string
-            return (string)content;
         }
 
 
@@ -331,16 +444,6 @@ namespace SS
         /// </summary>
         protected override ISet<string> SetCellContents(string name, Formula formula)
         {
-            //check for null formula
-            if (formula == null)
-            {
-                throw new ArgumentNullException();
-            }
-            //check for valid name
-            if (!checkName(name))
-            {
-                throw new InvalidNameException();
-            }
 
             //create an empty hashset to hold dependents
             HashSet<string> dependeesDependents = new HashSet<string>();
@@ -380,11 +483,6 @@ namespace SS
         /// </summary>
         protected override ISet<string> SetCellContents(string name, double number)
         {
-            //check that the name is valid
-            if (!checkName(name))
-            {
-                throw new InvalidNameException();
-            }
             //make a set to hold all dependents
             HashSet<string> dependeesDependents = new HashSet<string>();
 
@@ -435,6 +533,7 @@ namespace SS
         private class Cell
         {
             private object content;
+            private object value;
 
             /// <summary>
             /// Constructor for a string
@@ -444,6 +543,7 @@ namespace SS
             public Cell(string cellContent)
             {
                 content = cellContent;
+                value = cellContent;
             }
 
             /// <summary>
@@ -454,6 +554,7 @@ namespace SS
             public Cell(double cellContent)
             {
                 content = cellContent;
+                value = cellContent;
             }
 
             /// <summary>
@@ -464,12 +565,23 @@ namespace SS
             public Cell(Formula cellContent)
             {
                 content = cellContent;
+                //svalue = formulaValue(cellContent);
+
             }
 
             public object getContents()
             {
                 return content;
             }
+
+            public object getValue()
+            {
+                return value;
+            }
+            //public object formulaValue(Formula f)
+            //{
+            //    return f.Evaluate(Lookup);
+            //}
 
         }
 
@@ -530,7 +642,7 @@ namespace SS
             {
                 return false;
             }
-            if (!Regex.IsMatch(name, @"^[a-zA-Z](?: [a-zA-Z]|\d)*$", RegexOptions.IgnorePatternWhitespace))
+            if (!IsValid(name))
             {
                 return false;
             }
@@ -629,6 +741,18 @@ namespace SS
                 }
                 return false;
             }
+        }
+        protected override ISet<String> SetCellContents(String name, String text)
+        {
+            HashSet<string> dependeesDependents = new HashSet<string>();
+            Cell newCell = new Cell(text);
+            //update cellGraph
+            addToCellGraph(name, newCell);
+            //add the dependee to the list
+            dependeesDependents.Add(name);
+            //get all direct and indirect dependents
+            dependeesDependents = directAndIndirectDependents(name, dependeesDependents);
+            return dependeesDependents;
         }
     }
 }
