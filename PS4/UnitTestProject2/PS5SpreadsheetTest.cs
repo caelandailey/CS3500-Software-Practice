@@ -12,11 +12,50 @@ namespace SS
         /// Creates a saved spreadsheet
         /// </summary>
         [TestMethod]
-        public void checkSave()
+        public void checkSave1()
         {
             Spreadsheet k = new Spreadsheet();
             k.SetContentsOfCell("A2", "4.0");
             k.Save("1.1.xml");
+
+            Spreadsheet b = new Spreadsheet("1.1.xml", isValidLastDigit, normalizeUpper, "1.2");
+
+            Assert.IsTrue(new HashSet<string>(k.GetNamesOfAllNonemptyCells()).SetEquals(new HashSet<string>(b.GetNamesOfAllNonemptyCells())));
+
+        }
+
+        /// <summary>
+        /// Save a spreadsheet with nothing in it
+        /// </summary>
+        [TestMethod]
+        public void checkSave2()
+        {
+            Spreadsheet k = new Spreadsheet();
+            k.Save("nothing.xml");
+
+            Spreadsheet b = new Spreadsheet("nothing.xml", isValidLastDigit, normalizeUpper, "1.2");
+
+            Assert.IsTrue(new HashSet<string>(k.GetNamesOfAllNonemptyCells()).SetEquals(new HashSet<string>(b.GetNamesOfAllNonemptyCells())));
+
+        }
+
+        /// <summary>
+        /// Save a spreadsheet that is all formulas
+        /// </summary>
+        [TestMethod]
+        public void checkSave3()
+        {
+            Spreadsheet k = new Spreadsheet(isValidLastDigit, normalizeUpper, "default");
+            k.SetContentsOfCell("e1", "=5 - 8");
+            k.SetContentsOfCell("a1", "=e1 + 2");
+            k.SetContentsOfCell("k13", "=3 + 4");
+
+            k.Save("allFormulas.xml");
+
+            Spreadsheet b = new Spreadsheet("allFormulas.xml", isValidLastDigit, normalizeUpper, "1.2");
+
+            Assert.IsTrue(new HashSet<string>(k.GetNamesOfAllNonemptyCells()).SetEquals(new HashSet<string>(b.GetNamesOfAllNonemptyCells())));
+            
         }
 
         /// <summary>
@@ -97,6 +136,17 @@ namespace SS
         }
 
         /// <summary>
+        /// Sets the content as null, throws null exception
+        /// </summary>
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentNullException))]
+        public void nullContentSet()
+        {
+            Spreadsheet k = new Spreadsheet();
+            k.SetContentsOfCell("g5", null);
+        }
+
+        /// <summary>
         /// Makes a new spreadsheet and checks that change is false
         /// </summary>
         [TestMethod]
@@ -171,6 +221,9 @@ namespace SS
             Assert.IsFalse(k.Changed);
         }
 
+        /// <summary>
+        /// Sets a cell that doesn't have a content, therefor was not changed
+        /// </summary>
         [TestMethod]
         public void changed8()
         {
@@ -180,7 +233,7 @@ namespace SS
         }
 
         /// <summary>
-        /// 
+        /// Get a cells content that has not been added to the cell graph, therefor there is no content
         /// </summary>
         [TestMethod()]
         public void getEmptyCell1()
@@ -189,6 +242,9 @@ namespace SS
             Assert.AreEqual("", s.GetCellContents("A2"));
         }
 
+        /// <summary>
+        /// Gets a cell's value that is not in the cell graph
+        /// </summary>
         [TestMethod()]
         public void getEmptyCell2()
         {
@@ -196,6 +252,9 @@ namespace SS
             Assert.AreEqual("", s.GetCellValue("A2"));
         }
 
+        /// <summary>
+        /// Searches for a content with a null name, throws invalid name exception
+        /// </summary>
         [TestMethod()]
         [ExpectedException(typeof(InvalidNameException))]
         public void getNullCell1()
@@ -204,6 +263,9 @@ namespace SS
             s.GetCellContents(null);
         }
 
+        /// <summary>
+        /// Get the value of a cell by calling null name, throws invalid name exception
+        /// </summary>
         [TestMethod()]
         [ExpectedException(typeof(InvalidNameException))]
         public void getNullCell2()
@@ -212,6 +274,9 @@ namespace SS
             s.GetCellValue(null);
         }
 
+        /// <summary>
+        /// Get the contents of a cell usin an invalid variable, throws invalid name exception
+        /// </summary>
         [TestMethod()]
         [ExpectedException(typeof(InvalidNameException))]
         public void invalidGetCellName1()
@@ -220,6 +285,9 @@ namespace SS
             s.GetCellContents("1AA");
         }
 
+        /// <summary>
+        /// Get the value of a cell with an invalid name, throws invalid name exception
+        /// </summary>
         [TestMethod()]
         [ExpectedException(typeof(InvalidNameException))]
         public void invalidGetCellName2()
@@ -228,6 +296,9 @@ namespace SS
             s.GetCellValue("1AA");
         }
 
+        /// <summary>
+        /// Make sure that the read file method is properly reading and storing the information passed in
+        /// </summary>
         [TestMethod()]
         public void testRead1()
         {
@@ -243,7 +314,195 @@ namespace SS
             Assert.IsTrue(new HashSet<string>(k.GetNamesOfAllNonemptyCells()).SetEquals(new HashSet<string>(b.GetNamesOfAllNonemptyCells())));
 
         }
-    
+
+        /// <summary>
+        /// Makes sure that a cell is not added to spreadsheet if content is empty
+        /// </summary>
+        [TestMethod]
+        public void setEmptyContents()
+        {
+            Spreadsheet k = new Spreadsheet(isValidLastDigit, normalizeUpper, "1.3");
+            k.SetContentsOfCell("aa3", "30");
+            k.SetContentsOfCell("fd2", "");
+
+            Assert.IsTrue(new HashSet<string>(k.GetNamesOfAllNonemptyCells()).SetEquals(new HashSet<string> { "AA3" } ));
+        }
+
+        /// <summary>
+        /// Adds a double that has dependents, checks that dependents were updated
+        /// </summary>
+        [TestMethod]
+        public void setDoubleContents()
+        {
+            Spreadsheet k = new Spreadsheet();
+            k.SetContentsOfCell("a1", "=3+3");
+            k.SetContentsOfCell("b1", "=a1");
+            k.SetContentsOfCell("b2", "=a3");
+
+            Assert.AreEqual(0.0, k.GetCellValue("b2"));
+
+            Assert.IsTrue(new HashSet<string>(k.SetContentsOfCell("a3", "4")).SetEquals(new HashSet<string> {"a3", "b2" }));
+
+            Assert.AreEqual(4.0, k.GetCellValue("b2"));
+        }
+
+        ///// <summary>
+        ///// Adds a string that has dependents, checks dependents value
+        ///// </summary>
+        //[TestMethod]
+        //[ExpectedException(typeof (ArgumentException))]
+        //public void setStringContents()
+        //{
+        //    Spreadsheet k = new Spreadsheet();
+        //    k.SetContentsOfCell("a1", "=3+3");
+        //    k.SetContentsOfCell("b1", "=a1");
+        //    k.SetContentsOfCell("b2", "=a3");
+
+        //    Assert.AreEqual(0.0, k.GetCellValue("b2"));
+
+        //    Assert.IsTrue(new HashSet<string>(k.SetContentsOfCell("a3", "error")).SetEquals(new HashSet<string> { "a3", "b2" }));
+
+        //    k.GetCellValue("b2");
+        //}
+
+        /// <summary>
+        /// Adds a string that has dependents
+        /// </summary>
+        [TestMethod]
+
+        public void setStringContents()
+        {
+            Spreadsheet k = new Spreadsheet();
+            k.SetContentsOfCell("a1", "=3+3");
+            k.SetContentsOfCell("b1", "=a1");
+            k.SetContentsOfCell("b2", "=a3");
+
+            Assert.AreEqual(0.0, k.GetCellValue("b2"));
+
+            Assert.IsTrue(new HashSet<string>(k.SetContentsOfCell("a3", "error")).SetEquals(new HashSet<string> { "a3", "b2" }));
+
+        }
+
+        /// <summary>
+        /// Adds a formula that has dependents, checks dependents value was updated
+        /// </summary>
+        [TestMethod]
+        public void setFormulaContents1()
+        {
+            Spreadsheet k = new Spreadsheet();
+            k.SetContentsOfCell("a1", "=3+3");
+            k.SetContentsOfCell("b1", "=a1");
+            k.SetContentsOfCell("b2", "=a3");
+
+            Assert.AreEqual(0.0, k.GetCellValue("b2"));
+
+            Assert.IsTrue(new HashSet<string>(k.SetContentsOfCell("a3", "=8*4 + a1")).SetEquals(new HashSet<string> { "a3", "b2" }));
+
+            Assert.AreEqual(38.0, k.GetCellValue("b2"));
+        }
+
+        /// <summary>
+        /// Changes a cell with a formula that has dependents already, checks new dependents value was updated
+        /// </summary>
+        [TestMethod]
+        public void setFormulaContents2()
+        {
+            Spreadsheet k = new Spreadsheet();
+            k.SetContentsOfCell("a1", "=3+3");
+            k.SetContentsOfCell("b1", "=a1");
+            k.SetContentsOfCell("b2", "=a3");
+            k.SetContentsOfCell("c3", "=b1");           
+
+            Assert.IsTrue(new HashSet<string>(k.SetContentsOfCell("a1", "=3+3")).SetEquals(new HashSet<string> { "a1", "b1", "c3" }));
+
+            k.SetContentsOfCell("b1", "=a3");
+            
+            Assert.IsTrue(new HashSet<string>(k.SetContentsOfCell("a1", "3")).SetEquals(new HashSet<string> { "a1" }));
+            
+        }
+
+        /// <summary>
+        /// Saves a file whos version is "default"
+        /// </summary>
+        [TestMethod]
+        public void getSaved1()
+        {
+            Spreadsheet k = new Spreadsheet();
+
+            k.Save("default.xml");
+
+            Assert.AreEqual("default", k.GetSavedVersion("default.xml"));
+        }
+
+        /// <summary>
+        /// Saves a file whos version is "1.2"
+        /// </summary>
+        [TestMethod]
+        public void getSaved2()
+        {
+            Spreadsheet k = new Spreadsheet(isValidLastDigit, normalizeReverse, "1.2");
+
+            k.Save("2ndConstructor.xml");
+
+            Assert.AreEqual("1.2", k.GetSavedVersion("2ndConstructor.xml"));
+        }
+
+        /// <summary>
+        /// Saves a file whos version is "default"
+        /// </summary>
+        [TestMethod]
+        public void getSaved3()
+        {
+            Spreadsheet b = new Spreadsheet();
+            b.Save("first.xml");
+
+            Spreadsheet k = new Spreadsheet("first.xml", isValidLastDigit, normalizeReverse, "1.2");
+
+            k.Save("3rdConstructor.xml");
+
+            Assert.AreEqual("default", k.GetSavedVersion("3rdConstructor.xml"));
+        }
+
+        /// <summary>
+        /// Passes in a file that does not have a version to read
+        /// </summary>
+        [TestMethod]
+        [ExpectedException(typeof (SpreadsheetReadWriteException))]
+        public void invalidVersion()
+        {
+            Spreadsheet k = new Spreadsheet();
+            k.GetSavedVersion("invalidFile.xml");
+        }
+
+        [TestMethod()]
+        [ExpectedException(typeof(CircularException))]
+        public void Test16()
+        {
+            Spreadsheet s = new Spreadsheet();
+            s.SetContentsOfCell("A1", "=A2+A3");
+            s.SetContentsOfCell("A3", "=A4+A5");
+            s.SetContentsOfCell("A5", "=A6+A7");
+            s.SetContentsOfCell("A7", "=A1+A1");
+        }
+
+        [TestMethod()]
+        public void Test18()
+        {
+            Spreadsheet s = new Spreadsheet();
+            Assert.IsFalse(s.GetNamesOfAllNonemptyCells().GetEnumerator().MoveNext());
+        }
+
+        [TestMethod()]
+        public void Test35()
+        {
+            Spreadsheet s = new Spreadsheet();
+            ISet<String> cells = new HashSet<string>();
+            for (int i = 1; i < 200; i++)
+            {
+                cells.Add("A" + i);
+                Assert.IsTrue(cells.SetEquals(s.SetContentsOfCell("A" + i, "=A" + (i + 1))));
+            }
+        }
 
         /// <summary>
         /// Takes a string and converts all the letter to uppercase

@@ -101,7 +101,6 @@ namespace SS
         {
             get;
             protected set;
-
         }
 
         private double Lookup(string variable)
@@ -116,8 +115,9 @@ namespace SS
             }
             else
             {
-                //the variable is not in the spreadsheet, therefor does not have a value
-                throw new ArgumentException();
+                //the variable is not in the spreadsheet, therefor its value is zero
+                return 0.0;
+                //throw new ArgumentException();
             }
         }
 
@@ -150,7 +150,7 @@ namespace SS
                                 //read the spreadsheet element
                                 case "spreadsheet":
                                     //read the attribute
-                                    newVersion = read.GetAttribute("version");
+                                    newVersion = read["version"];
                                     break;
                             }
                         }
@@ -161,7 +161,7 @@ namespace SS
             catch (Exception)
             {
                 //the file could not open
-                throw new SpreadsheetReadWriteException("Invalid file.");
+                throw new SpreadsheetReadWriteException("Can not retrieve the version from the file.");
             }
 
             return newVersion;
@@ -185,34 +185,40 @@ namespace SS
                 {
                     write.WriteStartDocument();
                     //Spreadsheet element
-                    write.WriteStartElement("Spreadsheet");
-                    write.WriteAttributeString("Version", Version);
+                    write.WriteStartElement("spreadsheet");
+                    write.WriteAttributeString("version", Version);
 
 
                     //loop through current dependency graph and write it to the file
                     foreach (KeyValuePair<string, Cell> pair in cellGraph)
                     {
                         //make a cell
-                        write.WriteStartElement("Cell");
+                        write.WriteStartElement("cell");
 
                         //name of the cell
-                        write.WriteStartElement("Name");
+                        write.WriteStartElement("name");
                         write.WriteString(pair.Key);
                         write.WriteEndElement();
                         //get the content of that cell
                         object content = GetCellContents(pair.Key);
-                        //depending on what type the content is, add it to the xml file                       
-                        if ((content is double) || (content is Formula))
-                        {
-                            //content is a double or formula
-                            write.WriteStartElement("Content");
+                        //add a double  content element                     
+                        if (content is double)
+                        {                           
+                            write.WriteStartElement("contents");
                             write.WriteString(content.ToString());
+                            write.WriteEndElement();
+                        }
+                        //add a formula content element
+                        else if(content is Formula)
+                        {                            
+                            write.WriteStartElement("contents");                                                                                
+                            write.WriteString("=" + content.ToString());
                             write.WriteEndElement();
                         }
                         else
                         {
                             //content is a string
-                            write.WriteStartElement("Content");
+                            write.WriteStartElement("contents");
                             write.WriteString((string)content);
                             write.WriteEndElement();
                         }
@@ -228,7 +234,7 @@ namespace SS
             }
             catch (Exception)
             {
-                throw new SpreadsheetReadWriteException("Invalid file");
+                throw new SpreadsheetReadWriteException("Can not save file.");
             }
 
         }
@@ -250,20 +256,25 @@ namespace SS
                                     //read the attribute
                                     Version = read["version"];
                                     break;
-
+                                //read a cell
                                 case "cell":
-                                    read.MoveToElement();
+                                    read.ReadToFollowing("name");
+                                    //hold the name
+                                    read.Read();
                                     string name = read.Value;
-                                    read.MoveToElement();
+                                    //hold contents
+                                    read.ReadToFollowing("contents");
+                                    read.Read();
                                     string content = read.Value;
-
+                                    
                                     //add this information to spreadsheet
                                     SetContentsOfCell(name, content);
                                     break;
-                            }
+                            }                       
                         }
                     }
                 }
+
             }
             catch (Exception)
             {
@@ -346,7 +357,7 @@ namespace SS
             else if (content.First() == '=')
             {
                 //take the = out of content
-                content.TrimStart('=');
+                content = content.TrimStart('=');
                 //try to make the content a formula                
                 Formula formula = new Formula(content, Normalize, spreadsheetValid);
                 //try add the formula to the cell graph
@@ -415,6 +426,8 @@ namespace SS
             {
                 throw new InvalidNameException();
             }
+
+            name = Normalize(name);
 
             if (!checkName(name))
             {
@@ -509,7 +522,7 @@ namespace SS
 
             //update cellGraph
             addToCellGraph(name, newCell);
-           
+
             //get all direct and indirect dependents
             dependeesDependents = new HashSet<string>(GetCellsToRecalculate(name));
             return dependeesDependents;
@@ -534,6 +547,10 @@ namespace SS
         /// </summary>
         protected override IEnumerable<string> GetDirectDependents(string name)
         {
+            if(name == null)
+            {
+                throw new ArgumentNullException();
+            }
             //check that the name is valid
             if (!checkName(name))
             {
@@ -608,22 +625,22 @@ namespace SS
                 if (content is Formula)
                 {
                     Formula f = content as Formula;
-                    f.Evaluate(Lookup);
+                    value = f.Evaluate(Lookup);
                 }
 
             }
         }
 
 
-            /// <summary>
-            /// Check if cellGraph(spreadsheet) already contains a key with the name passed in. If it does, update that key
-            /// if not make a new pair in the cellGraph. In other words, it creates a new cell in the spreadsheet.
-            /// </summary>
-            /// <param name="name"></param>
-            /// the name of that cell, which has already been validated
-            /// <param name="newCell"></param>
-            /// holds the contents to be linked to that name passed in
-            private void addToCellGraph(string name, Cell newCell)
+        /// <summary>
+        /// Check if cellGraph(spreadsheet) already contains a key with the name passed in. If it does, update that key
+        /// if not make a new pair in the cellGraph. In other words, it creates a new cell in the spreadsheet.
+        /// </summary>
+        /// <param name="name"></param>
+        /// the name of that cell, which has already been validated
+        /// <param name="newCell"></param>
+        /// holds the contents to be linked to that name passed in
+        private void addToCellGraph(string name, Cell newCell)
         {
             if (!cellGraph.ContainsKey(name))
             {
