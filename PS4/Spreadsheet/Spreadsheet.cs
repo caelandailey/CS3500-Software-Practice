@@ -1,6 +1,6 @@
 ﻿//Written by Karina Biancone, implementing the provided Abstract class for Spreadsheet, October 2016
 //
-//Version 1.4
+//Version 1.9
 //
 //Revision History:
 //  1.1     10/2/16     1:10 PM   Implemented the new setCellContents, getValue, and commented plans for Changed
@@ -12,9 +12,17 @@
 //
 //  1.4                 11:00 PM    Started saved and get version functions
 //
-//  1.5     10/4/16     4:00 PM 
+//  1.5     10/4/16     4:00 PM     Worked on read helper method
 //
-//                      8:00 PM                          
+//                      8:00 PM     Created a way to start updating value and tested save method
+//
+//  1.6     10/5/16     8:00 AM     Made helper functions for updating the value
+//
+//  1.7                 3:00 PM     Finished helper functions, wrote tests for change, and invalid names
+//
+//  1.8                 8:00 PM     Tested all methods until I got over 95% code coverage, tweaking small lines of code
+//
+//  1.9     10/6/16     9:00 PM     Added more comments, a couple more formula tests, and updated readme file
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -48,7 +56,8 @@ namespace SS
         private DependencyGraph cellDependents;
 
         /// <summary>
-        /// Checks that a variable name for formula begins with one or more letter and ends with one or more numbers
+        /// Checks that a variable name for formula begins with one or more letter and ends with one or more numbers,
+        /// also uses the validation passed in from constructor
         /// </summary>
         /// <param name="variable"></param>
         /// <returns></returns>
@@ -62,7 +71,12 @@ namespace SS
         }
 
 
-
+        /// <summary>
+        /// Constructor for spreadsheet, sets the parameters, and sets cellGraph and cellDependents to null
+        /// </summary>
+        /// <param name="isValid"></param>
+        /// <param name="normalize"></param>
+        /// <param name="version"></param>
         public Spreadsheet(Func<string, bool> isValid, Func<string, string> normalize, string version) : base(isValid, normalize, version)
         {
             cellGraph = new Dictionary<string, Cell>();
@@ -73,9 +87,8 @@ namespace SS
         /// <summary>
         /// Constructor for spreadsheet. Makes a fresh Dictionary and depencyGraph
         /// </summary>
-        public Spreadsheet() : this(s => true, n => n, "default")
-        {
-        }
+        public Spreadsheet() : this(s => true, n => n, "default") { }
+        
 
         /// <summary>
         /// Creates a spreadsheet with the information from the file passed in.
@@ -103,21 +116,29 @@ namespace SS
             protected set;
         }
 
+        /// <summary>
+        /// Checks if the Spreadsheet contains the variable passed in from the Formula Evaluator and gets
+        /// its value. If the value is a string, a FormulaError, or is not in the cell graph it will throw an error.
+        /// </summary>
+        /// <param name="variable"></param>
+        /// <returns></returns>
         private double Lookup(string variable)
         {
+            //checks if the variable is in spreadsheet
             if (cellGraph.ContainsKey(variable))
             {
-                if ((cellGraph[variable].getContents() is string) || (cellGraph[variable].getValue() is FormulaError))
+                //checks if the value is a string or formula error
+                if ((cellGraph[variable].getValue() is string) || (cellGraph[variable].getValue() is FormulaError))
                 {
                     throw new ArgumentException();
                 }
+                //returns the value of the variable
                 return (double)GetCellValue(variable);
             }
             else
             {
                 //the variable is not in the spreadsheet, therefor its value is zero
-                return 0.0;
-                //throw new ArgumentException();
+                throw new ArgumentException();
             }
         }
 
@@ -232,6 +253,7 @@ namespace SS
                     Changed = false;
                 }
             }
+            //something went wrong with saving the file
             catch (Exception)
             {
                 throw new SpreadsheetReadWriteException("Can not save file.");
@@ -239,6 +261,11 @@ namespace SS
 
         }
 
+        /// <summary>
+        /// Helper function that reads the xml file passed in. As the file is read spreadsheet is updated with
+        /// the contents it contains.
+        /// </summary>
+        /// <param name="filename"></param>
         private void readFile(string filename)
         {
             try
@@ -276,6 +303,7 @@ namespace SS
                 }
 
             }
+            //something went wrong with reading the file
             catch (Exception)
             {
                 throw new SpreadsheetReadWriteException("Can not read the .xml file given");
@@ -422,21 +450,25 @@ namespace SS
         /// </summary>
         public override object GetCellValue(String name)
         {
+            //check for null
             if (name == null)
             {
                 throw new InvalidNameException();
             }
 
+            ////update name to the normalized name
             name = Normalize(name);
-
+            //check if name is valid
             if (!checkName(name))
             {
                 throw new InvalidNameException();
             }
+            //check for name in the cell graph
             if (cellGraph.ContainsKey(name))
             {
                 return cellGraph[name].getValue();
             }
+            //name was not in spreadsheet
             else
             {
                 return "";
@@ -547,10 +579,13 @@ namespace SS
         /// </summary>
         protected override IEnumerable<string> GetDirectDependents(string name)
         {
+            //check if name is null
             if(name == null)
             {
                 throw new ArgumentNullException();
             }
+            //normalize the name
+            name = Normalize(name);
             //check that the name is valid
             if (!checkName(name))
             {
@@ -561,7 +596,7 @@ namespace SS
         }
 
         /// <summary>
-        /// Creates an object that holds a string, double, or formula as its content
+        /// Creates an object that holds a string, double, or formula as its content and calculates its value
         /// </summary>
         private class Cell
         {
@@ -599,16 +634,28 @@ namespace SS
 
             }
 
+            /// <summary>
+            /// Returns the Cell's contents
+            /// </summary>
+            /// <returns></returns>
             public object getContents()
             {
                 return content;
             }
 
+            /// <summary>
+            /// Returns the Cell's value
+            /// </summary>
+            /// <returns></returns>
             public object getValue()
             {
                 return value;
             }
 
+            /// <summary>
+            /// Calculates the Cell's value
+            /// </summary>
+            /// <param name="Lookup"></param>
             public void updateValue(Func<string, double> Lookup)
             {
                 //if content double, value
@@ -625,9 +672,9 @@ namespace SS
                 if (content is Formula)
                 {
                     Formula f = content as Formula;
+                    //retrieve Evaluate's result
                     value = f.Evaluate(Lookup);
                 }
-
             }
         }
 
@@ -663,10 +710,12 @@ namespace SS
         /// <returns></returns>
         private bool checkName(string name)
         {
-            if (name == "" || name == null)
+            //if name is an empty string
+            if (name == "" )
             {
                 return false;
             }
+            //check if name is valid acording to spreadsheet's validation
             if (!spreadsheetValid(name))
             {
                 return false;
@@ -767,6 +816,13 @@ namespace SS
                 return false;
             }
         }
+
+        /// <summary>
+        /// Set the cell's contents to be a string and return all dependents
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="text"></param>
+        /// <returns></returns>
         protected override ISet<String> SetCellContents(String name, String text)
         {
             HashSet<string> dependeesDependents = new HashSet<string>();

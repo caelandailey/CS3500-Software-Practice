@@ -1,17 +1,10 @@
 ﻿
-Karina Biancone, September 25, 2016
+Karina Biancone, October 6, 2016
 
+I corrected all the errors in PS4 by using the grading tests, I then transfered those corrections to the branch PS5 and went on from
+there.
 
-I updated PS2 on the 29th of September to be 'SpreadsheetUtilites' instead of 'DependencyGraph'
-I am using the PS3 files that were last updated the 22nd of September.
+I first wanted to make sure that SetContentsOfCell was not reapeating any work. I started off calculating the values of cells after they
+had already been made, but then changed it so that it would calculate after adding the cell's contents. I also wanted to approach the save 
+method first to understand then exactly what I would be reading in, when called in the constructor.
 
-My initial steps for the Spreadsheet project was making a Cell class that will hold the content of a string,
-double, or Formula and be able to return that content as an object. I then need a Spreadsheet constructor that
-will initiate my Dictionary(cellGraph) and DependencyGraph(cellDependents).
-
-P.S.
- I do not use 'GetCellsToRecalculate' for my 'SetContent' for a string and double, only formula. This is mainly because I do not need
- to check for a circular dependency when creating those cells, since it is not possible and seemed like extra things to check for no reason.
- I simply made my own helper method that returns all direct and indirect dependents without checking for repeating cell names.
-Also, I tried to update the folder that holds PS3 to say 'PS3' but it still says 'ClassLibrary1'. I'm hoping that because
-I already was marked down for this I won't be again.

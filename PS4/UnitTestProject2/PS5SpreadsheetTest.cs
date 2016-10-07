@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SS;
 using System.Collections.Generic;
 
+
 namespace SS
 {
     [TestClass]
@@ -332,14 +333,14 @@ namespace SS
         /// Adds a double that has dependents, checks that dependents were updated
         /// </summary>
         [TestMethod]
+  
         public void setDoubleContents()
+        
         {
             Spreadsheet k = new Spreadsheet();
             k.SetContentsOfCell("a1", "=3+3");
             k.SetContentsOfCell("b1", "=a1");
             k.SetContentsOfCell("b2", "=a3");
-
-            Assert.AreEqual(0.0, k.GetCellValue("b2"));
 
             Assert.IsTrue(new HashSet<string>(k.SetContentsOfCell("a3", "4")).SetEquals(new HashSet<string> {"a3", "b2" }));
 
@@ -375,9 +376,10 @@ namespace SS
             Spreadsheet k = new Spreadsheet();
             k.SetContentsOfCell("a1", "=3+3");
             k.SetContentsOfCell("b1", "=a1");
+            k.SetContentsOfCell("a3", "2");
             k.SetContentsOfCell("b2", "=a3");
 
-            Assert.AreEqual(0.0, k.GetCellValue("b2"));
+            Assert.AreEqual(2.0, k.GetCellValue("b2"));
 
             Assert.IsTrue(new HashSet<string>(k.SetContentsOfCell("a3", "error")).SetEquals(new HashSet<string> { "a3", "b2" }));
 
@@ -392,10 +394,11 @@ namespace SS
             Spreadsheet k = new Spreadsheet();
             k.SetContentsOfCell("a1", "=3+3");
             k.SetContentsOfCell("b1", "=a1");
+            k.SetContentsOfCell("a3", "7");
             k.SetContentsOfCell("b2", "=a3");
 
-            Assert.AreEqual(0.0, k.GetCellValue("b2"));
-
+            Assert.AreEqual(7.0, k.GetCellValue("b2"));
+            
             Assert.IsTrue(new HashSet<string>(k.SetContentsOfCell("a3", "=8*4 + a1")).SetEquals(new HashSet<string> { "a3", "b2" }));
 
             Assert.AreEqual(38.0, k.GetCellValue("b2"));
@@ -474,26 +477,39 @@ namespace SS
             k.GetSavedVersion("invalidFile.xml");
         }
 
+        /// <summary>
+        /// Tests that a circular dependency is caught
+        /// </summary>
         [TestMethod()]
         [ExpectedException(typeof(CircularException))]
-        public void Test16()
+        public void circularDependency()
         {
             Spreadsheet s = new Spreadsheet();
             s.SetContentsOfCell("A1", "=A2+A3");
             s.SetContentsOfCell("A3", "=A4+A5");
             s.SetContentsOfCell("A5", "=A6+A7");
             s.SetContentsOfCell("A7", "=A1+A1");
+
+            Assert.IsTrue(new HashSet<string>(s.GetNamesOfAllNonemptyCells()).SetEquals(new HashSet<string> { "A1", "A3", "A5" }));
         }
 
+
+        /// <summary>
+        /// Attemps to get names of all cells from an empty spreadsheet
+        /// </summary>
         [TestMethod()]
-        public void Test18()
+        public void getNamesEmpty()
         {
             Spreadsheet s = new Spreadsheet();
             Assert.IsFalse(s.GetNamesOfAllNonemptyCells().GetEnumerator().MoveNext());
         }
 
+
+        /// <summary>
+        /// Adds 98 values to the spreadsheet, which rely on one another
+        /// </summary>
         [TestMethod()]
-        public void Test35()
+        public void stressTest()
         {
             Spreadsheet s = new Spreadsheet();
             ISet<String> cells = new HashSet<string>();
@@ -504,6 +520,162 @@ namespace SS
             }
         }
 
+        /// <summary>
+        /// Tries to get a cell content with a name that is not valid after normalizer
+        /// </summary>
+        [TestMethod]
+        [ExpectedException (typeof (InvalidNameException))]
+        public void invalidNameGet1()
+        {
+            Spreadsheet k = new Spreadsheet(isValidLastDigit, normalizeReverse, "wrong");
+
+            k.GetCellContents("e4");
+        }
+
+        /// <summary>
+        /// Tries to get a cell value with a name that is not valid after normalizer
+        /// </summary>
+        [TestMethod]
+        [ExpectedException(typeof(InvalidNameException))]
+        public void invalidNameGet2()
+        {
+            Spreadsheet k = new Spreadsheet(isValidLastDigit, normalizeReverse, "wrong");
+
+            k.GetCellValue("e4");
+        }
+
+        /// <summary>
+        /// A spreadsheet is created and saved, a new spreadsheet tries to read it but the normalizer
+        /// makes the names invalid
+        /// </summary>
+        [TestMethod]
+        [ExpectedException(typeof (SpreadsheetReadWriteException))]
+        public void readInvalidName()
+        {
+            Spreadsheet k = new Spreadsheet();
+            k.SetContentsOfCell("a1", "=3+3");
+            k.SetContentsOfCell("b1", "=a1");
+            k.SetContentsOfCell("b2", "=a3");
+            k.SetContentsOfCell("c3", "=b1");
+
+            k.Save("forRead.xml");
+
+            Spreadsheet b = new Spreadsheet("forRead.xml", isValidLastDigit, normalizeReverse, "1.2");
+                        
+        }
+
+        /// <summary>
+        /// Tests that a circular dependency is caught for a cell that already contained content
+        /// </summary>
+        [TestMethod()]
+        [ExpectedException(typeof(CircularException))]
+        public void circularDependency2()
+        {
+            Spreadsheet s = new Spreadsheet();
+            s.SetContentsOfCell("A1", "=A2+A3");
+            s.SetContentsOfCell("A3", "=A4+A5");
+            s.SetContentsOfCell("A5", "=A6+A7");
+            s.SetContentsOfCell("A7", "=7");
+
+            s.SetContentsOfCell("A7", "=A1 +2");
+
+            Assert.IsTrue(new HashSet<string>(s.GetNamesOfAllNonemptyCells()).SetEquals(new HashSet<string> { "A1", "A3", "A5", "A7" }));
+
+            Assert.AreEqual(7.0, s.GetCellValue("A7"));
+        }
+
+        /// <summary>
+        /// Adds an empty string as the name to spreadsheet, throws invalid name exception
+        /// </summary>
+        [TestMethod]
+        [ExpectedException(typeof (InvalidNameException))]
+        public void emptyName1()
+        {
+            Spreadsheet k = new Spreadsheet();
+            k.SetContentsOfCell("", "7");
+
+        }
+
+        /// <summary>
+        /// Checks that dependents are updated after changing a cell's content
+        /// </summary>
+        [TestMethod]
+        public void checkDependents()
+        {
+            Spreadsheet k = new Spreadsheet();            
+            k.SetContentsOfCell("b1", "=a1");
+            k.SetContentsOfCell("b2", "=a3");
+            k.SetContentsOfCell("c3", "=b1");
+
+            Assert.IsTrue(new HashSet<string>(k.SetContentsOfCell("a1", "=3+3")).SetEquals(new HashSet<string> { "a1", "b1", "c3" }));
+
+            k.SetContentsOfCell("c3", "2");
+
+            Assert.IsTrue(new HashSet<string>(k.SetContentsOfCell("a1", "=3+3")).SetEquals(new HashSet<string> { "a1", "b1" }));
+
+        }
+
+        /// <summary>
+        /// searches for a value using a name that is a blank string, throws exception
+        /// </summary>
+        [TestMethod]
+        [ExpectedException(typeof(InvalidNameException))]
+        public void emptyName2()
+        {
+            Spreadsheet k = new Spreadsheet();
+            k.SetContentsOfCell("er4", "7");
+            k.GetCellValue("");
+
+        }
+
+        /// <summary>
+        /// Checks depedents for converting a formula to double
+        /// </summary>
+        [TestMethod()]
+        public void convertingFormulaToDouble()
+        {
+            Spreadsheet s = new Spreadsheet();
+            for (int i = 0; i < 500; i++)
+            {
+                s.SetContentsOfCell("A1" + i, "=A1" + (i + 1));
+            }
+            HashSet<string> firstCells = new HashSet<string>();
+            HashSet<string> lastCells = new HashSet<string>();
+            for (int i = 0; i < 250; i++)
+            {
+                firstCells.Add("A1" + i);
+                lastCells.Add("A1" + (i + 250));
+            }
+            Assert.IsTrue(s.SetContentsOfCell("A1249", "25.0").SetEquals(firstCells));
+            Assert.IsTrue(s.SetContentsOfCell("A1499", "0").SetEquals(lastCells));
+        }
+
+        /// <summary>
+        /// Has multiple cell's dependend on one another for the value
+        /// </summary>
+        [TestMethod]
+        public void complicatedValues()
+        {
+            Spreadsheet k = new Spreadsheet();
+
+            
+            k.SetContentsOfCell("A1", "1");
+            k.SetContentsOfCell("a1", "A1");
+            k.SetContentsOfCell("b1", "=A1 +2");
+            k.SetContentsOfCell("c1", "=a2 *2");
+            k.SetContentsOfCell("a2", "=A1 +b1");
+            k.SetContentsOfCell("b2", "=c1*b1");
+            k.SetContentsOfCell("a3", "=A1+c1");
+
+            Assert.AreEqual(3.0, k.GetCellValue("b1"));
+            Assert.AreEqual("A1", k.GetCellValue("a1"));
+            Assert.AreEqual(4.0, k.GetCellValue("a2"));
+            Assert.AreEqual(8.0, k.GetCellValue("c1"));
+            Assert.AreEqual(24.0, k.GetCellValue("b2"));
+            Assert.AreEqual(9.0, k.GetCellValue("a3"));
+        }
+
+        ///////////////////////////
         /// <summary>
         /// Takes a string and converts all the letter to uppercase
         /// </summary>
@@ -548,23 +720,7 @@ namespace SS
             return false;
         }
 
-        /// <summary>
-        /// Checks that a string does not contain any numbers
-        /// </summary>
-        /// <param name="s"></param>
-        /// The token that is read as a variable in the Evaluate method
-        /// <returns></returns>
-        private bool isValidNoDigits(string s)
-        {
-            foreach (char c in s)
-            {
-                if (char.IsDigit(c))
-                {
-                    return false;
-                }
-            }
-            return true;
-        }
+
     }
 
 }
