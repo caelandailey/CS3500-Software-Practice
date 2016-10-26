@@ -103,7 +103,7 @@ namespace SS
             cellDependents = new DependencyGraph();
             //read the file
             readFile(pathfile);
-            Changed = false;
+            
         }
 
         /// <summary>
@@ -281,7 +281,11 @@ namespace SS
                                 //read the spreadsheet element
                                 case "spreadsheet":
                                     //read the attribute
-                                    Version = read["version"];
+                                    if (!Version.Equals(read["version"]))
+                                    {
+                                        throw new Exception();
+                                    }
+                                                                        
                                     break;
                                 //read a cell
                                 case "cell":
@@ -301,14 +305,13 @@ namespace SS
                         }
                     }
                 }
-
+                Changed = false;
             }
             //something went wrong with reading the file
             catch (Exception)
             {
                 throw new SpreadsheetReadWriteException("Can not read the .xml file given");
             }
-
         }
 
 
@@ -373,6 +376,7 @@ namespace SS
             //if the string is empty
             if (content == "")
             {
+                //does have name of cell?
                 return dependeesDependents;
             }
             //check if the content is a double
@@ -757,7 +761,7 @@ namespace SS
         }
 
         /// <summary>
-        /// Checks if a cell already exists and if it's contents is a forula. Looks at the formula and deletes
+        /// Checks if a cell already exists and if it's contents is a formula. Looks at the formula and deletes
         /// all variables that it contains in dependencies dependees.
         /// </summary>
         /// <param name="name"></param>
