@@ -32,12 +32,7 @@ namespace SS
             String value;
             ss.GetSelection(out col, out row);
             ss.GetValue(col, row, out value);
-            if (value == "")
-            {
-                ss.SetValue(col, row, DateTime.Now.ToLocalTime().ToString("T"));
-                ss.GetValue(col, row, out value);
-                MessageBox.Show("Selection: column " + col + " row " + row + " value " + value);
-            }
+            
             cellValue.Text = value;
         }
 
@@ -49,11 +44,38 @@ namespace SS
         {
             int row, col;
             ss.GetSelection(out col, out row);
-            col += 64;
-            cellName.Text = (char)col + row + ":";
+            col += 65;
+            row += 1;
+            
+            cellName.Text = (char)col + "" + (int)row + ":";
+            cellContents.Focus();
         }
 
-        
+        // Deals with the New menu
+        private void newToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // Tell the application context to run the form on the same
+            // thread as the other forms.
+            //DemoApplicationContext.getAppContext().RunForm(new Form1());
+        }
 
+        private void closeToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            //if changed is true
+                //pop up window to tell user the spreadsheet has not been saved
+            Close();
+        }
+
+        private void saveNewToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            //if the file has been saved already
+                //call on the spreadsheet to save the file
+            //create a new save window
+        }
+
+        private void saveAsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            //invoke a new save window
+        }
     }
 }
