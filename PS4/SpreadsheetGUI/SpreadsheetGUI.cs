@@ -77,10 +77,33 @@ namespace SS
             //if changed is true
             if (spreadsheet.Changed)
             {
-                //pop up window to tell user the spreadsheet has not been saved
+                // Initializes the variables to pass to the MessageBox.Show method.
+
+                string message = "Want to save your changes?";
+                string caption = "Unsaved Changes";
+                MessageBoxButtons buttons = MessageBoxButtons.YesNoCancel;
+                DialogResult resultBox;
+
+                // Displays the MessageBox.
+
+                resultBox = MessageBox.Show(message, caption, buttons);
+
+                if (resultBox == DialogResult.Yes)
+                {
+
+                    saveNewToolStripMenuItem.PerformClick();
+
+                }
+                else if (resultBox == DialogResult.No)
+                {
+                    Close();
+                }
+                // No if statement for close since pressing it already closes the form
             }
-                
-            Close();
+            else
+            {
+                Close();
+            }
         }
 
         private void saveNewToolStripMenuItem_Click(object sender, EventArgs e)
@@ -125,6 +148,7 @@ namespace SS
         {
             int col, row;
             spreadsheetPanel1.GetSelection(out col, out row);
+            spreadsheet.SetContentsOfCell(cellName.Text, cellContents.Text);
             spreadsheetPanel1.SetValue(col, row, cellContents.Text);
             //add the contents to the spreadsheet graph
                 //spreadsheet.SetCellContents(cellContent.Text);
