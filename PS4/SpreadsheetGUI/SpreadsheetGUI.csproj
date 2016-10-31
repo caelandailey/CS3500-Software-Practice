@@ -33,6 +33,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Spreadsheet">
+      <HintPath>..\Spreadsheet\bin\Debug\Spreadsheet.dll</HintPath>
+    </Reference>
     <Reference Include="SpreadsheetPanel">
       <HintPath>..\Resources\Libraries\SpreadsheetPanel.dll</HintPath>
     </Reference>
