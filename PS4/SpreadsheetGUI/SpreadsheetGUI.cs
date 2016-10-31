@@ -149,7 +149,9 @@ namespace SS
             int col, row;
             spreadsheetPanel1.GetSelection(out col, out row);
             spreadsheet.SetContentsOfCell(cellName.Text, cellContents.Text);
-            spreadsheetPanel1.SetValue(col, row, cellContents.Text);
+            //spreadsheetPanel1.SetValue(col, row, cellContents.Text);
+
+
             //add the contents to the spreadsheet graph
                 //spreadsheet.SetCellContents(cellContent.Text);
             //update value?
@@ -158,6 +160,11 @@ namespace SS
             displayValue(spreadsheetPanel1);
         }
 
-
+        private void existingFileToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog openFileDialog1 = new OpenFileDialog();
+            // openFiles
+            // same as save?
+        }
     }
 }
