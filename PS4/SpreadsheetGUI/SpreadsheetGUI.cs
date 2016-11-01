@@ -64,13 +64,6 @@ namespace SS
             cellContents.Focus();
         }
 
-        // Deals with the New menu
-        private void newToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            // Tell the application context to run the form on the same
-            // thread as the other forms.
-            //DemoApplicationContext.getAppContext().RunForm(new Form1());
-        }
 
         private void closeToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -149,7 +142,9 @@ namespace SS
             int col, row;
             spreadsheetPanel1.GetSelection(out col, out row);
             spreadsheet.SetContentsOfCell(cellName.Text, cellContents.Text);
-            //spreadsheetPanel1.SetValue(col, row, cellContents.Text);
+            //Console.WriteLine(cellName.Text + cellContents.Text);
+            //Console.Read();
+            spreadsheetPanel1.SetValue(col, row, cellContents.Text);
 
 
             //add the contents to the spreadsheet graph
@@ -160,11 +155,43 @@ namespace SS
             displayValue(spreadsheetPanel1);
         }
 
+        // Deals with the New menu
+        private void newToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // Tell the application context to run the form on the same
+            // thread as the other forms.
+            //DemoApplicationContext.getAppContext().RunForm(new Form1());
+        }
+
         private void existingFileToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            Stream myStream = null;
             OpenFileDialog openFileDialog1 = new OpenFileDialog();
-            // openFiles
-            // same as save?
+
+            openFileDialog1.InitialDirectory = "c:\\";
+            openFileDialog1.Filter = "All files (*.*)|*.*|sprd files (*.sprd)|*.sprd";
+            openFileDialog1.FilterIndex = 2;
+            openFileDialog1.RestoreDirectory = true;
+
+            if (openFileDialog1.ShowDialog() == DialogResult.OK)
+            {
+                try
+                {
+                    if ((myStream = openFileDialog1.OpenFile()) != null)
+                    {
+                        using (myStream)
+                        {
+                            // Load file
+                            // Create new spreadsheet?
+                            
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Error: Could not read file from disk. Original error: " + ex.Message);
+                }
+            }
         }
     }
 }
