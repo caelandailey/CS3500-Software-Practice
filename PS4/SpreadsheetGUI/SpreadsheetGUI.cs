@@ -119,7 +119,7 @@ namespace SS
 
         private void saveAsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Stream myStream;
+           
             SaveFileDialog saveFileDialog1 = new SaveFileDialog();
 
             saveFileDialog1.Filter = "All files (*.*)|*.*|sprd files (*.sprd)|*.sprd";
@@ -129,15 +129,15 @@ namespace SS
 
             if (saveFileDialog1.ShowDialog() == DialogResult.OK)
             {
-                if ((myStream = saveFileDialog1.OpenFile()) != null)
-                {
+               
                     //save the file path
                     filePath = saveFileDialog1.FileName;
                     //save in spreadsheet
+                 
                     spreadsheet.Save(filePath);
                     // Code to write the stream goes here.
-                    myStream.Close();
-                }
+                    
+                
             }
         }
 
@@ -145,6 +145,7 @@ namespace SS
         {
             int col, row;
             spreadsheetPanel1.GetSelection(out col, out row);
+
             updateCells(spreadsheet.SetContentsOfCell(cellName.Text, cellContents.Text));
             
 
@@ -160,10 +161,6 @@ namespace SS
         {
             foreach (string t in cells)
             {
-                Console.WriteLine(spreadsheet.GetCellContents(t));
-                Console.WriteLine(spreadsheet.GetCellValue(t));
-                Console.Read();
-                
                 spreadsheetPanel1.SetValue(getColumn(t)-1, getRow(t)-1, spreadsheet.GetCellValue(t).ToString());
             }
         }
@@ -201,13 +198,10 @@ namespace SS
 
                 if (resultBox == DialogResult.Yes)
                 {
-
                     saveNewToolStripMenuItem.PerformClick();
-
-
                 }
             }
-            Stream myStream = null;
+
             OpenFileDialog openFileDialog1 = new OpenFileDialog();
 
             openFileDialog1.InitialDirectory = "c:\\";
@@ -219,16 +213,9 @@ namespace SS
             {
                 try
                 {
-                    if ((myStream = openFileDialog1.OpenFile()) != null)
-                    {
-                        using (myStream)
-                        {
-                            // Load file
-                            spreadsheet = new Spreadsheet(openFileDialog1.FileName, s => true, s => s.ToUpper(), "ps6");
-                            updateCells(spreadsheet.GetNamesOfAllNonemptyCells());
-
-                        }
-                    }
+                     // Load file
+                     spreadsheet = new Spreadsheet(openFileDialog1.FileName, s => true, s => s.ToUpper(), "ps6");
+                     updateCells(spreadsheet.GetNamesOfAllNonemptyCells());
                 }
                 catch (Exception ex)
                 {
