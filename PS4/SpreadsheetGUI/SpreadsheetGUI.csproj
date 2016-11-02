@@ -33,9 +33,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Spreadsheet">
-      <HintPath>..\Spreadsheet\bin\Debug\Spreadsheet.dll</HintPath>
-    </Reference>
     <Reference Include="SpreadsheetPanel">
       <HintPath>..\Resources\Libraries\SpreadsheetPanel.dll</HintPath>
     </Reference>
@@ -84,6 +81,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Spreadsheet\Spreadsheet.csproj">
+      <Project>{cd2849e0-c6e4-4269-b4b2-5e9762ae9f8d}</Project>
+      <Name>Spreadsheet</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

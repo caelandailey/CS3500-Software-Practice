@@ -6,6 +6,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -47,6 +48,8 @@ namespace SS
             value = spreadsheet.GetCellValue(cellName.Text).ToString();
 
             cellValue.Text = value;
+            cellContents.Text = spreadsheet.GetCellContents(cellName.Text).ToString();
+            cellContents.Select(cellContents.Text.Length, 0);
         }
 
         /// <summary>
@@ -85,6 +88,7 @@ namespace SS
                 {
 
                     saveNewToolStripMenuItem.PerformClick();
+                    
 
                 }
                 else if (resultBox == DialogResult.No)
@@ -141,20 +145,39 @@ namespace SS
         {
             int col, row;
             spreadsheetPanel1.GetSelection(out col, out row);
-            spreadsheet.SetContentsOfCell(cellName.Text, cellContents.Text);
-            //Console.WriteLine(cellName.Text + cellContents.Text);
-            //Console.Read();
-            spreadsheetPanel1.SetValue(col, row, cellContents.Text);
+            updateCells(spreadsheet.SetContentsOfCell(cellName.Text, cellContents.Text));
+            
 
-
-            //add the contents to the spreadsheet graph
-                //spreadsheet.SetCellContents(cellContent.Text);
             //update value?
                 
-            cellContents.Text = "";
+            //cellContents.Text = "";
+            //cellContents.Select(cellContents.Text.Length, 0); // Not sure how we need selecting rules set up? 
+           
             displayValue(spreadsheetPanel1);
         }
 
+        private void updateCells(IEnumerable<string> cells)
+        {
+            foreach (string t in cells)
+            {
+                Console.WriteLine(spreadsheet.GetCellContents(t));
+                Console.WriteLine(spreadsheet.GetCellValue(t));
+                Console.Read();
+                
+                spreadsheetPanel1.SetValue(getColumn(t)-1, getRow(t)-1, spreadsheet.GetCellValue(t).ToString());
+            }
+        }
+     
+
+        private int getRow(String name)
+        {
+            return Convert.ToInt32(name.Substring(1, name.Length-1));
+        }
+
+        private int getColumn(String name)
+        {
+            return char.ToUpper(name[0]) - 64;
+        }
         // Deals with the New menu
         private void newToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -165,6 +188,25 @@ namespace SS
 
         private void existingFileToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (spreadsheet.Changed)
+            {
+                string message = "Want to save your changes?";
+                string caption = "Unsaved Changes";
+                MessageBoxButtons buttons = MessageBoxButtons.YesNoCancel;
+                DialogResult resultBox;
+
+                // Displays the MessageBox.
+
+                resultBox = MessageBox.Show(message, caption, buttons);
+
+                if (resultBox == DialogResult.Yes)
+                {
+
+                    saveNewToolStripMenuItem.PerformClick();
+
+
+                }
+            }
             Stream myStream = null;
             OpenFileDialog openFileDialog1 = new OpenFileDialog();
 
@@ -182,8 +224,9 @@ namespace SS
                         using (myStream)
                         {
                             // Load file
-                            // Create new spreadsheet?
-                            
+                            spreadsheet = new Spreadsheet(openFileDialog1.FileName, s => true, s => s.ToUpper(), "ps6");
+                            updateCells(spreadsheet.GetNamesOfAllNonemptyCells());
+
                         }
                     }
                 }
