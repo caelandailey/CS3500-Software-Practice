@@ -71,19 +71,19 @@
             this.cellValue.Enabled = false;
             this.cellValue.Location = new System.Drawing.Point(55, 27);
             this.cellValue.Name = "cellValue";
-            this.cellValue.Size = new System.Drawing.Size(123, 20);
+            this.cellValue.Size = new System.Drawing.Size(206, 20);
             this.cellValue.TabIndex = 3;
             // 
             // cellContents
             // 
-            this.cellContents.Location = new System.Drawing.Point(184, 27);
+            this.cellContents.Location = new System.Drawing.Point(267, 26);
             this.cellContents.Name = "cellContents";
             this.cellContents.Size = new System.Drawing.Size(209, 20);
             this.cellContents.TabIndex = 4;
             // 
             // enterButton
             // 
-            this.enterButton.Location = new System.Drawing.Point(410, 24);
+            this.enterButton.Location = new System.Drawing.Point(482, 24);
             this.enterButton.Name = "enterButton";
             this.enterButton.Size = new System.Drawing.Size(61, 23);
             this.enterButton.TabIndex = 5;
@@ -107,19 +107,23 @@
             this.newToolStripMenuItem,
             this.existingFileToolStripMenuItem});
             this.openToolStripMenuItem.Name = "openToolStripMenuItem";
-            this.openToolStripMenuItem.Size = new System.Drawing.Size(103, 22);
+            this.openToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.openToolStripMenuItem.Text = "Open";
             // 
             // newToolStripMenuItem
             // 
             this.newToolStripMenuItem.Name = "newToolStripMenuItem";
-            this.newToolStripMenuItem.Size = new System.Drawing.Size(135, 22);
+            this.newToolStripMenuItem.ShortcutKeyDisplayString = "";
+            this.newToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.N)));
+            this.newToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
             this.newToolStripMenuItem.Text = "New";
+            this.newToolStripMenuItem.Click += new System.EventHandler(this.newToolStripMenuItem_Click);
             // 
             // existingFileToolStripMenuItem
             // 
             this.existingFileToolStripMenuItem.Name = "existingFileToolStripMenuItem";
-            this.existingFileToolStripMenuItem.Size = new System.Drawing.Size(135, 22);
+            this.existingFileToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.O)));
+            this.existingFileToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
             this.existingFileToolStripMenuItem.Text = "Existing File";
             this.existingFileToolStripMenuItem.Click += new System.EventHandler(this.existingFileToolStripMenuItem_Click);
             // 
@@ -129,27 +133,31 @@
             this.saveNewToolStripMenuItem,
             this.saveAsToolStripMenuItem});
             this.saveToolStripMenuItem.Name = "saveToolStripMenuItem";
-            this.saveToolStripMenuItem.Size = new System.Drawing.Size(103, 22);
+            this.saveToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.saveToolStripMenuItem.Text = "Save";
             // 
             // saveNewToolStripMenuItem
             // 
             this.saveNewToolStripMenuItem.Name = "saveNewToolStripMenuItem";
-            this.saveNewToolStripMenuItem.Size = new System.Drawing.Size(114, 22);
+            this.saveNewToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S)));
+            this.saveNewToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.saveNewToolStripMenuItem.Text = "Save";
             this.saveNewToolStripMenuItem.Click += new System.EventHandler(this.saveNewToolStripMenuItem_Click);
             // 
             // saveAsToolStripMenuItem
             // 
             this.saveAsToolStripMenuItem.Name = "saveAsToolStripMenuItem";
-            this.saveAsToolStripMenuItem.Size = new System.Drawing.Size(114, 22);
+            this.saveAsToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)(((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Alt) 
+            | System.Windows.Forms.Keys.S)));
+            this.saveAsToolStripMenuItem.Size = new System.Drawing.Size(177, 22);
             this.saveAsToolStripMenuItem.Text = "Save As";
             this.saveAsToolStripMenuItem.Click += new System.EventHandler(this.saveAsToolStripMenuItem_Click);
             // 
             // closeToolStripMenuItem
             // 
             this.closeToolStripMenuItem.Name = "closeToolStripMenuItem";
-            this.closeToolStripMenuItem.Size = new System.Drawing.Size(103, 22);
+            this.closeToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.F1;
+            this.closeToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.closeToolStripMenuItem.Text = "Close";
             this.closeToolStripMenuItem.Click += new System.EventHandler(this.closeToolStripMenuItem_Click);
             // 
@@ -173,6 +181,7 @@
             // 
             // SpreadsheetGUI
             // 
+            this.AcceptButton = this.enterButton;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(625, 369);
@@ -183,6 +192,7 @@
             this.Controls.Add(this.cellName);
             this.Controls.Add(this.spreadsheetPanel1);
             this.Controls.Add(this.menuStrip1);
+            this.KeyPreview = true;
             this.MainMenuStrip = this.menuStrip1;
             this.Name = "SpreadsheetGUI";
             this.Text = "Form1";

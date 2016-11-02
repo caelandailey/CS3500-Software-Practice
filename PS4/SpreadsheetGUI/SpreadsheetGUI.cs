@@ -68,13 +68,17 @@ namespace SS
         }
 
 
+        /// <summary>
+        /// Closes out of the spreadsheet after close button is clicked.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void closeToolStripMenuItem_Click(object sender, EventArgs e)
         {
             //if changed is true
             if (spreadsheet.Changed)
             {
                 // Initializes the variables to pass to the MessageBox.Show method.
-
                 string message = "Want to save your changes?";
                 string caption = "Unsaved Changes";
                 MessageBoxButtons buttons = MessageBoxButtons.YesNoCancel;
@@ -86,9 +90,7 @@ namespace SS
 
                 if (resultBox == DialogResult.Yes)
                 {
-
-                    saveNewToolStripMenuItem.PerformClick();
-                    
+                    saveNewToolStripMenuItem.PerformClick();                    
 
                 }
                 else if (resultBox == DialogResult.No)
@@ -103,8 +105,14 @@ namespace SS
             }
         }
 
+        /// <summary>
+        /// Saves a spreadsheet, if it has not been saved yet it will call on save as function
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void saveNewToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            
             //if the file has not been saved
             if (filePath == null)
             {
@@ -117,6 +125,11 @@ namespace SS
             }           
         }
 
+        /// <summary>
+        /// Finds a location to save the spreadsheet.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void saveAsToolStripMenuItem_Click(object sender, EventArgs e)
         {
            
@@ -126,37 +139,61 @@ namespace SS
             saveFileDialog1.FilterIndex = 2;
             saveFileDialog1.RestoreDirectory = true;
 
-
             if (saveFileDialog1.ShowDialog() == DialogResult.OK)
-            {
-               
+            {               
                     //save the file path
                     filePath = saveFileDialog1.FileName;
                     //save in spreadsheet
                  
                     spreadsheet.Save(filePath);
-                    // Code to write the stream goes here.
-                    
+                    // Code to write the stream goes here.              
                 
             }
         }
 
+        /// <summary>
+        /// Takes the text in the contents box and applies it to the spreadsheet
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void enterButton_Click(object sender, EventArgs e)
         {
             int col, row;
             spreadsheetPanel1.GetSelection(out col, out row);
 
+            try
+            {
             updateCells(spreadsheet.SetContentsOfCell(cellName.Text, cellContents.Text));
-            
+            }
+                //check for Circular Dependency
+            catch (CircularException)
+            {
+                string message = "This fomula causes a circular dependency error.";
+                string caption = "Error";
+                MessageBoxButtons button = MessageBoxButtons.OK;
+                DialogResult errorBox;
 
-            //update value?
-                
-            //cellContents.Text = "";
-            //cellContents.Select(cellContents.Text.Length, 0); // Not sure how we need selecting rules set up? 
-           
+                errorBox = MessageBox.Show(message, caption, button);        
+            }
+            //check for format exception
+            catch (FormatException)
+            {
+                string message = "This fomula cannot be performed.";
+                string caption = "Error";
+                MessageBoxButtons button = MessageBoxButtons.OK;
+                DialogResult errorBox;
+
+                errorBox = MessageBox.Show(message, caption, button);
+            }                                
+            //update the value for that specific cell
             displayValue(spreadsheetPanel1);
         }
 
+
+        /// <summary>
+        /// Updates all cell's values
+        /// </summary>
+        /// <param name="cells"></param>
         private void updateCells(IEnumerable<string> cells)
         {
             foreach (string t in cells)
@@ -175,13 +212,9 @@ namespace SS
         {
             return char.ToUpper(name[0]) - 64;
         }
-        // Deals with the New menu
-        private void newToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            // Tell the application context to run the form on the same
-            // thread as the other forms.
-            //DemoApplicationContext.getAppContext().RunForm(new Form1());
-        }
+
+
+        
 
         private void existingFileToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -223,5 +256,13 @@ namespace SS
                 }
             }
         }
+
+        private void newToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // Tell the application context to run the form on the same
+            // thread as the other forms.
+            DemoApplicationContext.getAppContext().RunForm(new SpreadsheetGUI());
+        }
     }
+    
 }
