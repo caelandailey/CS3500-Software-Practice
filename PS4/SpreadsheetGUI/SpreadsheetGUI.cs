@@ -15,22 +15,21 @@ namespace SS
 {
     public partial class SpreadsheetGUI : Form
     {
-        //create spreadsheet
+        // Create spreadsheet
         private AbstractSpreadsheet spreadsheet;
 
-        //a file path
+        //Track the file path, if empty then file has not been saved. Easy way to track if file has been saved before.
         private string filePath;
 
-        //construct gui
+        // Construct GUI
         public SpreadsheetGUI()
         {
-            InitializeComponent();
+            InitializeComponent(); // Required method for designer support
 
-            spreadsheet = new Spreadsheet(s => true, s => s.ToUpper(), "ps6");
+            spreadsheet = new Spreadsheet(s => true, s => s.ToUpper(), "ps6"); // Create spreadsheet
 
-            spreadsheetPanel1.SelectionChanged += displaySelection;
+            spreadsheetPanel1.SelectionChanged += displaySelection; // If there's a selection changed then update selection and value
             spreadsheetPanel1.SelectionChanged += displayValue;
-            
         }
 
         /// <summary>
@@ -39,17 +38,13 @@ namespace SS
         /// <param name="ss"></param>
         private void displayValue(SpreadsheetPanel ss)
         {
-            int row, col;
-            String value;
-            String contents;
-            ss.GetSelection(out col, out row);
-            ss.GetValue(col, row, out contents);
+            int row, col; // Initialize variables. getSelection uses 'out', need to create variables before.
+            ss.GetSelection(out col, out row); // Find where we want to display the value
 
-            value = spreadsheet.GetCellValue(cellName.Text).ToString();
+            cellValue.Text = spreadsheet.GetCellValue(cellName.Text).ToString(); // Set the value textBox to the value
+            cellContents.Text = spreadsheet.GetCellContents(cellName.Text).ToString(); // Set the contents textBox to the value
 
-            cellValue.Text = value;
-            cellContents.Text = spreadsheet.GetCellContents(cellName.Text).ToString();
-            cellContents.Select(cellContents.Text.Length, 0);
+            cellContents.Select(cellContents.Text.Length, 0); // Set the contents textBox cursor to the end of the contents
         }
 
         /// <summary>
@@ -58,13 +53,14 @@ namespace SS
         /// <param name="ss"></param>
         private void displaySelection(SpreadsheetPanel ss)
         {
-            int row, col;
+            int row, col; // Initialize row and col for the getSelection 'out'
             ss.GetSelection(out col, out row);
-            col += 65;
-            row += 1;                     
+
+            col += 65; // Increase by 65 since it starts at 0. Col are letters
+            row += 1;  // Increase by 1 since it's a number, starts at 0 and we want it at 1.                   
             
-            cellName.Text = (char)col + "" + (int)row;
-            cellContents.Focus();
+            cellName.Text = (char)col + "" + (int)row; // Set cell name to the row and col
+            cellContents.Focus(); // Set the foucs to the contents textBox
         }
 
 
@@ -75,33 +71,29 @@ namespace SS
         /// <param name="e"></param>
         private void closeToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            //if changed is true
-            if (spreadsheet.Changed)
+            if (spreadsheet.Changed) // If the spreadsheet as been changed or edited at all
             {
                 // Initializes the variables to pass to the MessageBox.Show method.
                 string message = "Want to save your changes?";
                 string caption = "Unsaved Changes";
-                MessageBoxButtons buttons = MessageBoxButtons.YesNoCancel;
-                DialogResult resultBox;
+                MessageBoxButtons buttons = MessageBoxButtons.YesNoCancel; // Sets the buttons on the message
+                DialogResult resultBox; // Initialize dialog menu
 
-                // Displays the MessageBox.
+                resultBox = MessageBox.Show(message, caption, buttons); // Show the message
 
-                resultBox = MessageBox.Show(message, caption, buttons);
-
-                if (resultBox == DialogResult.Yes)
+                if (resultBox == DialogResult.Yes) // If yes is pressed, "Yes I want to save before I close"
                 {
-                    saveNewToolStripMenuItem.PerformClick();                    
-
+                    saveNewToolStripMenuItem.PerformClick(); // Save, this method handles if file has saved before              
                 }
-                else if (resultBox == DialogResult.No)
+                else if (resultBox == DialogResult.No) // If user doesn't want to save before closing
                 {
-                    Close();
+                    Close(); // End program
                 }
                 // No if statement for close since pressing it already closes the form
             }
             else
             {
-                Close();
+                Close(); // If no changes, then no need to save. Close program.
             }
         }
 
@@ -112,16 +104,20 @@ namespace SS
         /// <param name="e"></param>
         private void saveNewToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            
-            //if the file has not been saved
-            if (filePath == null)
+            if (filePath == null) // File not saved before, do save as
             {
                 saveAsToolStripMenuItem.PerformClick();
             }
-            //call on the spreadsheet to save the file
-            else
+            else // File path exists, save it
             {
-                spreadsheet.Save(filePath);
+                try
+                {
+                    spreadsheet.Save(filePath);
+                }
+                catch (Exception error) // If an error throw message 
+                {
+                    MessageBox.Show(error.Message); // Show error message
+                }
             }           
         }
 
@@ -132,22 +128,22 @@ namespace SS
         /// <param name="e"></param>
         private void saveAsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-           
-            SaveFileDialog saveFileDialog1 = new SaveFileDialog();
+            SaveFileDialog saveFileDialog = new SaveFileDialog(); // Create file dialog
 
-            saveFileDialog1.Filter = "All files (*.*)|*.*|sprd files (*.sprd)|*.sprd";
-            saveFileDialog1.FilterIndex = 2;
-            saveFileDialog1.RestoreDirectory = true;
+            saveFileDialog.Filter = "All files (*.*)|*.*|sprd files (*.sprd)|*.sprd"; // Set files
+            saveFileDialog.FilterIndex = 2; // Set default file
+            saveFileDialog.RestoreDirectory = true; // Restore directory before closing
 
-            if (saveFileDialog1.ShowDialog() == DialogResult.OK)
-            {               
-                    //save the file path
-                    filePath = saveFileDialog1.FileName;
-                    //save in spreadsheet
-                 
-                    spreadsheet.Save(filePath);
-                    // Code to write the stream goes here.              
-                
+            if (saveFileDialog.ShowDialog() == DialogResult.OK) // If the 'ok' button is pressed
+            {
+                try
+                {
+                    spreadsheet.Save(saveFileDialog.FileName); // Take in the filepath and save it to the path
+                }
+                catch (Exception error)
+                {
+                    MessageBox.Show(error.Message); // Show error message
+                }
             }
         }
 
@@ -159,125 +155,152 @@ namespace SS
         private void enterButton_Click(object sender, EventArgs e)
         {
             int col, row;
-            spreadsheetPanel1.GetSelection(out col, out row);
+            spreadsheetPanel1.GetSelection(out col, out row); // Get selection
 
-            try
+            try // If there's an error, we want to catch it
             {
-            updateCells(spreadsheet.SetContentsOfCell(cellName.Text, cellContents.Text));
+                updateCells(spreadsheet.SetContentsOfCell(cellName.Text, cellContents.Text)); // Set contents and then update cells
             }
-            catch (Exception ex)
+            catch (Exception ex) // If there's an error
             {
-                MessageBox.Show(ex.Message);
+                MessageBox.Show(ex.Message); // Show error message
             }
             
-            //update the value for that specific cell
-            displayValue(spreadsheetPanel1);
+            displayValue(spreadsheetPanel1); // Update the value for that specific cell
         }
 
 
         /// <summary>
-        /// Updates all cell's values
+        /// Helper method that takes in a list of cells that need to be updated and updates the values in the GUI
         /// </summary>
         /// <param name="cells"></param>
         private void updateCells(IEnumerable<string> cells)
         {
             foreach (string t in cells)
             {
-                spreadsheetPanel1.SetValue(getColumn(t)-1, getRow(t)-1, spreadsheet.GetCellValue(t).ToString());
+                spreadsheetPanel1.SetValue(getColumn(t), getRow(t), spreadsheet.GetCellValue(t).ToString());
             }
         }
      
 
+        /// <summary>
+        /// Helper method that takes in a cell name and returns the row
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
         private int getRow(String name)
         {
-            return Convert.ToInt32(name.Substring(1, name.Length-1));
+            return (Convert.ToInt32(name.Substring(1, name.Length-1)) - 1); // Subtract 1 since the panel starts at 0,0 NOT at 1,1
         }
 
+        /// <summary>
+        /// Helper method that takes in a cell name and returns the row
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
         private int getColumn(String name)
         {
-            return char.ToUpper(name[0]) - 64;
+            return ((char.ToUpper(name[0]) - 64) - 1); // Subtract 1 since the panel starts at 0,0 NOT at 1,1
         }
 
-
-        
-
+        /// <summary>
+        /// Opening a file overrides the current window. Replace spreadsheet with new spreadsheet. Check if wanting to save first
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void existingFileToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (spreadsheet.Changed)
             {
+                // Configure message box
                 string message = "Want to save your changes?";
                 string caption = "Unsaved Changes";
                 MessageBoxButtons buttons = MessageBoxButtons.YesNoCancel;
                 DialogResult resultBox;
 
-                // Displays the MessageBox.
+                resultBox = MessageBox.Show(message, caption, buttons); // Display message
 
-                resultBox = MessageBox.Show(message, caption, buttons);
-
-                if (resultBox == DialogResult.Yes)
+                if (resultBox == DialogResult.Yes) // If they want to save
                 {
-                    saveNewToolStripMenuItem.PerformClick();
+                    saveNewToolStripMenuItem.PerformClick(); // Save it, this method handles if changes have been made or not.
                 }
             }
 
-            OpenFileDialog openFileDialog1 = new OpenFileDialog();
+            OpenFileDialog openFileDialog = new OpenFileDialog(); // Create dialog object
 
-            openFileDialog1.InitialDirectory = "c:\\";
-            openFileDialog1.Filter = "All files (*.*)|*.*|sprd files (*.sprd)|*.sprd";
-            openFileDialog1.FilterIndex = 2;
-            openFileDialog1.RestoreDirectory = true;
+            // Initialize dialog properties
+            openFileDialog.InitialDirectory = "c:\\";
+            openFileDialog.Filter = "All files (*.*)|*.*|sprd files (*.sprd)|*.sprd";
+            openFileDialog.FilterIndex = 2;
+            openFileDialog.RestoreDirectory = true;
 
-            if (openFileDialog1.ShowDialog() == DialogResult.OK)
+            if (openFileDialog.ShowDialog() == DialogResult.OK) // User pressed open
             {
                 try
                 {
                     resetView(spreadsheet.GetNamesOfAllNonemptyCells()); // Reset all cells to empty
-                    spreadsheet = new Spreadsheet(openFileDialog1.FileName, s => true, s => s.ToUpper(), "ps6"); // Load new spreadsheet values
-                     updateCells(spreadsheet.GetNamesOfAllNonemptyCells()); // Update view
+                    spreadsheet = new Spreadsheet(openFileDialog.FileName, s => true, s => s.ToUpper(), "ps6"); // Load new spreadsheet values
+                    updateCells(spreadsheet.GetNamesOfAllNonemptyCells()); // Update view with new values
                 }
-                catch (Exception ex)
+                catch (Exception error) // If any errors with loading file
                 {
-                    MessageBox.Show("Error: Could not read file from disk. Original error: " + ex.Message);
+                    MessageBox.Show("Could not read file from disk: " + error.Message);
                 }
             }
         }
 
+        /// <summary>
+        /// Helper method that resets the view no an empty spreadsheet. Needed for opening a file and overriding the current file. 
+        /// Takes in list of cells to reset to empty
+        /// </summary>
+        /// <param name="cells"></param>
         private void resetView(IEnumerable<string> cells)
         {
             foreach (string t in cells)
             {
-                spreadsheetPanel1.SetValue(getColumn(t) - 1, getRow(t) - 1, "");
+                spreadsheetPanel1.SetValue(getColumn(t), getRow(t), ""); // Set to empty
             }
-            cellContents.Text = "";
-            spreadsheetPanel1.SetSelection(0, 0); // Need to update where the panel thinks it is, thinks its at old cords. 
-            updateSelection();
+
+            cellContents.Text = ""; // Reset content box
+            spreadsheetPanel1.SetSelection(0, 0); // Reset to default selection
+            updateSelection(); // Updated selection in GUI
         }
 
+        /// <summary>
+        /// Button that creates a new form. Opens entirely new spreadsheet.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void newToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            // Tell the application context to run the form on the same
-            // thread as the other forms.
-            DemoApplicationContext.getAppContext().RunForm(new SpreadsheetGUI());
+            DemoApplicationContext.getAppContext().RunForm(new SpreadsheetGUI());  // Tell the application context to run the form on the same thread as the other forms
         }
 
-
-
+        /// <summary>
+        /// Button that opens a help menu that describes the program. Help menu is there incase user gets confused. 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void helpButton_Click(object sender, EventArgs e)
         {
-            string message = "This program is a spreadsheet. You can add formulas, numbers or text to a cell.";
-           
-            MessageBoxButtons button = MessageBoxButtons.OK;
-            DialogResult helpBox;
+            string message = "This program is a spreadsheet. You can add formulas, numbers or text to a cell."; // Help info
+            MessageBoxButtons button = MessageBoxButtons.OK; // Set buttons
+            DialogResult helpBox; // Initialize dialog object
 
-            helpBox = MessageBox.Show(message,"", button);
+            helpBox = MessageBox.Show(message,"", button); // Show message with properties
         }
 
+        /// <summary>
+        /// Method that proccesses arrow keys. Overrides key since other objects such as scroll bar can mess with it
+        /// </summary>
+        /// <param name="msg"></param>
+        /// <param name="keyData"></param>
+        /// <returns></returns>
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
-            //capture up arrow key
-            if (keyData == Keys.Up)
+            if (keyData == Keys.Up) // If 'up' arrow key is pressed
             {
-                moveUpKey();
+                moveUpKey(); // Handle work in another method
             }
 
             if (keyData == Keys.Down)
@@ -295,35 +318,44 @@ namespace SS
                 moveRightKey();
             }
 
-            return base.ProcessCmdKey(ref msg, keyData);
+            return base.ProcessCmdKey(ref msg, keyData); // If none of the given keys were pressed
         }
 
+        /// <summary>
+        /// Helper method to handle the code for the move up key
+        /// </summary>
+        /// <returns></returns>
         private bool moveUpKey()
         {
             int row, col;
-            spreadsheetPanel1.GetSelection(out col, out row);
+            spreadsheetPanel1.GetSelection(out col, out row); // Get selection
 
-            if (row == 0)
+            if (row == 0) // If the row is at the top, then do nothing
             {
                 return true;
             }
-            else
+            else // If not at top then move up 1
             {
                 spreadsheetPanel1.SetSelection(col, row - 1);
                 updateSelection();
             }
             return true;
         }
+
+        /// <summary>
+        /// Helper method to handle the code for the move left arrow key
+        /// </summary>
+        /// <returns></returns>
         private bool moveLeftKey()
         {
             int row, col;
-            spreadsheetPanel1.GetSelection(out col, out row);
+            spreadsheetPanel1.GetSelection(out col, out row); // Get selection
 
-            if (col == 0)
+            if (col == 0) // If all the way to the left, do nothing
             {
                 return true;
             }
-            else
+            else // Space open on the left, move left
             {
                 spreadsheetPanel1.SetSelection(col-1, row );
                 updateSelection();
@@ -331,16 +363,20 @@ namespace SS
             return true;
         }
 
+        /// <summary>
+        /// Helper method to handle the code for the move right key
+        /// </summary>
+        /// <returns></returns>
         private bool moveRightKey()
         {
             int row, col;
-            spreadsheetPanel1.GetSelection(out col, out row);
+            spreadsheetPanel1.GetSelection(out col, out row); // Get selection
 
-            if (col == 25)
+            if (col == 25) // If all the way to the right, do nothing. Panel goes from 0-25 (26 spaces)
             {
                 return true;
             }
-            else
+            else // Go right
             {
                 spreadsheetPanel1.SetSelection(col + 1, row);
                 updateSelection();
@@ -348,16 +384,20 @@ namespace SS
             return true;
         }
 
+        /// <summary>
+        /// Helper method to handle the down arrow key
+        /// </summary>
+        /// <returns></returns>
         private bool moveDownKey()
         {
             int row, col;
-            spreadsheetPanel1.GetSelection(out col, out row);
+            spreadsheetPanel1.GetSelection(out col, out row); // Get selection
 
-            if (row == 98)
+            if (row == 98) // If at the bottom do nothing. Panel goes from 0-98 (99 spaces)
             {
                 return true;
             }
-            else
+            else // Go down 
             {
                 spreadsheetPanel1.SetSelection(col, row + 1);
                 updateSelection();
@@ -365,10 +405,14 @@ namespace SS
             return true;
         }
 
+        /// <summary>
+        /// Helper method to update the selection GUI. 
+        /// Used whenever spreadsheet.panel.setSelection is used since the GUI doesnt update on its own. 
+        /// </summary>
         private void updateSelection()
         {
-            displaySelection(spreadsheetPanel1);
-            displayValue(spreadsheetPanel1);
+            displaySelection(spreadsheetPanel1); // Update selection GUI
+            displayValue(spreadsheetPanel1); // Update value GUI
         }
     }
     
