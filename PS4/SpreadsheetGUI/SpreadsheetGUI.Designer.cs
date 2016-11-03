@@ -43,7 +43,7 @@
             this.closeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.helpProvider1 = new System.Windows.Forms.HelpProvider();
-            this.Help = new System.Windows.Forms.TextBox();
+            this.helpButton = new System.Windows.Forms.Button();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -107,7 +107,7 @@
             this.newToolStripMenuItem,
             this.existingFileToolStripMenuItem});
             this.openToolStripMenuItem.Name = "openToolStripMenuItem";
-            this.openToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.openToolStripMenuItem.Size = new System.Drawing.Size(122, 22);
             this.openToolStripMenuItem.Text = "Open";
             // 
             // newToolStripMenuItem
@@ -133,14 +133,14 @@
             this.saveNewToolStripMenuItem,
             this.saveAsToolStripMenuItem});
             this.saveToolStripMenuItem.Name = "saveToolStripMenuItem";
-            this.saveToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.saveToolStripMenuItem.Size = new System.Drawing.Size(122, 22);
             this.saveToolStripMenuItem.Text = "Save";
             // 
             // saveNewToolStripMenuItem
             // 
             this.saveNewToolStripMenuItem.Name = "saveNewToolStripMenuItem";
             this.saveNewToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S)));
-            this.saveNewToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.saveNewToolStripMenuItem.Size = new System.Drawing.Size(177, 22);
             this.saveNewToolStripMenuItem.Text = "Save";
             this.saveNewToolStripMenuItem.Click += new System.EventHandler(this.saveNewToolStripMenuItem_Click);
             // 
@@ -157,7 +157,7 @@
             // 
             this.closeToolStripMenuItem.Name = "closeToolStripMenuItem";
             this.closeToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.F1;
-            this.closeToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.closeToolStripMenuItem.Size = new System.Drawing.Size(122, 22);
             this.closeToolStripMenuItem.Text = "Close";
             this.closeToolStripMenuItem.Click += new System.EventHandler(this.closeToolStripMenuItem_Click);
             // 
@@ -171,13 +171,15 @@
             this.menuStrip1.TabIndex = 6;
             this.menuStrip1.Text = "menuStrip1";
             // 
-            // Help
+            // helpButton
             // 
-            this.Help.Location = new System.Drawing.Point(67, 3);
-            this.Help.Name = "Help";
-            this.Help.Size = new System.Drawing.Size(41, 20);
-            this.Help.TabIndex = 7;
-            this.Help.Text = "Help";
+            this.helpButton.Location = new System.Drawing.Point(55, 1);
+            this.helpButton.Name = "helpButton";
+            this.helpButton.Size = new System.Drawing.Size(75, 23);
+            this.helpButton.TabIndex = 7;
+            this.helpButton.Text = "Help";
+            this.helpButton.UseVisualStyleBackColor = true;
+            this.helpButton.Click += new System.EventHandler(this.helpButton_Click);
             // 
             // SpreadsheetGUI
             // 
@@ -185,7 +187,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(625, 369);
-            this.Controls.Add(this.Help);
+            this.Controls.Add(this.helpButton);
             this.Controls.Add(this.enterButton);
             this.Controls.Add(this.cellContents);
             this.Controls.Add(this.cellValue);
@@ -220,7 +222,7 @@
         private System.Windows.Forms.ToolStripMenuItem closeToolStripMenuItem;
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.HelpProvider helpProvider1;
-        private System.Windows.Forms.TextBox Help;
+        private System.Windows.Forms.Button helpButton;
     }
 }
 

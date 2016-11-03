@@ -165,26 +165,11 @@ namespace SS
             {
             updateCells(spreadsheet.SetContentsOfCell(cellName.Text, cellContents.Text));
             }
-                //check for Circular Dependency
-            catch (CircularException)
+            catch (Exception ex)
             {
-                string message = "This fomula causes a circular dependency error.";
-                string caption = "Error";
-                MessageBoxButtons button = MessageBoxButtons.OK;
-                DialogResult errorBox;
-
-                errorBox = MessageBox.Show(message, caption, button);        
+                MessageBox.Show(ex.Message);
             }
-            //check for format exception
-            catch (FormatException)
-            {
-                string message = "This fomula cannot be performed.";
-                string caption = "Error";
-                MessageBoxButtons button = MessageBoxButtons.OK;
-                DialogResult errorBox;
-
-                errorBox = MessageBox.Show(message, caption, button);
-            }                                
+            
             //update the value for that specific cell
             displayValue(spreadsheetPanel1);
         }
@@ -246,9 +231,9 @@ namespace SS
             {
                 try
                 {
-                     // Load file
-                     spreadsheet = new Spreadsheet(openFileDialog1.FileName, s => true, s => s.ToUpper(), "ps6");
-                     updateCells(spreadsheet.GetNamesOfAllNonemptyCells());
+                    resetView(spreadsheet.GetNamesOfAllNonemptyCells()); // Reset all cells to empty
+                    spreadsheet = new Spreadsheet(openFileDialog1.FileName, s => true, s => s.ToUpper(), "ps6"); // Load new spreadsheet values
+                     updateCells(spreadsheet.GetNamesOfAllNonemptyCells()); // Update view
                 }
                 catch (Exception ex)
                 {
@@ -257,11 +242,133 @@ namespace SS
             }
         }
 
+        private void resetView(IEnumerable<string> cells)
+        {
+            foreach (string t in cells)
+            {
+                spreadsheetPanel1.SetValue(getColumn(t) - 1, getRow(t) - 1, "");
+            }
+            cellContents.Text = "";
+            spreadsheetPanel1.SetSelection(0, 0); // Need to update where the panel thinks it is, thinks its at old cords. 
+            updateSelection();
+        }
+
         private void newToolStripMenuItem_Click(object sender, EventArgs e)
         {
             // Tell the application context to run the form on the same
             // thread as the other forms.
             DemoApplicationContext.getAppContext().RunForm(new SpreadsheetGUI());
+        }
+
+
+
+        private void helpButton_Click(object sender, EventArgs e)
+        {
+            string message = "This program is a spreadsheet. You can add formulas, numbers or text to a cell.";
+           
+            MessageBoxButtons button = MessageBoxButtons.OK;
+            DialogResult helpBox;
+
+            helpBox = MessageBox.Show(message,"", button);
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            //capture up arrow key
+            if (keyData == Keys.Up)
+            {
+                moveUpKey();
+            }
+
+            if (keyData == Keys.Down)
+            {
+                moveDownKey();
+            }
+
+            if (keyData == Keys.Left)
+            {
+                moveLeftKey();
+            }
+
+            if (keyData == Keys.Right)
+            {
+                moveRightKey();
+            }
+
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        private bool moveUpKey()
+        {
+            int row, col;
+            spreadsheetPanel1.GetSelection(out col, out row);
+
+            if (row == 0)
+            {
+                return true;
+            }
+            else
+            {
+                spreadsheetPanel1.SetSelection(col, row - 1);
+                updateSelection();
+            }
+            return true;
+        }
+        private bool moveLeftKey()
+        {
+            int row, col;
+            spreadsheetPanel1.GetSelection(out col, out row);
+
+            if (col == 0)
+            {
+                return true;
+            }
+            else
+            {
+                spreadsheetPanel1.SetSelection(col-1, row );
+                updateSelection();
+            }
+            return true;
+        }
+
+        private bool moveRightKey()
+        {
+            int row, col;
+            spreadsheetPanel1.GetSelection(out col, out row);
+
+            if (col == 25)
+            {
+                return true;
+            }
+            else
+            {
+                spreadsheetPanel1.SetSelection(col + 1, row);
+                updateSelection();
+            }
+            return true;
+        }
+
+        private bool moveDownKey()
+        {
+            int row, col;
+            spreadsheetPanel1.GetSelection(out col, out row);
+
+            if (row == 98)
+            {
+                return true;
+            }
+            else
+            {
+                spreadsheetPanel1.SetSelection(col, row + 1);
+                updateSelection();
+            }
+            return true;
+        }
+
+        private void updateSelection()
+        {
+            displaySelection(spreadsheetPanel1);
+            displayValue(spreadsheetPanel1);
         }
     }
     
