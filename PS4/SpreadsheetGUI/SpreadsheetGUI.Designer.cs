@@ -30,8 +30,8 @@
         {
             this.spreadsheetPanel1 = new SS.SpreadsheetPanel();
             this.cellName = new System.Windows.Forms.TextBox();
-            this.cellValue = new System.Windows.Forms.TextBox();
-            this.cellContents = new System.Windows.Forms.TextBox();
+            this.valueTextBox = new System.Windows.Forms.TextBox();
+            this.contentsTextBox = new System.Windows.Forms.TextBox();
             this.enterButton = new System.Windows.Forms.Button();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.openToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -66,20 +66,20 @@
             this.cellName.TabIndex = 2;
             this.cellName.Text = "A1";
             // 
-            // cellValue
+            // valueTextBox
             // 
-            this.cellValue.Enabled = false;
-            this.cellValue.Location = new System.Drawing.Point(55, 27);
-            this.cellValue.Name = "cellValue";
-            this.cellValue.Size = new System.Drawing.Size(206, 20);
-            this.cellValue.TabIndex = 3;
+            this.valueTextBox.Enabled = false;
+            this.valueTextBox.Location = new System.Drawing.Point(55, 27);
+            this.valueTextBox.Name = "valueTextBox";
+            this.valueTextBox.Size = new System.Drawing.Size(206, 20);
+            this.valueTextBox.TabIndex = 3;
             // 
-            // cellContents
+            // contentsTextBox
             // 
-            this.cellContents.Location = new System.Drawing.Point(267, 26);
-            this.cellContents.Name = "cellContents";
-            this.cellContents.Size = new System.Drawing.Size(209, 20);
-            this.cellContents.TabIndex = 4;
+            this.contentsTextBox.Location = new System.Drawing.Point(267, 26);
+            this.contentsTextBox.Name = "contentsTextBox";
+            this.contentsTextBox.Size = new System.Drawing.Size(209, 20);
+            this.contentsTextBox.TabIndex = 0;
             // 
             // enterButton
             // 
@@ -189,8 +189,8 @@
             this.ClientSize = new System.Drawing.Size(625, 369);
             this.Controls.Add(this.helpButton);
             this.Controls.Add(this.enterButton);
-            this.Controls.Add(this.cellContents);
-            this.Controls.Add(this.cellValue);
+            this.Controls.Add(this.contentsTextBox);
+            this.Controls.Add(this.valueTextBox);
             this.Controls.Add(this.cellName);
             this.Controls.Add(this.spreadsheetPanel1);
             this.Controls.Add(this.menuStrip1);
@@ -198,6 +198,7 @@
             this.MainMenuStrip = this.menuStrip1;
             this.Name = "SpreadsheetGUI";
             this.Text = "Form1";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.SpreadsheetGUI_FormClosing);
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
             this.ResumeLayout(false);
@@ -209,8 +210,8 @@
 
         private SS.SpreadsheetPanel spreadsheetPanel1;
         private System.Windows.Forms.TextBox cellName;
-        private System.Windows.Forms.TextBox cellValue;
-        private System.Windows.Forms.TextBox cellContents;
+        private System.Windows.Forms.TextBox valueTextBox;
+        private System.Windows.Forms.TextBox contentsTextBox;
         private System.Windows.Forms.Button enterButton;
         private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem openToolStripMenuItem;

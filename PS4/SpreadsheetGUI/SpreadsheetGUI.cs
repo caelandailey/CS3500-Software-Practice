@@ -1,4 +1,13 @@
-﻿using System;
+﻿/// Author: Caelan Dailey & Karina Biancone
+/// This GUI project uses SpreadsheetPanel to represent a spreadsheet which can hold numbers, strings, and calculate formulas in the cell selected. There is a 
+/// help window that explains shortcuts and how to navigate the spreadsheet in order to enter contents in the cell. The file menu strip gives options on opening a new
+/// spreadsheet, an existing spreadsheet, saving a spreadsheet, saving a new spreasheet, or simply closing the spreadsheet. The spreadsheet ranges in cells from A-Z and 1-99.
+/// 
+/// CS 3500 PS6
+/// 11/3/2016
+///
+
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -41,12 +50,28 @@ namespace SS
             int row, col; // Initialize variables. getSelection uses 'out', need to create variables before.
             ss.GetSelection(out col, out row); // Find where we want to display the value
 
-            cellValue.Text = spreadsheet.GetCellValue(cellName.Text).ToString(); // Set the value textBox to the value
-            cellContents.Text = spreadsheet.GetCellContents(cellName.Text).ToString(); // Set the contents textBox to the value
+            valueTextBox.Text = spreadsheet.GetCellValue(cellName.Text).ToString(); // Set the value textBox to the value
 
-            cellContents.Select(cellContents.Text.Length, 0); // Set the contents textBox cursor to the end of the contents
+            //check if the value is a formula error
+            checkFormulaError(col, row);
+
+            contentsTextBox.Text = spreadsheet.GetCellContents(cellName.Text).ToString(); // Set the contents textBox to the value
+            contentsTextBox.Select(contentsTextBox.Text.Length, 0); // Set the contents textBox cursor to the end of the contents
         }
 
+        /// <summary>
+        /// Helper method to check if the cells value is a formula error in order to set the text to invalid error, which is our own text error
+        /// </summary>
+        /// <param name="col"></param>
+        /// <param name="row"></param>
+        private void checkFormulaError(int col, int row)
+        {
+            if (!(spreadsheet.GetCellValue(cellName.Text) is double) && !(spreadsheet.GetCellValue(cellName.Text) is string))
+            {
+                valueTextBox.Text = "Invalid error.";
+                spreadsheetPanel1.SetValue(col, row, "Invalid error.");
+            }
+        }
         /// <summary>
         /// Shows the cell's name selected
         /// </summary>
@@ -58,9 +83,9 @@ namespace SS
 
             col += 65; // Increase by 65 since it starts at 0. Col are letters
             row += 1;  // Increase by 1 since it's a number, starts at 0 and we want it at 1.                   
-            
+
             cellName.Text = (char)col + "" + (int)row; // Set cell name to the row and col
-            cellContents.Focus(); // Set the foucs to the contents textBox
+            contentsTextBox.Focus(); // Set the foucs to the contents textBox
         }
 
 
@@ -71,30 +96,7 @@ namespace SS
         /// <param name="e"></param>
         private void closeToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (spreadsheet.Changed) // If the spreadsheet as been changed or edited at all
-            {
-                // Initializes the variables to pass to the MessageBox.Show method.
-                string message = "Want to save your changes?";
-                string caption = "Unsaved Changes";
-                MessageBoxButtons buttons = MessageBoxButtons.YesNoCancel; // Sets the buttons on the message
-                DialogResult resultBox; // Initialize dialog menu
-
-                resultBox = MessageBox.Show(message, caption, buttons); // Show the message
-
-                if (resultBox == DialogResult.Yes) // If yes is pressed, "Yes I want to save before I close"
-                {
-                    saveNewToolStripMenuItem.PerformClick(); // Save, this method handles if file has saved before              
-                }
-                else if (resultBox == DialogResult.No) // If user doesn't want to save before closing
-                {
-                    Close(); // End program
-                }
-                // No if statement for close since pressing it already closes the form
-            }
-            else
-            {
-                Close(); // If no changes, then no need to save. Close program.
-            }
+            this.Close();
         }
 
         /// <summary>
@@ -114,11 +116,13 @@ namespace SS
                 {
                     spreadsheet.Save(filePath);
                 }
-                catch (Exception error) // If an error throw message 
+                catch (Exception) // If an error throw message 
                 {
-                    MessageBox.Show(error.Message); // Show error message
+                    string caption = "Save Error";
+                    string message = "Error occured when attempting to save the file. Please check that the file is valid";
+                    MessageBox.Show(message, caption, MessageBoxButtons.OK); // Show error message
                 }
-            }           
+            }
         }
 
         /// <summary>
@@ -138,11 +142,14 @@ namespace SS
             {
                 try
                 {
-                    spreadsheet.Save(saveFileDialog.FileName); // Take in the filepath and save it to the path
+                    filePath = saveFileDialog.FileName;
+                    spreadsheet.Save(filePath); // Take in the filepath and save it to the path
                 }
-                catch (Exception error)
+                catch (Exception)
                 {
-                    MessageBox.Show(error.Message); // Show error message
+                    string caption = "Save Error";
+                    string message = "Error occured when attempting to save the file. Please check that the file is valid";
+                    MessageBox.Show(message, caption, MessageBoxButtons.OK); // Show error message
                 }
             }
         }
@@ -159,13 +166,33 @@ namespace SS
 
             try // If there's an error, we want to catch it
             {
-                updateCells(spreadsheet.SetContentsOfCell(cellName.Text, cellContents.Text)); // Set contents and then update cells
+                updateCells(spreadsheet.SetContentsOfCell(cellName.Text, contentsTextBox.Text)); // Set contents and then update cells
             }
-            catch (Exception ex) // If there's an error
+            catch (FormatException) // If there's an error
             {
-                MessageBox.Show(ex.Message); // Show error message
+                string caption = "Format Error";
+                string message = "There's is an error with the format of the formula.";
+                MessageBox.Show(message, caption, MessageBoxButtons.OK); // Show error message
             }
-            
+            catch (CircularException)
+            {
+                string caption = "Circular Dependency Error";
+                string message = "There is either an indirect or direct dependency on another cell's value.";
+                MessageBox.Show(message, caption, MessageBoxButtons.OK); // Show error message
+            }
+            catch (InvalidNameException)
+            {
+                string caption = "Invalid Name Error";
+                string message = "The name given is invalid for this spreadsheet.";
+                MessageBox.Show(message, caption, MessageBoxButtons.OK); // Show error message
+            }
+            catch
+            {
+                string caption = "Invalid Formula";
+                string message = "This formula is invalid!";
+                MessageBox.Show(message, caption, MessageBoxButtons.OK); // Show error message
+            }
+
             displayValue(spreadsheetPanel1); // Update the value for that specific cell
         }
 
@@ -178,10 +205,14 @@ namespace SS
         {
             foreach (string t in cells)
             {
-                spreadsheetPanel1.SetValue(getColumn(t), getRow(t), spreadsheet.GetCellValue(t).ToString());
+                int col, row;
+                col = getColumn(t);
+                row = getRow(t);
+                spreadsheetPanel1.SetValue(col, row, spreadsheet.GetCellValue(t).ToString());
+                checkFormulaError(col, row);
             }
         }
-     
+
 
         /// <summary>
         /// Helper method that takes in a cell name and returns the row
@@ -190,7 +221,7 @@ namespace SS
         /// <returns></returns>
         private int getRow(String name)
         {
-            return (Convert.ToInt32(name.Substring(1, name.Length-1)) - 1); // Subtract 1 since the panel starts at 0,0 NOT at 1,1
+            return (Convert.ToInt32(name.Substring(1, name.Length - 1)) - 1); // Subtract 1 since the panel starts at 0,0 NOT at 1,1
         }
 
         /// <summary>
@@ -240,6 +271,7 @@ namespace SS
                 {
                     resetView(spreadsheet.GetNamesOfAllNonemptyCells()); // Reset all cells to empty
                     spreadsheet = new Spreadsheet(openFileDialog.FileName, s => true, s => s.ToUpper(), "ps6"); // Load new spreadsheet values
+                    filePath = openFileDialog.FileName;
                     updateCells(spreadsheet.GetNamesOfAllNonemptyCells()); // Update view with new values
                 }
                 catch (Exception error) // If any errors with loading file
@@ -261,7 +293,7 @@ namespace SS
                 spreadsheetPanel1.SetValue(getColumn(t), getRow(t), ""); // Set to empty
             }
 
-            cellContents.Text = ""; // Reset content box
+            contentsTextBox.Text = ""; // Reset content box
             spreadsheetPanel1.SetSelection(0, 0); // Reset to default selection
             updateSelection(); // Updated selection in GUI
         }
@@ -283,11 +315,16 @@ namespace SS
         /// <param name="e"></param>
         private void helpButton_Click(object sender, EventArgs e)
         {
-            string message = "This program is a spreadsheet. You can add formulas, numbers or text to a cell."; // Help info
+            // Create the help message
+            string caption = "Spreadsheet Information";
+            string message = "This program is a spreadsheet. You can add formulas, numbers or text to a cell. When you press enter on the keyboard the enter button on the spreadsheet is invoked." + "\n" + "\n" + "Here are some other short keys that might be useful."; // Help info
+            string shortcutMessage = "\n" + "Close: F1" + "\n" + "Save: Ctrl+S" + "\n" + "Save as: Crtl+Alt+S" + "\n" + "Open new: Ctrl+N" + "\n" + "Open existing file: Ctrl+O";
+            string keyMessage = "\n" + "\n" + "To navigate to a different cell you may use the arrow keys such as down, left, up, right, or you may select a cell with a mouse.";
+            string textBoxMessage = "\n" + "\n" + "The text box on the top left shows the value of the selected cell. The text box to the right shows the contents of the selected cell.";
             MessageBoxButtons button = MessageBoxButtons.OK; // Set buttons
             DialogResult helpBox; // Initialize dialog object
 
-            helpBox = MessageBox.Show(message,"", button); // Show message with properties
+            helpBox = MessageBox.Show(message + shortcutMessage + keyMessage + textBoxMessage, caption, button); // Show message with properties
         }
 
         /// <summary>
@@ -357,7 +394,7 @@ namespace SS
             }
             else // Space open on the left, move left
             {
-                spreadsheetPanel1.SetSelection(col-1, row );
+                spreadsheetPanel1.SetSelection(col - 1, row);
                 updateSelection();
             }
             return true;
@@ -378,7 +415,7 @@ namespace SS
             }
             else // Go right
             {
-                spreadsheetPanel1.SetSelection(col + 1, row);
+                spreadsheetPanel1.SetSelection(col + 1, row); 
                 updateSelection();
             }
             return true;
@@ -414,6 +451,33 @@ namespace SS
             displaySelection(spreadsheetPanel1); // Update selection GUI
             displayValue(spreadsheetPanel1); // Update value GUI
         }
+
+        /// <summary>
+        /// Executes when the form closes. If the spreadsheet has changed at all then it asks the user if they want to save, discard, or cancel. 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void SpreadsheetGUI_FormClosing(object sender, FormClosingEventArgs e )
+        {
+            if (spreadsheet.Changed) // If the spreadsheet as been changed or edited at all
+            {
+                // Initializes the variables to pass to the MessageBox.Show method.
+                string message = "Want to save your changes?";
+                string caption = "Unsaved Changes";
+                MessageBoxButtons buttons = MessageBoxButtons.YesNoCancel; // Sets the buttons on the message
+                DialogResult resultBox; // Initialize dialog menu
+
+                resultBox = MessageBox.Show(message, caption, buttons); // Show the message
+
+                if (resultBox == DialogResult.Yes) // If yes is pressed, "Yes I want to save before I close"
+                {
+                    saveNewToolStripMenuItem.PerformClick(); // Save, this method handles if file has saved before              
+                }
+                else if (resultBox == DialogResult.Cancel) // If user pressed cancel
+                {
+                    e.Cancel = true; // Set cancel to true, cancel the closing
+                }
+            }
+        }
     }
-    
 }
