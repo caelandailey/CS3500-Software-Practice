@@ -9,6 +9,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatServer", "ClassLibrary1
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetworkControl", "ClassLibrary2\NetworkControl.csproj", "{56829827-ACC0-49D0-A35F-ECCAF9CF01B4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "World", "World\World.csproj", "{8F36DBB6-7AE5-47C9-8ABB-55661C3C30B9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WindowsFormsApplication1", "WindowsFormsApplication1\WindowsFormsApplication1.csproj", "{DC23BFFD-4FDD-4567-9348-6AE971920388}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +31,14 @@ Global
 		{56829827-ACC0-49D0-A35F-ECCAF9CF01B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{56829827-ACC0-49D0-A35F-ECCAF9CF01B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{56829827-ACC0-49D0-A35F-ECCAF9CF01B4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8F36DBB6-7AE5-47C9-8ABB-55661C3C30B9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8F36DBB6-7AE5-47C9-8ABB-55661C3C30B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8F36DBB6-7AE5-47C9-8ABB-55661C3C30B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8F36DBB6-7AE5-47C9-8ABB-55661C3C30B9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DC23BFFD-4FDD-4567-9348-6AE971920388}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DC23BFFD-4FDD-4567-9348-6AE971920388}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DC23BFFD-4FDD-4567-9348-6AE971920388}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DC23BFFD-4FDD-4567-9348-6AE971920388}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
