@@ -4,7 +4,9 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace Snake
 {
@@ -22,6 +24,7 @@ namespace Snake
     {
         public Socket theSocket;
         public int ID;
+        public Action<SocketState> callMe;
 
         // This is the buffer where we will receive message data from the client
         public byte[] messageBuffer = new byte[1024];
@@ -41,6 +44,8 @@ namespace Snake
 
         public const int DEFAULT_PORT = 11000;
 
+        private static int socketID = 0;
+
         // TODO: Move all networking code to this class.
         // Networking code should be completely general-purpose, and useable by any other application.
         // It should contain no references to a specific project.
@@ -56,12 +61,59 @@ namespace Snake
         /// <param name=""></param>
         /// <param name=""></param>
         /// <returns></returns>
-        Socket ConnectToServer(Delegate callbackFunction, hostname string)
+        public static SocketState ConnectToServer(Action<SocketState> callbackFunction,  string hostName)
         {
-            //hostname - the name of the server to connect to
+            // Connect to a remote device.
+            try
+            {
+                // Establish the remote endpoint for the socket.
+                IPHostEntry ipHostInfo;
+                IPAddress ipAddress = IPAddress.None;
 
-            //callbackFunction - a function inside the View to be called when a connection is made
+                // Determine if the server address is a URL or an IP
+                try
+                {
+                    ipHostInfo = Dns.GetHostEntry(hostName);
+                    bool foundIPV4 = false;
+                    foreach (IPAddress addr in ipHostInfo.AddressList)
+                        if (addr.AddressFamily != AddressFamily.InterNetworkV6)
+                        {
+                            foundIPV4 = true;
+                            ipAddress = addr;
+                            break;
+                        }
+                    // Didn't find any IPV4 addresses
+                    if (!foundIPV4)
+                    {
+                        System.Diagnostics.Debug.WriteLine("Invalid addres: " + hostName);
+                        return null;
+                    }
+                }
+                catch (Exception e1)
+                {
+                    // see if host name is actually an ipaddress, i.e., 155.99.123.456
+                    System.Diagnostics.Debug.WriteLine("using IP");
+                    ipAddress = IPAddress.Parse(hostName);
+                }
 
+                Socket socket = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+
+                SocketState state = new SocketState(socket, socketID);
+                socketID++;
+                state.callMe = callbackFunction;
+
+
+                
+                
+                state.theSocket.BeginConnect(ipAddress, Networking.DEFAULT_PORT, ConnectedToServer, state);
+
+                return state;
+            }
+            catch (Exception e)
+            {
+                System.Diagnostics.Debug.WriteLine("Unable to connect to server. Error occured: " + e);
+                return null;
+            }
         }
 
         /// <summary>
@@ -71,10 +123,15 @@ namespace Snake
         /// This function is saved in the socket state, and was originally passed in to ConnectToServer.
         /// </summary>
         /// <param name="state_in_an_ar_object"></param>
-        void ConnectedToServer(IAsyncResult state_in_an_ar_object)
-        {
+        public static void ConnectedToServer(IAsyncResult state_in_an_ar_object)
+        { 
+            SocketState state = (SocketState)state_in_an_ar_object.AsyncState;
 
+            state.theSocket.EndConnect(state_in_an_ar_object);
 
+            state.callMe(state);
+
+            state.theSocket.BeginReceive(state.messageBuffer, 0, state.messageBuffer.Length, SocketFlags.None, ReceiveCallback, state);
         }
 
         /// <summary>
@@ -84,9 +141,58 @@ namespace Snake
         /// On greater than zero data, this method should call the callback function provided above.
         /// </summary>
         /// <param name="state_in_an_ar_object"></param>
-        void ReceiveCallback(IAsyncResult state_in_an_ar_object)
+        public static void ReceiveCallback(IAsyncResult state_in_an_ar_object)
         {
+            SocketState state = (SocketState)state_in_an_ar_object.AsyncState;
 
+            state.theSocket.EndConnect(state_in_an_ar_object);
+
+            //(append message to state)
+
+            int bytesRead = state.theSocket.EndReceive(state_in_an_ar_object);
+
+            // If the socket is still open
+            if (bytesRead > 0)
+            {
+                string theMessage = Encoding.UTF8.GetString(state.messageBuffer, 0, bytesRead);
+                // Append the received data to the growable buffer.
+                // It may be an incomplete message, so we need to start building it up piece by piece
+                state.sb.Append(theMessage);
+
+                ProcessMessage(state);
+            }
+
+            state.callMe(state);
+        }
+
+        private static void ProcessMessage(SocketState ss)
+        {
+            string totalData = ss.sb.ToString();
+            string[] parts = Regex.Split(totalData, @"(?<=[\n])");
+
+            // Loop until we have processed all messages.
+            // We may have received more than one.
+
+            foreach (string p in parts)
+            {
+                // Ignore empty strings added by the regex splitter
+                if (p.Length == 0)
+                    continue;
+                // The regex splitter will include the last string even if it doesn't end with a '\n',
+                // So we need to ignore it if this happens. 
+                if (p[p.Length - 1] != '\n')
+                    break;
+
+                // Display the message
+                // "messages" is the big message text box in the form.
+                // We must use a MethodInvoker, because only the thread that created the GUI can modify it.
+                System.Diagnostics.Debug.WriteLine("appending \"" + p + "\"");
+                Invoke(new MethodInvoker(
+                  () => messages.AppendText(p)));
+
+                // Then remove it from the SocketState's growable buffer
+                ss.sb.Remove(0, p.Length);
+            }
         }
 
         /// <summary>
@@ -94,9 +200,9 @@ namespace Snake
         /// Note: the client will probably want more data every time it gets data, and has finished processing it in its callbackFunction.
         /// </summary>
         /// <param name=""></param>
-        void GetData(state )
+        public static void GetData(SocketState state)
         {
-
+            state.theSocket.BeginReceive(state.messageBuffer, 0, state.messageBuffer.Length, SocketFlags.None, ReceiveCallback, state);
         }
 
         /// <summary>
@@ -105,7 +211,7 @@ namespace Snake
         /// </summary>
         /// <param name="socket"></param>
         /// <param name="data"></param>
-        void Send(Socket socket, String data)
+        public static void Send(Socket socket, String data)
         {
 
         }
@@ -114,14 +220,14 @@ namespace Snake
         /// This function "assists" the Send function. If all the data has been sent, then life is good and nothing needs to be done 
         /// (note: you may, when first prototyping your program, put a WriteLine in here to see when data goes out).
         /// </summary>
-        void SendCallback(IAsyncResult ar)
+        public static void SendCallback(IAsyncResult state_in_an_ar_object)
         {
             Console.WriteLine("SendCallBack: Data has been sent");
             Console.Read();
 
-            SocketState ss = (SocketState)ar.AsyncState;
+            SocketState state = (SocketState)state_in_an_ar_object.AsyncState;
             // Nothing much to do here, just conclude the send operation so the socket is happy.
-            ss.theSocket.EndSend(ar);
+            state.theSocket.EndSend(state_in_an_ar_object);
         }
 
 

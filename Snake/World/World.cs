@@ -4,10 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace World
+namespace Snake
 {
     public class World
     {
+
+        public static string playerName;
 
         // Example of world method might be...
 
