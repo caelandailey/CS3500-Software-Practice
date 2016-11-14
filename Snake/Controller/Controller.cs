@@ -11,11 +11,8 @@ namespace Snake
 {
     public class Controller
     {
-        
 
         
-
-        SocketState server;
 
         public static void connectToServer(string serverIP)
         {
@@ -28,7 +25,6 @@ namespace Snake
             Networking.Send(state.theSocket, World.playerName);
         }
 
-
         public static void ReceieveStartup(SocketState state)
         {
             //(extract data from state)
@@ -40,5 +36,11 @@ namespace Snake
         {
 
         }
+
+        public static void sendMessage(string message)
+        {
+            //Networking.Send()
+        }
+
     }
 }

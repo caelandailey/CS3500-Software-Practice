@@ -15,13 +15,9 @@ namespace WindowsFormsApplication1
     public partial class Form1 : Form
     {
 
-       
-
         public Form1()
         {
             InitializeComponent();
-
-            
         }
 
         /// <summary>
@@ -75,6 +71,8 @@ namespace WindowsFormsApplication1
         private void moveLeftKey()
         {
             // Send "(4)\n" to the server
+
+            Controller.sendMessage("(4)");
             Console.WriteLine("hey");
             Console.Read();
         }
@@ -97,14 +95,19 @@ namespace WindowsFormsApplication1
             // Send "(3)\n" to the server
         }
 
-
-        private void connectButton(object sender, EventArgs e)
+        /// <summary>
+        /// Connects to the server
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void connectServerButton(object sender, EventArgs e)
         {
-            Controller.Controller.connectToServer(serverTextBox.Text);
+            if (serverTextBox.Text == "")
+            {
+                MessageBox.Show("Please enter a server address");
+                return;
+            }
+            Controller.connectToServer(serverTextBox.Text);
         }
-
-
-        
-
     }
 }

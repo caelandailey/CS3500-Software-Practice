@@ -25,6 +25,7 @@ namespace Snake
         public Socket theSocket;
         public int ID;
         public Action<SocketState> callMe;
+        public SocketState server;
 
         // This is the buffer where we will receive message data from the client
         public byte[] messageBuffer = new byte[1024];
@@ -100,11 +101,10 @@ namespace Snake
 
                 SocketState state = new SocketState(socket, socketID);
                 socketID++;
+                state.theSocket = socket;
+
                 state.callMe = callbackFunction;
 
-
-                
-                
                 state.theSocket.BeginConnect(ipAddress, Networking.DEFAULT_PORT, ConnectedToServer, state);
 
                 return state;
@@ -145,8 +145,8 @@ namespace Snake
         {
             SocketState state = (SocketState)state_in_an_ar_object.AsyncState;
 
-            state.theSocket.EndConnect(state_in_an_ar_object);
-
+            //state.theSocket.EndReceive(state_in_an_ar_object);
+            
             //(append message to state)
 
             int bytesRead = state.theSocket.EndReceive(state_in_an_ar_object);
@@ -162,12 +162,14 @@ namespace Snake
                 ProcessMessage(state);
             }
 
-            state.callMe(state);
+            //state.callMe(state);
+            state.theSocket.BeginReceive(state.messageBuffer, 0, state.messageBuffer.Length, SocketFlags.None, ReceiveCallback, state);
+
         }
 
-        private static void ProcessMessage(SocketState ss)
+        private static void ProcessMessage(SocketState state)
         {
-            string totalData = ss.sb.ToString();
+            string totalData = state.sb.ToString();
             string[] parts = Regex.Split(totalData, @"(?<=[\n])");
 
             // Loop until we have processed all messages.
@@ -183,15 +185,12 @@ namespace Snake
                 if (p[p.Length - 1] != '\n')
                     break;
 
-                // Display the message
-                // "messages" is the big message text box in the form.
-                // We must use a MethodInvoker, because only the thread that created the GUI can modify it.
-                System.Diagnostics.Debug.WriteLine("appending \"" + p + "\"");
-                Invoke(new MethodInvoker(
-                  () => messages.AppendText(p)));
+                Console.WriteLine("received message: \"" + p + "\"");
+
+                byte[] messageBytes = Encoding.UTF8.GetBytes(p);
 
                 // Then remove it from the SocketState's growable buffer
-                ss.sb.Remove(0, p.Length);
+                state.sb.Remove(0, p.Length);
             }
         }
 
@@ -213,7 +212,9 @@ namespace Snake
         /// <param name="data"></param>
         public static void Send(Socket socket, String data)
         {
+            byte[] messageBytes = Encoding.UTF8.GetBytes(data + "\n");
 
+            socket.BeginSend(messageBytes, 0, messageBytes.Length, SocketFlags.None, SendCallback, socket);
         }
 
         /// <summary>
@@ -225,12 +226,9 @@ namespace Snake
             Console.WriteLine("SendCallBack: Data has been sent");
             Console.Read();
 
-            SocketState state = (SocketState)state_in_an_ar_object.AsyncState;
+            Socket state = (Socket)state_in_an_ar_object.AsyncState;
             // Nothing much to do here, just conclude the send operation so the socket is happy.
-            state.theSocket.EndSend(state_in_an_ar_object);
+            state.EndSend(state_in_an_ar_object);
         }
-
-
     }
-
 }
