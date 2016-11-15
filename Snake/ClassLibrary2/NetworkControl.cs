@@ -25,7 +25,7 @@ namespace Snake
         public Socket theSocket;
         public int ID;
         public Action<SocketState> callMe;
-        public SocketState server;
+        
 
         // This is the buffer where we will receive message data from the client
         public byte[] messageBuffer = new byte[1024];
@@ -46,6 +46,8 @@ namespace Snake
         public const int DEFAULT_PORT = 11000;
 
         private static int socketID = 0;
+
+        public static SocketState server;
 
         // TODO: Move all networking code to this class.
         // Networking code should be completely general-purpose, and useable by any other application.
@@ -98,16 +100,17 @@ namespace Snake
                 }
 
                 Socket socket = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                
+                server = new SocketState(socket, socketID);
 
-                SocketState state = new SocketState(socket, socketID);
                 socketID++;
-                state.theSocket = socket;
+                server.theSocket = socket;
 
-                state.callMe = callbackFunction;
+                server.callMe = callbackFunction;
 
-                state.theSocket.BeginConnect(ipAddress, Networking.DEFAULT_PORT, ConnectedToServer, state);
+                server.theSocket.BeginConnect(ipAddress, Networking.DEFAULT_PORT, ConnectedToServer, server);
 
-                return state;
+                return server;
             }
             catch (Exception e)
             {
@@ -171,7 +174,7 @@ namespace Snake
         {
             string totalData = state.sb.ToString();
             string[] parts = Regex.Split(totalData, @"(?<=[\n])");
-
+            
             // Loop until we have processed all messages.
             // We may have received more than one.
 
@@ -186,8 +189,9 @@ namespace Snake
                     break;
 
                 Console.WriteLine("received message: \"" + p + "\"");
-
-                byte[] messageBytes = Encoding.UTF8.GetBytes(p);
+                
+                
+                //byte[] messageBytes = Encoding.UTF8.GetBytes(p);
 
                 // Then remove it from the SocketState's growable buffer
                 state.sb.Remove(0, p.Length);
@@ -201,6 +205,7 @@ namespace Snake
         /// <param name=""></param>
         public static void GetData(SocketState state)
         {
+            
             state.theSocket.BeginReceive(state.messageBuffer, 0, state.messageBuffer.Length, SocketFlags.None, ReceiveCallback, state);
         }
 
@@ -213,8 +218,8 @@ namespace Snake
         public static void Send(Socket socket, String data)
         {
             byte[] messageBytes = Encoding.UTF8.GetBytes(data + "\n");
-
-            socket.BeginSend(messageBytes, 0, messageBytes.Length, SocketFlags.None, SendCallback, socket);
+            
+            socket.BeginSend(messageBytes, 0, messageBytes.Length, SocketFlags.None, SendCallback, server);
         }
 
         /// <summary>
@@ -226,9 +231,9 @@ namespace Snake
             Console.WriteLine("SendCallBack: Data has been sent");
             Console.Read();
 
-            Socket state = (Socket)state_in_an_ar_object.AsyncState;
+            SocketState state = (SocketState)state_in_an_ar_object.AsyncState;
             // Nothing much to do here, just conclude the send operation so the socket is happy.
-            state.EndSend(state_in_an_ar_object);
+            state.theSocket.EndSend(state_in_an_ar_object);
         }
     }
 }

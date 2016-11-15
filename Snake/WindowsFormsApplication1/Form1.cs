@@ -62,6 +62,9 @@ namespace WindowsFormsApplication1
             // send '1' to the server
             // Note, this should be of the form: "(X)\n"
             // Send "(1)\n" to the server
+
+            Controller.sendMessage("(1)");
+            Console.WriteLine("Up key pressed");
         }
 
         /// <summary>
@@ -73,7 +76,7 @@ namespace WindowsFormsApplication1
             // Send "(4)\n" to the server
 
             Controller.sendMessage("(4)");
-            Console.WriteLine("hey");
+            Console.WriteLine("Left key pressed");
             Console.Read();
         }
 
@@ -84,6 +87,9 @@ namespace WindowsFormsApplication1
         private void moveRightKey()
         {
             // Send "(2)\n" to the server
+
+            Controller.sendMessage("(2)");
+            Console.WriteLine("Right key pressed");
         }
 
         /// <summary>
@@ -93,6 +99,9 @@ namespace WindowsFormsApplication1
         private void moveDownKey()
         {
             // Send "(3)\n" to the server
+
+            Controller.sendMessage("(3)");
+            Console.WriteLine("Down key pressed");
         }
 
         /// <summary>
@@ -107,6 +116,7 @@ namespace WindowsFormsApplication1
                 MessageBox.Show("Please enter a server address");
                 return;
             }
+            World.playerName = nameTextBox.Text;
             Controller.connectToServer(serverTextBox.Text);
         }
     }

@@ -11,9 +11,7 @@ namespace Snake
 {
     public class Controller
     {
-
         
-
         public static void connectToServer(string serverIP)
         {
             Networking.ConnectToServer(FirstContact, serverIP);
@@ -37,9 +35,15 @@ namespace Snake
 
         }
 
-        public static void sendMessage(string message)
+        public static void sendMessage(string data)
         {
-            //Networking.Send()
+            Networking.Send(Networking.server.theSocket, data);
+                
+        }
+
+        public void convertMessage(string data)
+        {
+
         }
 
     }
