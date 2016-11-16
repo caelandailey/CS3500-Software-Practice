@@ -88,6 +88,14 @@
       <Project>{11cad1e5-bbf0-4225-ad34-7836b0d6bc51}</Project>
       <Name>Controller</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Food\Food.csproj">
+      <Project>{c5e9c0d5-da93-4770-92c5-874fc435a12e}</Project>
+      <Name>Food</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Point\Point.csproj">
+      <Project>{cd7e12e4-6bb9-40c1-961e-cf8621bb96c2}</Project>
+      <Name>Point</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Snake\Snake.csproj">
       <Project>{45375ebd-f181-44dd-99df-7138effa2e24}</Project>
       <Name>Snake</Name>

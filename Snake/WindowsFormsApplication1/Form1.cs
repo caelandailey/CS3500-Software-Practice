@@ -10,6 +10,7 @@ using System.Windows.Forms;
 using Snake;
 
 
+
 namespace WindowsFormsApplication1
 {
     public partial class Form1 : Form
@@ -18,6 +19,14 @@ namespace WindowsFormsApplication1
         public Form1()
         {
             InitializeComponent();
+        }
+
+        public void updateView()
+        {
+            foreach (var point in World.foods)
+            {
+                //draw point
+            }
         }
 
         /// <summary>

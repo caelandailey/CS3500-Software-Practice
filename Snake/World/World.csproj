@@ -30,6 +30,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -42,6 +46,23 @@
   <ItemGroup>
     <Compile Include="World.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Food\Food.csproj">
+      <Project>{c5e9c0d5-da93-4770-92c5-874fc435a12e}</Project>
+      <Name>Food</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Point\Point.csproj">
+      <Project>{cd7e12e4-6bb9-40c1-961e-cf8621bb96c2}</Project>
+      <Name>Point</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Snake\Snake.csproj">
+      <Project>{45375ebd-f181-44dd-99df-7138effa2e24}</Project>
+      <Name>Snake</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

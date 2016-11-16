@@ -162,40 +162,13 @@ namespace Snake
                 // It may be an incomplete message, so we need to start building it up piece by piece
                 state.sb.Append(theMessage);
 
-                ProcessMessage(state);
+                //ProcessMessage(state);
+                state.callMe(state);
             }
 
-            //state.callMe(state);
-            state.theSocket.BeginReceive(state.messageBuffer, 0, state.messageBuffer.Length, SocketFlags.None, ReceiveCallback, state);
-
-        }
-
-        private static void ProcessMessage(SocketState state)
-        {
-            string totalData = state.sb.ToString();
-            string[] parts = Regex.Split(totalData, @"(?<=[\n])");
             
-            // Loop until we have processed all messages.
-            // We may have received more than one.
+            //state.theSocket.BeginReceive(state.messageBuffer, 0, state.messageBuffer.Length, SocketFlags.None, ReceiveCallback, state);
 
-            foreach (string p in parts)
-            {
-                // Ignore empty strings added by the regex splitter
-                if (p.Length == 0)
-                    continue;
-                // The regex splitter will include the last string even if it doesn't end with a '\n',
-                // So we need to ignore it if this happens. 
-                if (p[p.Length - 1] != '\n')
-                    break;
-
-                Console.WriteLine("received message: \"" + p + "\"");
-                
-                
-                //byte[] messageBytes = Encoding.UTF8.GetBytes(p);
-
-                // Then remove it from the SocketState's growable buffer
-                state.sb.Remove(0, p.Length);
-            }
         }
 
         /// <summary>
@@ -205,7 +178,7 @@ namespace Snake
         /// <param name=""></param>
         public static void GetData(SocketState state)
         {
-            
+            //state.callMe(state);
             state.theSocket.BeginReceive(state.messageBuffer, 0, state.messageBuffer.Length, SocketFlags.None, ReceiveCallback, state);
         }
 
