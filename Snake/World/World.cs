@@ -37,12 +37,12 @@ namespace Snake
             //Action based on collision or not
         }
 
-        public void addFood(Food food)
+        public static void addFood(Food food)
         {
             foods[food.ID] = food.Point;
         }
 
-        public void addSnake(Snake snake)
+        public static void addSnake(Snake snake)
         {
             snakes[snake.ID] = snake.vertices;
             snakeNames[snake.ID] = snake.name;
