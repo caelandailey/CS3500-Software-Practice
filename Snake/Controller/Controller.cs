@@ -69,13 +69,11 @@ namespace Snake
                 JToken someProp = obj["vertices"];
                 if (someProp != null) // we are dealing with a snake
                 {
-                    Snake snake = JsonConvert.DeserializeObject<Snake>(p);
-                    World.addSnake(snake);
+                    World.addSnake(JsonConvert.DeserializeObject<Snake>(p));
                 }
                 else // if not its food
                 {
-                    Food food = JsonConvert.DeserializeObject<Food>(p);
-                    World.addFood(food);
+                    World.addFood(JsonConvert.DeserializeObject<Food>(p));
                 }
 
                 if (state.sb.Length >= p.Length)            // DO WE NEED THIS?

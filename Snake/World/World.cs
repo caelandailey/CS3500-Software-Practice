@@ -13,14 +13,15 @@ namespace Snake
         public static string playerName;
         public static int playerID;
 
+        private static int foodCount = 0;
         public static int worldSizeX;
         public static int worldSizeY;
 
+        private static Dictionary<Point,int> grid;
 
-        public static Dictionary<int,Point> foods;
-        private Dictionary<int, List<Point>> snakes;
 
-        private Dictionary<int, string> snakeNames;
+        private static Dictionary<int, Food> foods;
+        private static Dictionary<int, Snake> snakes;
 
         // Example of world method might be...
 
@@ -39,14 +40,15 @@ namespace Snake
 
         public static void addFood(Food food)
         {
-            foods[food.ID] = food.Point;
+            foods.Add(foodCount, food);
         }
 
         public static void addSnake(Snake snake)
         {
-            snakes[snake.ID] = snake.vertices;
-            snakeNames[snake.ID] = snake.name;
+            snakes.Add(playerID, snake);
         }
+
+        
 
 
     }
