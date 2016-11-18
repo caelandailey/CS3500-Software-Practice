@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace Snake
+namespace SnakeGame
 {
     // Should know what to do when when data comes in....
     //(1) Which socket is the data on

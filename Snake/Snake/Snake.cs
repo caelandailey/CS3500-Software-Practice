@@ -5,41 +5,28 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using MyPoint;
 
-namespace Snake
+namespace SnakeGame
 {
     [JsonObject(MemberSerialization.OptIn)]
     public class Snake
     {
         [JsonProperty]
-        private int ID;
+        public int ID { get; protected set; }
 
         [JsonProperty]
-        private string name;
+        public string name { get; protected set; }
 
         [JsonProperty]
-        private List<Point> vertices;
+        public List<Point> vertices { get; protected set; }
 
-        private int length;
 
-        /// <summary>
-        /// Determines if this snake collides with the other snake.
-        /// </summary>
-        public bool CollidesWith(Snake other)
-        {
-            // If collision
-            // Check if head of snake collides with self or another snakes location
-            // How do we track a snakes location?
-            return true;
-        }
-
-        public int getSnakeLength(Snake snake)
+        public int getSnakeLength()
         {
             Point lastPoint = null;
             int length = 0;
 
-            foreach(Point p in snake.vertices)
+            foreach(Point p in this.vertices)
             {
                 if (ReferenceEquals(lastPoint, null)) // if first vertice
                 {
@@ -52,5 +39,7 @@ namespace Snake
 
             return length;
         }
+
+
     }
 }

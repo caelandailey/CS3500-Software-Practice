@@ -1,4 +1,4 @@
-﻿namespace WindowsFormsApplication1
+﻿namespace SnakeGame
 {
     partial class Form1
     {
@@ -33,6 +33,7 @@
             this.serverTextBox = new System.Windows.Forms.TextBox();
             this.nameTextBox = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
+            this.drawingPanel1 = new DrawingPanel.DrawingPanel();
             this.SuspendLayout();
             // 
             // connectButton
@@ -77,11 +78,19 @@
             this.label2.TabIndex = 4;
             this.label2.Text = "Server:";
             // 
+            // drawingPanel1
+            // 
+            this.drawingPanel1.Location = new System.Drawing.Point(12, 38);
+            this.drawingPanel1.Name = "drawingPanel1";
+            this.drawingPanel1.Size = new System.Drawing.Size(613, 557);
+            this.drawingPanel1.TabIndex = 5;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(830, 607);
+            this.Controls.Add(this.drawingPanel1);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.nameTextBox);
             this.Controls.Add(this.serverTextBox);
@@ -101,6 +110,7 @@
         private System.Windows.Forms.TextBox serverTextBox;
         private System.Windows.Forms.TextBox nameTextBox;
         private System.Windows.Forms.Label label2;
+        private DrawingPanel.DrawingPanel drawingPanel1;
     }
 }
 

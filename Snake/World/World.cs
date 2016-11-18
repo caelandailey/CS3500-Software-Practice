@@ -1,23 +1,21 @@
-﻿using MyPoint;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Snake
+namespace SnakeGame
 {
     public class World
     {
 
-        public static string playerName;
         public static int playerID;
-
-        private static int foodCount = 0;
+        public static string playerName;
         public static int worldSizeX;
         public static int worldSizeY;
 
-        private static Dictionary<Point,int> grid;
+        private int[][] grid;
+
 
 
         private static Dictionary<int, Food> foods;
@@ -31,24 +29,36 @@ namespace Snake
         /// Eats food.
         /// Kills snakes, and recycles them.
         /// </summary>
-        public void Update()
+        public static void Update()
         {
-            //Update location for one frame
-            //Check for collision of some sort
-            //Action based on collision or not
+            
         }
 
-        public static void addFood(Food food)
+        public static void AddFood(Food food)
         {
-            foods.Add(foodCount, food);
+            foods.Add(food.ID, food);
         }
 
-        public static void addSnake(Snake snake)
+        public static void AddSnake(Snake snake)
         {
-            snakes.Add(playerID, snake);
+            snakes.Add(snake.ID, snake);
         }
 
+        public static void RemoveSnake(int id)
+        {
+            if (snakes.ContainsKey(id))
+            {
+                snakes.Remove(id);
+            }
+        }
         
+        public static void RemoveFood(int id)
+        {
+            if (foods.ContainsKey(id))
+            {
+                foods.Remove(id);
+            }
+        }
 
 
     }

@@ -5,14 +5,20 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 
-namespace MyPoint
+namespace SnakeGame
 {
     [JsonObject(MemberSerialization.OptIn)]
     public class Point
     {
+        public Point(int pointX, int pointY)
+        {
+            x = pointX;
+            y = pointY;
+        } 
+
         [JsonProperty]
-        private int x;
+        public int x { get; set; }
         [JsonProperty]
-        private int y;
+        public int y { get; set; }
     }
 }

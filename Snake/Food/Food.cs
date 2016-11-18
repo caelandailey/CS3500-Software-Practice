@@ -4,18 +4,17 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using MyPoint;
 
-namespace Snake
+namespace SnakeGame
 {
     [JsonObject(MemberSerialization.OptIn)]
     public class Food
     {
         [JsonProperty]
-        private int ID;
-        
+        public int ID { get; protected set; }
+
         [JsonProperty]
-        private Point loc;
+        public Point loc { get; protected set; }
 
 
     }
