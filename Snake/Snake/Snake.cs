@@ -41,11 +41,11 @@ namespace SnakeGame
             Point lastPoint = null;
             int length = 0;
 
-            foreach(Point p in this.vertices)
+            foreach (Point p in this.vertices)
             {
                 if (ReferenceEquals(lastPoint, null)) // if first vertice
                 {
-                    length += Math.Abs(p.x - lastPoint.x); 
+                    length += Math.Abs(p.x - lastPoint.x);
                     length += Math.Abs(p.y - lastPoint.y);
                 }
 
@@ -56,5 +56,18 @@ namespace SnakeGame
         }
 
 
+        public void drawSegment(PaintEventArgs e)
+        {
+            using (SolidBrush drawBrush = new SolidBrush(color))
+            {
+                //Draw lines to screen.
+                e.Graphics.DrawLines(drawBrush, vertices);
+            }
+
+
+        }
+
     }
+
+}
 }

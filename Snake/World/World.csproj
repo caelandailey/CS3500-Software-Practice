@@ -36,6 +36,8 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -44,13 +46,19 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="World.cs" />
+    <Compile Include="World.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\DrawWorld\DrawWorld.csproj">
+      <Project>{C716C7F5-3DE4-43C8-9143-B0DB745926AA}</Project>
+      <Name>DrawWorld</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Food\Food.csproj">
       <Project>{c5e9c0d5-da93-4770-92c5-874fc435a12e}</Project>
       <Name>Food</Name>
