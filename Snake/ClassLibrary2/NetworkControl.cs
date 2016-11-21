@@ -191,7 +191,6 @@ namespace SnakeGame
         public static void Send(Socket socket, String data)
         {
             byte[] messageBytes = Encoding.UTF8.GetBytes(data + "\n");
-            
             socket.BeginSend(messageBytes, 0, messageBytes.Length, SocketFlags.None, SendCallback, server);
         }
 

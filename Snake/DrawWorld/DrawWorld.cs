@@ -33,6 +33,9 @@ namespace SnakeGame
         private int dotX;
         private int dotY;
 
+        private Point point1;
+        private Point point2;
+
         public DrawWorld(int w, int h)
         {
             width = w;
@@ -44,6 +47,12 @@ namespace SnakeGame
         {
             dotX = x;
             dotY = y;
+        }
+
+        public void SetLine(Point p1, Point p2)
+        {
+            point1 = p1;
+            point2 = p2;
         }
 
         /// <summary>
@@ -58,7 +67,13 @@ namespace SnakeGame
                 // Draw the single dot that represents the world
                 Rectangle dotBounds = new Rectangle(dotX * pixelsPerCell, dotY * pixelsPerCell, pixelsPerCell, pixelsPerCell);
                 e.Graphics.FillEllipse(drawBrush, dotBounds);
+
+
+
+                //Rectangle lineBounds = new Rectangle((point1.X - point2.X) * pixelsPerCell, point1 )
             }
+
+            
         }
 
     }

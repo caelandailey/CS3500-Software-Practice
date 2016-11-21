@@ -15,35 +15,33 @@ namespace SnakeGame
 {
     public partial class Form1 : Form
     {
-        //public string playerName;
+        public static string playerName;
 
         // This object represents the world.
         // In this simple demo, the world consists of one dot
-        private DrawWorld world;
+        //private DrawWorld world;
+
+        private static World world;
+
         //private DrawingPanel.DrawingPanel panel;
-        // Fake data that will simulate a message from the server
-        private int dotX, dotY;
+
 
         public static Form1 form;
         public Form1()
         {
             InitializeComponent();
-
-            dotX = 0;
-            dotY = 25;
-
-
+            world = new World();
             // TODO: We would also need to update this form's size to expand or shrink to fit the panel
             // this.Size = (large enough to hold all buttons, panels, etc)
 
         }
         private void createWorld(int height, int width)
         {
-            world = new DrawWorld(width, height);
-            drawingPanel1.SetWorld(world);
+            //world = new World(width, height);
+            //drawingPanel1.SetWorld(world);
 
             // Set the size of the drawing panel to match the world
-            drawingPanel1.Size = new Size(world.width * DrawWorld.pixelsPerCell, world.height * DrawWorld.pixelsPerCell);
+            //drawingPanel1.Size = new Size(world.width * DrawWorld.pixelsPerCell, world.height * DrawWorld.pixelsPerCell);
         }
         /// <summary>
         /// This tick event is called 30 times / sec
@@ -54,8 +52,20 @@ namespace SnakeGame
         private void UpdateFrame(object sender, EventArgs e)
         {
             // pretend this dot was deserialized from a JSON string sent by the server
-            dotX++;
-            world.SetDot(dotX, dotY);
+            
+            // Draw food
+            foreach(KeyValuePair<int, Food> food in World.foods)
+            {
+                DrawFood(food.Value);
+            }
+
+            // Draw snake
+            foreach (KeyValuePair<int, Snake> snake in World.snakes)
+            {
+                DrawSnake(snake.Value);
+            }
+
+            //world.SetDot(dotX, dotY);
 
             // Cause the panel to redraw
             drawingPanel1.Invalidate();
@@ -158,7 +168,7 @@ namespace SnakeGame
                 return;
             }
 
-            World.playerName = nameTextBox.Text;
+            playerName = nameTextBox.Text;
             connectToServer(serverTextBox.Text);
         }
 
@@ -170,16 +180,14 @@ namespace SnakeGame
         {
 
         }
-        private void DrawSnakes()
+        private void DrawSnake(Snake snake)
         {
 
         }
-        private void DrawFoods()
+        private void DrawFood(Food food)
         {
-
+           // world.SetDot(food.loc.x, food.loc.y);
         }
-
-
 
         public static void connectToServer(string serverIP)
         {
@@ -189,7 +197,7 @@ namespace SnakeGame
         public static void FirstContact(SocketState state)
         {
             state.callMe = ReceieveStartup;
-            Networking.Send(state.theSocket, World.playerName);
+            Networking.Send(state.theSocket, playerName);
         }
 
         public static void ReceieveStartup(SocketState state)
@@ -244,11 +252,13 @@ namespace SnakeGame
 
                     if (snake.vertices.Contains(deadPoint))
                     {
-                        World.RemoveSnake(snake.ID);
+                        world.RemoveSnake(snake.ID);
+                        
                     }
                     else
                     {
-                        World.AddSnake(snake);
+                        snake.setColor();
+                        world.AddSnake(snake);
                     }
                 }
                 else // if not its food
@@ -259,11 +269,12 @@ namespace SnakeGame
 
                     if (food.loc.x == -1)
                     {
-                        World.RemoveFood(food.ID);
+                        world.RemoveFood(food.ID);
                     }
                     else
                     {
-                        World.AddFood(food);
+                        world.AddFood(food);
+                        
                     }
                 }
 
@@ -271,6 +282,8 @@ namespace SnakeGame
                 {
                     state.sb.Remove(0, p.Length);
                 }
+
+                
             }
         }
 
@@ -295,21 +308,21 @@ namespace SnakeGame
                 switch (position)
                 {
                     case 1: // Its player name
-                        World.playerID = Convert.ToInt32(p);
+                        world.setWorldID(Convert.ToInt32(p));
                         break;
                     case 2:
-                        World.worldSizeX = Convert.ToInt32(p);
+                        world.setWorldWidth(Convert.ToInt32(p));
                         break;
                     case 3:
-                        World.worldSizeY = Convert.ToInt32(p);
+                        world.setWorldHeight(Convert.ToInt32(p));
                         break;
                 }
                 position++;
-
-
             }
-            createWorld(World.worldSizeX, World.worldSizeY);
-            World.Update();
+            
+            //createWorld(world.worldSizeX, world.worldSizeY);
+            
+            //World.Update();
 
         }
 

@@ -8,18 +8,19 @@ namespace SnakeGame
 {
     public class World
     {
-
-        public static int playerID;
-        public static string playerName;
-        public static int worldSizeX;
-        public static int worldSizeY;
+        private int worldWidth;
+        private int worldHeight;
 
         private int[][] grid;
 
+        public World()
+        {
+            foods = new Dictionary<int, Food>();
+            snakes = new Dictionary<int, Snake>();
+        }
 
-
-        private static Dictionary<int, Food> foods;
-        private static Dictionary<int, Snake> snakes;
+        public static Dictionary<int, Food> foods;
+        public static Dictionary<int, Snake> snakes;
 
         // Example of world method might be...
 
@@ -29,22 +30,28 @@ namespace SnakeGame
         /// Eats food.
         /// Kills snakes, and recycles them.
         /// </summary>
-        public static void Update()
+        public void Update()
         {
             
         }
 
-        public static void AddFood(Food food)
+        public void AddFood(Food food)
         {
-            foods.Add(food.ID, food);
+            //foods.Add(food.ID, food);
+            foods[food.ID] = food;
         }
 
-        public static void AddSnake(Snake snake)
+        public void AddSnake(Snake snake)
         {
-            snakes.Add(snake.ID, snake);
+            if (object.ReferenceEquals(null, snake))
+            {
+                return;
+            }
+            snakes[snake.ID] = snake;
+            
         }
 
-        public static void RemoveSnake(int id)
+        public void RemoveSnake(int id)
         {
             if (snakes.ContainsKey(id))
             {
@@ -52,7 +59,7 @@ namespace SnakeGame
             }
         }
         
-        public static void RemoveFood(int id)
+        public void RemoveFood(int id)
         {
             if (foods.ContainsKey(id))
             {
@@ -60,6 +67,25 @@ namespace SnakeGame
             }
         }
 
+        public void setWorldWidth(int width)
+        {
+            worldWidth = width;
+        }
+       
+        public void setWorldID(int ID)
+        {
+
+        }
+
+        public void setWorldHeight(int height)
+        {
+
+        }
+
+        public void draw()
+        {
+
+        }
 
     }
 }

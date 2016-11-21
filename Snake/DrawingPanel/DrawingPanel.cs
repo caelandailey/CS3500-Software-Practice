@@ -41,9 +41,9 @@ namespace DrawingPanel
             if (world == null)
                 return;
 
-            using (SolidBrush drawBrush = new SolidBrush(Color.Blue))
+            using (SolidBrush drawBrush = new SolidBrush(Color.Black))
             {
-                
+
                 // Turn on anti-aliasing for smooth round edges
                 e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
 
@@ -66,8 +66,8 @@ namespace DrawingPanel
             }
 
             // Draw the "world" (just one dot) within this panel by using the PaintEventArgs
+
             world.Draw(e);
-            
         }
     }
 }

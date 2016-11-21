@@ -5,6 +5,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using System.Drawing;
 
 namespace SnakeGame
 {
@@ -19,6 +20,20 @@ namespace SnakeGame
 
         [JsonProperty]
         public List<Point> vertices { get; protected set; }
+
+        public Color color;
+
+        public void setColor()
+        {
+            //read id and set it to a random color
+            Random random = new Random();
+            color = Color.FromArgb(random.Next(0, 255), random.Next(0, 255), random.Next(0, 255));
+        }
+
+        public Color getColor()
+        {
+            return color;
+        }
 
 
         public int getSnakeLength()
