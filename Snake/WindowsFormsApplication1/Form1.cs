@@ -15,75 +15,18 @@ namespace SnakeGame
 {
     public partial class Form1 : Form
     {
-        private static string playerName;
-        private static int worldWidth;
-        private static int worldHeight;
-        private static int playerID;
+        private string playerName;
+        private int worldWidth;
+        private int worldHeight;
+        private int playerID;
 
-        private World world;
-
-        // This object represents the world.
-        // In this simple demo, the world consists of one dot
-        //private DrawWorld world;
-
-
-
-        //private DrawingPanel.DrawingPanel panel;
-
-
+        //private World world;
         public Form1()
         {
             InitializeComponent();
             // TODO: We would also need to update this form's size to expand or shrink to fit the panel
             // this.Size = (large enough to hold all buttons, panels, etc)
 
-        }
-        private void createWorld()
-        {
-
-            world = new World(worldHeight, worldWidth);
-
-            // Set the size of the drawing panel to match the world
-            worldPanel.Size = new Size(1000, 1000);
-
-        }
-
-
-        /// <summary>
-        /// This tick event is called 30 times / sec
-        /// This method simulates an update coming from the server
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void UpdateFrame()
-        {
-            // pretend this dot was deserialized from a JSON string sent by the server
-            
-            // Draw food
-            foreach(KeyValuePair<int, Food> food in World.foods)
-            {
-                DrawFood(food.Value);
-            }
-
-            // Draw snake
-            foreach (KeyValuePair<int, Snake> snake in World.snakes)
-            {
-                DrawSnake(snake.Value);
-            }
-
-            
-
-            // Cause the panel to redraw
-            worldPanel.Invalidate();
-        }
-
-        private void DrawSnake(Snake snake)
-        {
-
-        }
-        private void DrawFood(Food food)
-        {
-            // world.SetDot(food.loc.x, food.loc.y);
         }
 
         /// <summary>
@@ -187,22 +130,18 @@ namespace SnakeGame
             connectToServer(serverTextBox.Text);
         }
 
-     
-      
-      
-
-        public static void connectToServer(string serverIP)
+        public void connectToServer(string serverIP)
         {
             Networking.ConnectToServer(FirstContact, serverIP);
         }
 
-        public static void FirstContact(SocketState state)
+        public void FirstContact(SocketState state)
         {
             state.callMe = ReceieveStartup;
             Networking.Send(state.theSocket, playerName);
         }
 
-        public static void ReceieveStartup(SocketState state)
+        public void ReceieveStartup(SocketState state)
         {
             ProcessStartup(state);
             state.sb.Clear(); //Warning: This assumes ReceiveStartup is only called once
@@ -211,85 +150,20 @@ namespace SnakeGame
             Networking.GetData(state);
         }
 
-        public static void ReceiveWorld(SocketState state)
+        public void ReceiveWorld(SocketState state)
         {
             ProcessMessage(state);
 
             Networking.GetData(state);
         }
 
-        public static void sendMessage(string data)
+        public void sendMessage(string data)
         {
             Networking.Send(Networking.server.theSocket, data);
         }
 
-        private void ProcessMessage(SocketState state)
-        {
 
-            string totalData = state.sb.ToString();
-            string[] parts = Regex.Split(totalData, @"(?<=[\n])");
-
-            // Loop until we have processed all messages.
-            // We may have received more than one.
-
-            foreach (string p in parts)
-            {
-                // Ignore empty strings added by the regex splitter
-                if (p.Length == 0)
-                    continue;
-                // The regex splitter will include the last string even if it doesn't end with a '\n',
-                // So we need to ignore it if this happens. 
-                if (p[p.Length - 1] != '\n')
-                    break;
-
-                //Food rebuilt = JsonConvert.DeserializeObject<Food>(p);
-                JObject obj = JObject.Parse(p);
-                JToken someProp = obj["vertices"];
-                if (someProp != null) // we are dealing with a snake
-                {
-
-                    Snake snake = JsonConvert.DeserializeObject<Snake>(p);
-
-                    Point deadPoint = new Point(-1, -1);
-
-                    if (snake.vertices.Contains(deadPoint))
-                    {
-                        world.RemoveSnake(snake.ID);
-                    }
-                    else
-                    {
-                        snake.setColor();
-                        world.AddSnake(snake);
-                    }
-                }
-                else // if not its food
-                {
-                    Food food = JsonConvert.DeserializeObject<Food>(p);
-
-                    Point deadPoint = new Point(-1, -1);
-
-                    if (food.loc.x == -1)
-                    {
-                        world.RemoveFood(food.ID);
-                        
-                    }
-                    else
-                    {
-                        world.AddFood(food);
-                        
-                    }
-                }
-
-                if (state.sb.Length >= p.Length)            // DO WE NEED THIS?
-                {
-                    state.sb.Remove(0, p.Length);
-                }
-                UpdateFrame();
-                
-            }
-        }
-
-        private static void ProcessStartup(SocketState state)
+        private void ProcessStartup(SocketState state)
         {
             string totalData = state.sb.ToString();
             string[] parts = Regex.Split(totalData, @"(?<=[\n])");
@@ -319,37 +193,97 @@ namespace SnakeGame
                         worldHeight = (Convert.ToInt32(p));
                         break;
                 }
+
                 position++;
+
+                if (position == 3) // recieved all data
+                {
+                    worldPanel = new World(worldWidth, worldHeight);
+
+                    //worldPanel.SetWorld(world);
+
+                    // Set the size of the drawing panel to match the world
+                    //worldPanel.Size = new Size(world.width * World.pixelsPerCell, world.height * World.pixelsPerCell);
+                }
+
+
             }
 
-            
-
-            //World.Update();
-
+            worldPanel.Refresh();
         }
-
-        /// <summary>
-        /// Helper method for DrawingPanel
-        /// Given the PaintEventArgs that comes from DrawingPanel, draw the contents of the world on to the panel.
-        /// </summary>
-        /// <param name="e"></param>
-        public void Draw(PaintEventArgs e)
+        private void ProcessMessage(SocketState state)
         {
-            using (SolidBrush drawBrush = new SolidBrush(Color.Black))
+
+            string totalData = state.sb.ToString();
+            string[] parts = Regex.Split(totalData, @"(?<=[\n])");
+
+            // Loop until we have processed all messages.
+            // We may have received more than one.
+
+            foreach (string p in parts)
             {
-                // Draw the single dot that represents the world
-                Rectangle dotBounds = new Rectangle(5, 5, 20, 20);
-                e.Graphics.FillEllipse(drawBrush, dotBounds);
+                // Ignore empty strings added by the regex splitter
+                if (p.Length == 0)
+                    continue;
+                // The regex splitter will include the last string even if it doesn't end with a '\n',
+                // So we need to ignore it if this happens. 
+                if (p[p.Length - 1] != '\n')
+                    break;
 
 
 
-                //Rectangle lineBounds = new Rectangle((point1.X - point2.X) * pixelsPerCell, point1 )
+                //Food rebuilt = JsonConvert.DeserializeObject<Food>(p);
+                JObject obj = JObject.Parse(p);
+                JToken someProp = obj["vertices"];
+                if (someProp != null) // we are dealing with a snake
+                {
+
+                    Snake snake = JsonConvert.DeserializeObject<Snake>(p);
+
+                    Point deadPoint = new Point(-1, -1);
+
+                    if (snake.vertices.Contains(deadPoint))
+                    {
+                        worldPanel.RemoveSnake(snake.ID);
+
+                    }
+                    else
+                    {
+                        snake.setColor();
+                        worldPanel.AddSnake(snake);
+                    }
+                }
+                else // if not its food
+                {
+                    Food food = JsonConvert.DeserializeObject<Food>(p);
+
+                    Point deadPoint = new Point(-1, -1);
+
+                    if (food.loc.x == -1)
+                    {
+                        worldPanel.RemoveFood(food.ID);
+
+                    }
+                    else
+                    {
+                        worldPanel.AddFood(food);
+
+                    }
+                }
+
+                if (state.sb.Length >= p.Length)            // DO WE NEED THIS?
+                {
+                    state.sb.Remove(0, p.Length);
+                }
+
+
+
+
+                Invoke(new MethodInvoker(this.Refresh));
+
+                
             }
 
-
         }
-
-        
-
     }
-}
+    }

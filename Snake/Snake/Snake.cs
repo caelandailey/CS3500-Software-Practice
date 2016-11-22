@@ -55,20 +55,6 @@ namespace SnakeGame
 
             return length;
         }
-
-
-        public void drawSegment(PaintEventArgs e)
-        {
-            using (SolidBrush drawBrush = new SolidBrush(color))
-            {
-                //Draw lines to screen.
-                //e.Graphics.DrawLines(drawBrush, vertices);
-            }
-
-
-        }
-
     }
-
 }
 

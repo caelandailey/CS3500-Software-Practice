@@ -10,18 +10,28 @@ using System.Windows.Forms;
 
 namespace SnakeGame
 {
-    public class World
+    public class World : Panel
     {
-       
+
         // Determines the size in pixels of each grid cell in the world
         public const int pixelsPerCell = 5;
 
-        public static Dictionary<int, Food> foods;
-        public static Dictionary<int, Snake> snakes;
+        private Dictionary<int, Food> foods;
+        private Dictionary<int, Snake> snakes;
 
-        
+        private World world;
+        public World()
+        {
+            foods = new Dictionary<int, Food>();
+            snakes = new Dictionary<int, Snake>();
+            width = 150;
+            height = 150;
 
-        public World(int w, int h)
+            // Setting this property to true prevents flickering
+            this.DoubleBuffered = true;
+        }
+
+        public World(int w, int h) // Constructor for world
         {
             foods = new Dictionary<int, Food>();
             snakes = new Dictionary<int, Snake>();
@@ -30,6 +40,15 @@ namespace SnakeGame
 
             // Setting this property to true prevents flickering
             this.DoubleBuffered = true;
+        }
+
+        /// <summary>
+        /// Pass in a reference to the world, so we can draw the objects in it
+        /// </summary>
+        /// <param name="_world"></param>
+        public void SetWorld(World _world)
+        {
+            world = _world;
         }
 
         // Width of the world in cells (not pixels)
@@ -48,17 +67,6 @@ namespace SnakeGame
 
         // Example of world method might be...
 
-        /// <summary>
-        /// Updates the game world for one time tick (frame).
-        /// Moves snakes forward in their direction.
-        /// Eats food.
-        /// Kills snakes, and recycles them.
-        /// </summary>
-        public void Update()
-        {
-            
-        }
-
         public void AddFood(Food food)
         {
             //foods.Add(food.ID, food);
@@ -72,7 +80,7 @@ namespace SnakeGame
                 return;
             }
             snakes[snake.ID] = snake;
-            
+
         }
 
         public void RemoveSnake(int id)
@@ -82,7 +90,7 @@ namespace SnakeGame
                 snakes.Remove(id);
             }
         }
-        
+
         public void RemoveFood(int id)
         {
             if (foods.ContainsKey(id))
@@ -90,19 +98,24 @@ namespace SnakeGame
                 foods.Remove(id);
             }
         }
-       
+
         public void setWorldID(int ID)
         {
-            
+
         }
 
-    
+        
 
-        public void drawWalls(PaintEventArgs e)
+
+        /// <summary>
+        /// Override the behavior when the panel is redrawn
+        /// </summary>
+        /// <param name="e"></param>
+        protected override void OnPaint(PaintEventArgs e)
         {
             //// If we don't have a reference to the world yet, nothing to draw.
-            if (drawWorld == null)
-                return;
+            //if (drawWorld == null)
+            //   return;
 
             using (SolidBrush drawBrush = new SolidBrush(Color.Black))
             {
@@ -110,25 +123,64 @@ namespace SnakeGame
                 // Turn on anti-aliasing for smooth round edges
                 e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
 
+                // Walls
+
                 // Draw the top wall
-                Rectangle topWall = new Rectangle(0, 0, width * DrawWorld.pixelsPerCell, DrawWorld.pixelsPerCell);
+                Rectangle topWall = new Rectangle(0, 0, width * pixelsPerCell, pixelsPerCell);
                 e.Graphics.FillRectangle(drawBrush, topWall);
 
                 // Draw the right wall
-                Rectangle rightWall = new Rectangle((width - 1) * DrawWorld.pixelsPerCell, 0, DrawWorld.pixelsPerCell, height * DrawWorld.pixelsPerCell);
+                Rectangle rightWall = new Rectangle((width - 1) * pixelsPerCell, 0, pixelsPerCell, height * pixelsPerCell);
                 e.Graphics.FillRectangle(drawBrush, rightWall);
 
                 // Draw the bottom wall
-                Rectangle bottomWall = new Rectangle(0, (height - 1) * DrawWorld.pixelsPerCell, width * DrawWorld.pixelsPerCell, DrawWorld.pixelsPerCell);
+                Rectangle bottomWall = new Rectangle(0, (height - 1) * pixelsPerCell, width * pixelsPerCell, pixelsPerCell);
                 e.Graphics.FillRectangle(drawBrush, bottomWall);
 
                 // Draw the left wall
-                Rectangle leftWall = new Rectangle(0, 0, DrawWorld.pixelsPerCell, height * DrawWorld.pixelsPerCell);
+                Rectangle leftWall = new Rectangle(0, 0, pixelsPerCell, height * pixelsPerCell);
                 e.Graphics.FillRectangle(drawBrush, leftWall);
+
+                // Food
+                foreach (KeyValuePair<int, Food> food in foods)
+                {
+                    Rectangle circle = new Rectangle(food.Value.loc.x, food.Value.loc.y, pixelsPerCell, pixelsPerCell);
+                    e.Graphics.FillEllipse(drawBrush, circle);
+                }
+            }
+
+
+            // Snake
+            foreach (KeyValuePair<int, Snake> snake in snakes)
+            {
+                using (SolidBrush drawBrusher = new SolidBrush(snake.Value.color))
+                {
+                    foreach (Point p in snake.Value.vertices)
+                    {
+                        Point lastPoint = null;
+
+                        if (ReferenceEquals(lastPoint, null)) // if first vertice
+                        {
+                            lastPoint = p;
+                            continue;
+                        }
+                        if (lastPoint == p)
+                        {
+                            break;
+                        }
+
+                        Rectangle segment = new Rectangle(lastPoint.x, lastPoint.y, pixelsPerCell * (lastPoint.x - p.x), pixelsPerCell * (lastPoint.y - p.y));
+                        e.Graphics.FillRectangle(drawBrusher, segment);
+
+                        lastPoint = p;
+                    }
+                }
+
 
             }
 
-            drawWorld.Draw(e);
+            // Draw e??
+
         }
     }
 }

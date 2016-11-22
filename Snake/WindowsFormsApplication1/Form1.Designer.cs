@@ -33,7 +33,7 @@
             this.serverTextBox = new System.Windows.Forms.TextBox();
             this.nameTextBox = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
-            this.drawingPanel1 = new DrawingPanel.DrawingPanel();
+            this.worldPanel = new SnakeGame.World();
             this.SuspendLayout();
             // 
             // connectButton
@@ -80,19 +80,19 @@
             this.label2.TabIndex = 4;
             this.label2.Text = "Server:";
             // 
-            // drawingPanel1
+            // worldPanel
             // 
-            this.drawingPanel1.Location = new System.Drawing.Point(46, 91);
-            this.drawingPanel1.Name = "drawingPanel1";
-            this.drawingPanel1.Size = new System.Drawing.Size(370, 286);
-            this.drawingPanel1.TabIndex = 5;
+            this.worldPanel.Location = new System.Drawing.Point(15, 63);
+            this.worldPanel.Name = "worldPanel";
+            this.worldPanel.Size = new System.Drawing.Size(803, 595);
+            this.worldPanel.TabIndex = 5;
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(830, 607);
-            this.Controls.Add(this.drawingPanel1);
+            this.Controls.Add(this.worldPanel);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.nameTextBox);
             this.Controls.Add(this.serverTextBox);
@@ -112,7 +112,7 @@
         private System.Windows.Forms.TextBox serverTextBox;
         private System.Windows.Forms.TextBox nameTextBox;
         private System.Windows.Forms.Label label2;
-        private DrawingPanel.DrawingPanel drawingPanel1;
+        private World worldPanel;
     }
 }
 
