@@ -7,6 +7,9 @@ using Newtonsoft.Json;
 
 namespace SnakeGame
 {
+    /// <summary>
+    /// Holds properties that help represent food in the World class
+    /// </summary>
     [JsonObject(MemberSerialization.OptIn)]
     public class Food
     {
