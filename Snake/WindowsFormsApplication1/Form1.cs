@@ -15,41 +15,47 @@ namespace SnakeGame
 {
     public partial class Form1 : Form
     {
-        public static string playerName;
+        private static string playerName;
+        private static int worldWidth;
+        private static int worldHeight;
+        private static int playerID;
+
+        private World world;
 
         // This object represents the world.
         // In this simple demo, the world consists of one dot
         //private DrawWorld world;
 
-        private static World world;
+
 
         //private DrawingPanel.DrawingPanel panel;
 
 
-        public static Form1 form;
         public Form1()
         {
             InitializeComponent();
-            world = new World();
             // TODO: We would also need to update this form's size to expand or shrink to fit the panel
             // this.Size = (large enough to hold all buttons, panels, etc)
 
         }
-        private void createWorld(int height, int width)
+        private void createWorld()
         {
-            //world = new World(width, height);
-            //drawingPanel1.SetWorld(world);
+
+            world = new World(worldHeight, worldWidth);
 
             // Set the size of the drawing panel to match the world
-            //drawingPanel1.Size = new Size(world.width * DrawWorld.pixelsPerCell, world.height * DrawWorld.pixelsPerCell);
+            worldPanel.Size = new Size(1000, 1000);
+
         }
+
+
         /// <summary>
         /// This tick event is called 30 times / sec
         /// This method simulates an update coming from the server
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void UpdateFrame(object sender, EventArgs e)
+        private void UpdateFrame()
         {
             // pretend this dot was deserialized from a JSON string sent by the server
             
@@ -65,10 +71,19 @@ namespace SnakeGame
                 DrawSnake(snake.Value);
             }
 
-            //world.SetDot(dotX, dotY);
+            
 
             // Cause the panel to redraw
-            drawingPanel1.Invalidate();
+            worldPanel.Invalidate();
+        }
+
+        private void DrawSnake(Snake snake)
+        {
+
+        }
+        private void DrawFood(Food food)
+        {
+            // world.SetDot(food.loc.x, food.loc.y);
         }
 
         /// <summary>
@@ -172,22 +187,9 @@ namespace SnakeGame
             connectToServer(serverTextBox.Text);
         }
 
-        public static void DrawWalls()
-        {
-
-        }
-        public void UpdateForm()
-        {
-
-        }
-        private void DrawSnake(Snake snake)
-        {
-
-        }
-        private void DrawFood(Food food)
-        {
-           // world.SetDot(food.loc.x, food.loc.y);
-        }
+     
+      
+      
 
         public static void connectToServer(string serverIP)
         {
@@ -221,7 +223,7 @@ namespace SnakeGame
             Networking.Send(Networking.server.theSocket, data);
         }
 
-        private static void ProcessMessage(SocketState state)
+        private void ProcessMessage(SocketState state)
         {
 
             string totalData = state.sb.ToString();
@@ -253,7 +255,6 @@ namespace SnakeGame
                     if (snake.vertices.Contains(deadPoint))
                     {
                         world.RemoveSnake(snake.ID);
-                        
                     }
                     else
                     {
@@ -270,6 +271,7 @@ namespace SnakeGame
                     if (food.loc.x == -1)
                     {
                         world.RemoveFood(food.ID);
+                        
                     }
                     else
                     {
@@ -282,7 +284,7 @@ namespace SnakeGame
                 {
                     state.sb.Remove(0, p.Length);
                 }
-
+                UpdateFrame();
                 
             }
         }
@@ -308,25 +310,46 @@ namespace SnakeGame
                 switch (position)
                 {
                     case 1: // Its player name
-                        world.setWorldID(Convert.ToInt32(p));
+                        playerID = (Convert.ToInt32(p));
                         break;
                     case 2:
-                        world.setWorldWidth(Convert.ToInt32(p));
+                        worldWidth = (Convert.ToInt32(p));
                         break;
                     case 3:
-                        world.setWorldHeight(Convert.ToInt32(p));
+                        worldHeight = (Convert.ToInt32(p));
                         break;
                 }
                 position++;
             }
+
             
-            //createWorld(world.worldSizeX, world.worldSizeY);
-            
+
             //World.Update();
 
         }
 
+        /// <summary>
+        /// Helper method for DrawingPanel
+        /// Given the PaintEventArgs that comes from DrawingPanel, draw the contents of the world on to the panel.
+        /// </summary>
+        /// <param name="e"></param>
+        public void Draw(PaintEventArgs e)
+        {
+            using (SolidBrush drawBrush = new SolidBrush(Color.Black))
+            {
+                // Draw the single dot that represents the world
+                Rectangle dotBounds = new Rectangle(5, 5, 20, 20);
+                e.Graphics.FillEllipse(drawBrush, dotBounds);
 
+
+
+                //Rectangle lineBounds = new Rectangle((point1.X - point2.X) * pixelsPerCell, point1 )
+            }
+
+
+        }
+
+        
 
     }
 }

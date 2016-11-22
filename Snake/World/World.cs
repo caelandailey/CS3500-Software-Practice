@@ -1,4 +1,5 @@
-﻿using SnakeGame;
+﻿using DrawingPanel;
+using SnakeGame;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -9,24 +10,41 @@ using System.Windows.Forms;
 
 namespace SnakeGame
 {
-    public class World : Panel
+    public class World
     {
-        private int worldWidth;
-        private int worldHeight;
+       
+        // Determines the size in pixels of each grid cell in the world
+        public const int pixelsPerCell = 5;
 
-        private int[][] grid;
+        public static Dictionary<int, Food> foods;
+        public static Dictionary<int, Snake> snakes;
 
-        public World()
+        
+
+        public World(int w, int h)
         {
             foods = new Dictionary<int, Food>();
             snakes = new Dictionary<int, Snake>();
+            width = w;
+            height = h;
 
             // Setting this property to true prevents flickering
             this.DoubleBuffered = true;
         }
 
-        public static Dictionary<int, Food> foods;
-        public static Dictionary<int, Snake> snakes;
+        // Width of the world in cells (not pixels)
+        public int width
+        {
+            get;
+            private set;
+        }
+
+        // Height of the world in cells (not pixels)
+        public int height
+        {
+            get;
+            private set;
+        }
 
         // Example of world method might be...
 
@@ -72,27 +90,19 @@ namespace SnakeGame
                 foods.Remove(id);
             }
         }
-
-        public void setWorldWidth(int width)
-        {
-            worldWidth = width;
-        }
        
         public void setWorldID(int ID)
         {
-
+            
         }
 
-        public void setWorldHeight(int height)
-        {
-
-        }
+    
 
         public void drawWalls(PaintEventArgs e)
         {
             //// If we don't have a reference to the world yet, nothing to draw.
-            //if (world == null)
-            //    return;
+            if (drawWorld == null)
+                return;
 
             using (SolidBrush drawBrush = new SolidBrush(Color.Black))
             {
@@ -101,23 +111,24 @@ namespace SnakeGame
                 e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
 
                 // Draw the top wall
-                Rectangle topWall = new Rectangle(0, 0, worldWidth * DrawWorld.pixelsPerCell, DrawWorld.pixelsPerCell);
+                Rectangle topWall = new Rectangle(0, 0, width * DrawWorld.pixelsPerCell, DrawWorld.pixelsPerCell);
                 e.Graphics.FillRectangle(drawBrush, topWall);
 
                 // Draw the right wall
-                Rectangle rightWall = new Rectangle((worldWidth - 1) * DrawWorld.pixelsPerCell, 0, DrawWorld.pixelsPerCell, worldHeight * DrawWorld.pixelsPerCell);
+                Rectangle rightWall = new Rectangle((width - 1) * DrawWorld.pixelsPerCell, 0, DrawWorld.pixelsPerCell, height * DrawWorld.pixelsPerCell);
                 e.Graphics.FillRectangle(drawBrush, rightWall);
 
                 // Draw the bottom wall
-                Rectangle bottomWall = new Rectangle(0, (worldHeight - 1) * DrawWorld.pixelsPerCell, worldWidth * DrawWorld.pixelsPerCell, DrawWorld.pixelsPerCell);
+                Rectangle bottomWall = new Rectangle(0, (height - 1) * DrawWorld.pixelsPerCell, width * DrawWorld.pixelsPerCell, DrawWorld.pixelsPerCell);
                 e.Graphics.FillRectangle(drawBrush, bottomWall);
 
                 // Draw the left wall
-                Rectangle leftWall = new Rectangle(0, 0, DrawWorld.pixelsPerCell, worldHeight * DrawWorld.pixelsPerCell);
+                Rectangle leftWall = new Rectangle(0, 0, DrawWorld.pixelsPerCell, height * DrawWorld.pixelsPerCell);
                 e.Graphics.FillRectangle(drawBrush, leftWall);
 
             }
-        }
 
+            drawWorld.Draw(e);
+        }
     }
 }

@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.Drawing;
+using System.Windows.Forms;
 
 namespace SnakeGame
 {
@@ -61,7 +62,7 @@ namespace SnakeGame
             using (SolidBrush drawBrush = new SolidBrush(color))
             {
                 //Draw lines to screen.
-                e.Graphics.DrawLines(drawBrush, vertices);
+                //e.Graphics.DrawLines(drawBrush, vertices);
             }
 
 
@@ -70,4 +71,4 @@ namespace SnakeGame
     }
 
 }
-}
+

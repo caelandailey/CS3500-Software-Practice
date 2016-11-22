@@ -61,6 +61,7 @@
             this.serverTextBox.Name = "serverTextBox";
             this.serverTextBox.Size = new System.Drawing.Size(100, 20);
             this.serverTextBox.TabIndex = 2;
+            this.serverTextBox.Text = "localhost";
             // 
             // nameTextBox
             // 
@@ -68,6 +69,7 @@
             this.nameTextBox.Name = "nameTextBox";
             this.nameTextBox.Size = new System.Drawing.Size(100, 20);
             this.nameTextBox.TabIndex = 3;
+            this.nameTextBox.Text = "testname";
             // 
             // label2
             // 
@@ -80,9 +82,9 @@
             // 
             // drawingPanel1
             // 
-            this.drawingPanel1.Location = new System.Drawing.Point(12, 38);
+            this.drawingPanel1.Location = new System.Drawing.Point(46, 91);
             this.drawingPanel1.Name = "drawingPanel1";
-            this.drawingPanel1.Size = new System.Drawing.Size(613, 557);
+            this.drawingPanel1.Size = new System.Drawing.Size(370, 286);
             this.drawingPanel1.TabIndex = 5;
             // 
             // Form1

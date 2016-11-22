@@ -46,15 +46,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="World.cs">
-      <SubType>Component</SubType>
-    </Compile>
+    <Compile Include="World.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\DrawingPanel\DrawingPanel.csproj">
+      <Project>{58AA4D6E-6475-4252-8F61-52291E36958B}</Project>
+      <Name>DrawingPanel</Name>
+    </ProjectReference>
     <ProjectReference Include="..\DrawWorld\DrawWorld.csproj">
       <Project>{C716C7F5-3DE4-43C8-9143-B0DB745926AA}</Project>
       <Name>DrawWorld</Name>
