@@ -50,8 +50,8 @@ namespace SnakeGame
                     continue;
 
                 }
-                length += Math.Abs(p.x - lastPoint.x);
-                length += Math.Abs(p.y - lastPoint.y);
+                snakeLength += Math.Abs(p.x - lastPoint.x);
+                snakeLength += Math.Abs(p.y - lastPoint.y);
 
                 lastPoint = p;
             }

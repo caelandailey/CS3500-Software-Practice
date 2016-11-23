@@ -21,7 +21,7 @@ namespace SnakeGame
         private int playerID;
         private bool connected = false;
         private Dictionary<string, int> snakeScores;
-        private Dictionary<int, Color> snakeColor;
+        private Dictionary<string, Color> snakeColor;
 
         //private World world;
         public Form1()
@@ -31,7 +31,7 @@ namespace SnakeGame
             // this.Size = (large enough to hold all buttons, panels, etc)
             this.Size = new Size(1000, 1000);
             snakeScores = new Dictionary<string, int>();
-            snakeColor = new Dictionary<int, Color>();
+            snakeColor = new Dictionary<string, Color>();
         }
 
         /// <summary>
@@ -134,11 +134,11 @@ namespace SnakeGame
                 return;
             }
 
-            //nameTextBox.Enabled = false;
+            nameTextBox.Enabled = false;
             serverTextBox.Enabled = false;
   
             playerName = nameTextBox.Text;
-            //connectButton.Enabled = false;
+            connectButton.Enabled = false;
             connectToServer(serverTextBox.Text);
         }
 
@@ -233,7 +233,17 @@ namespace SnakeGame
 
         private void UpdateScore()
         {
-           
+            Invoke(new MethodInvoker(() => scoreBoard.Clear()));
+            foreach (KeyValuePair<String, int> scores in snakeScores)
+            {
+                
+                string score = scores.Key + ": " + scores.Value;
+                Invoke(new MethodInvoker(() => scoreBoard.AppendText(score + "\n")));
+                Invoke(new MethodInvoker(() => scoreBoard.Find(score)));
+
+                Invoke(new MethodInvoker(() => scoreBoard.SelectionColor = snakeColor[scores.Key]));
+
+            }
         }
         private void ProcessWorld(SocketState state)
         {
@@ -264,43 +274,44 @@ namespace SnakeGame
 
                     Snake snake = JsonConvert.DeserializeObject<Snake>(p);
 
-                    if (!snakeScores.ContainsKey(snake.name))
-                    {
+                    
                         Invoke(new MethodInvoker(() => snakeScores[snake.name] = snake.getSnakeLength()));
-                    }
+                    
                     
 
-                    if (!snakeColor.ContainsKey(snake.ID))
+                    if (!snakeColor.ContainsKey(snake.name))
                     {
                         Random random = new Random();
                         Color color = Color.FromArgb(random.Next(0, 255), random.Next(0, 255), random.Next(0, 255));
-                        snakeColor[snake.ID] = color;
+                        snakeColor[snake.name] = color;
                        
                     }
-                    Invoke(new MethodInvoker(() => snake.color = snakeColor[snake.ID]));
-
-                    Invoke(new MethodInvoker(() => scoreBoard.Clear()));
-                    foreach (KeyValuePair<String, int> scores in snakeScores)
+                    Invoke(new MethodInvoker(() =>
                     {
-                        string score = scores.Key + ": " + scores.Value;
-                        Invoke(new MethodInvoker(() => scoreBoard.AppendText(score+ "\n")));
-                        Invoke(new MethodInvoker(() => scoreBoard.Find(score)));
-
-                        Invoke(new MethodInvoker(() => scoreBoard.SelectionColor = snakeColor[snake.ID]));
-                        Console.WriteLine(snake.color);
-                        Console.Read();
+                        try
+                        {
+                            snake.color = snakeColor[snake.name];
+                        }
+                        catch { }
                     }
+                              ));
+                    
+
+
+                    UpdateScore();
 
 
 
-                    Point deadPoint = new Point(-1, -1);
-
-                    if (snake.vertices.Contains(deadPoint))
+                    //Point deadPoint = new Point(-1, -1);
+                    if (snake.vertices.Last().x == -1)
                     {
+
+                   
                         Invoke(new MethodInvoker(() => worldPanel.RemoveSnake(snake.ID)));
-                        Invoke(new MethodInvoker(() => snakeColor.Remove(snake.ID)));
+                        Invoke(new MethodInvoker(() => snakeColor.Remove(snake.name)));
                         Invoke(new MethodInvoker(() => snakeScores.Remove(snake.name)));
 
+                        UpdateScore();
 
                     }
                     else
