@@ -19,6 +19,8 @@ namespace SnakeGame
         private int worldWidth;
         private int worldHeight;
         private int playerID;
+        private bool connected = false;
+        
 
         //private World world;
         public Form1()
@@ -26,7 +28,7 @@ namespace SnakeGame
             InitializeComponent();
             // TODO: We would also need to update this form's size to expand or shrink to fit the panel
             // this.Size = (large enough to hold all buttons, panels, etc)
-
+            this.Size = new Size(1000, 1000);
         }
 
         /// <summary>
@@ -73,7 +75,7 @@ namespace SnakeGame
             // Send "(1)\n" to the server
 
             sendMessage("(1)");
-            Console.WriteLine("Up key pressed");
+            
         }
 
         /// <summary>
@@ -85,8 +87,7 @@ namespace SnakeGame
             // Send "(4)\n" to the server
 
             sendMessage("(4)");
-            Console.WriteLine("Left key pressed");
-            Console.Read();
+           
         }
 
         /// <summary>
@@ -98,7 +99,7 @@ namespace SnakeGame
             // Send "(2)\n" to the server
 
             sendMessage("(2)");
-            Console.WriteLine("Right key pressed");
+         
         }
 
         /// <summary>
@@ -110,7 +111,7 @@ namespace SnakeGame
             // Send "(3)\n" to the server
 
             sendMessage("(3)");
-            Console.WriteLine("Down key pressed");
+           
         }
 
         /// <summary>
@@ -126,6 +127,8 @@ namespace SnakeGame
                 return;
             }
 
+            nameTextBox.Select(0, 0); // Deselect the boxes
+            serverTextBox.Select(0, 0);
             playerName = nameTextBox.Text;
             connectToServer(serverTextBox.Text);
         }
@@ -152,7 +155,7 @@ namespace SnakeGame
 
         public void ReceiveWorld(SocketState state)
         {
-            ProcessMessage(state);
+            ProcessWorld(state);
 
             Networking.GetData(state);
         }
@@ -194,24 +197,30 @@ namespace SnakeGame
                         break;
                 }
 
-                position++;
+                
 
                 if (position == 3) // recieved all data
                 {
-                    worldPanel = new World(worldWidth, worldHeight);
+ 
+                    Invoke(new MethodInvoker(() => worldPanel.width = worldWidth));
+                    Invoke(new MethodInvoker(() => worldPanel.height = worldHeight));
+                    // May need to change the size of the form 'this.size'
 
-                    //worldPanel.SetWorld(world);
+                    // if the panel is too big for the form then update the form. 
 
                     // Set the size of the drawing panel to match the world
-                    //worldPanel.Size = new Size(world.width * World.pixelsPerCell, world.height * World.pixelsPerCell);
+                    Invoke(new MethodInvoker(() => worldPanel.Size = new Size(worldPanel.width * World.pixelsPerCell, worldPanel.height * World.pixelsPerCell)));
                 }
 
+                position++;
 
             }
 
-            worldPanel.Refresh();
+            
+            //Invoke(new MethodInvoker(() => worldPanel.Invalidate()));
+            //Invoke(new MethodInvoker(this.Update));
         }
-        private void ProcessMessage(SocketState state)
+        private void ProcessWorld(SocketState state)
         {
 
             string totalData = state.sb.ToString();
@@ -249,8 +258,8 @@ namespace SnakeGame
                     }
                     else
                     {
-                        snake.setColor();
-                        worldPanel.AddSnake(snake);
+                       // snake.setColor();
+                       worldPanel.AddSnake(snake);
                     }
                 }
                 else // if not its food
@@ -278,10 +287,14 @@ namespace SnakeGame
 
 
 
+                //try catch
+                try
+                {
+                    Invoke(new MethodInvoker(() => worldPanel.Invalidate()));
+                }
+                catch { }
+                //Invoke(new MethodInvoker(this.Update));
 
-                Invoke(new MethodInvoker(this.Refresh));
-
-                
             }
 
         }

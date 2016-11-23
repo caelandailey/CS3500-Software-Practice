@@ -1,4 +1,4 @@
-﻿using DrawingPanel;
+﻿
 using SnakeGame;
 using System;
 using System.Collections.Generic;
@@ -16,93 +16,82 @@ namespace SnakeGame
         // Determines the size in pixels of each grid cell in the world
         public const int pixelsPerCell = 5;
 
+
         private Dictionary<int, Food> foods;
         private Dictionary<int, Snake> snakes;
 
-        private World world;
+        private Object foodLock;
+
+        private Object snakeLock;
+
         public World()
         {
             foods = new Dictionary<int, Food>();
             snakes = new Dictionary<int, Snake>();
-            width = 150;
-            height = 150;
+            snakeLock = new Object();
+            foodLock = new Object();
+            width = 200;
+            height = 200;
 
             // Setting this property to true prevents flickering
             this.DoubleBuffered = true;
-        }
-
-        public World(int w, int h) // Constructor for world
-        {
-            foods = new Dictionary<int, Food>();
-            snakes = new Dictionary<int, Snake>();
-            width = w;
-            height = h;
-
-            // Setting this property to true prevents flickering
-            this.DoubleBuffered = true;
-        }
-
-        /// <summary>
-        /// Pass in a reference to the world, so we can draw the objects in it
-        /// </summary>
-        /// <param name="_world"></param>
-        public void SetWorld(World _world)
-        {
-            world = _world;
         }
 
         // Width of the world in cells (not pixels)
         public int width
         {
             get;
-            private set;
+            set;
         }
 
         // Height of the world in cells (not pixels)
         public int height
         {
             get;
-            private set;
+            set;
         }
 
         // Example of world method might be...
 
         public void AddFood(Food food)
         {
-            //foods.Add(food.ID, food);
-            foods[food.ID] = food;
+            lock (foodLock)
+            {
+                foods[food.ID] = food;
+            }
         }
 
         public void AddSnake(Snake snake)
         {
-            if (object.ReferenceEquals(null, snake))
+            lock (snakeLock)
             {
-                return;
+                snakes[snake.ID] = snake;
             }
-            snakes[snake.ID] = snake;
 
         }
 
         public void RemoveSnake(int id)
         {
-            if (snakes.ContainsKey(id))
+            lock (snakeLock)
             {
-                snakes.Remove(id);
+                if (snakes.ContainsKey(id))
+                {
+                    snakes.Remove(id);
+                }
             }
         }
 
         public void RemoveFood(int id)
         {
-            if (foods.ContainsKey(id))
+            lock (foodLock)
             {
-                foods.Remove(id);
+                if (foods.ContainsKey(id))
+                {
+                    foods.Remove(id);
+                }
             }
         }
 
-        public void setWorldID(int ID)
-        {
-
-        }
 
         
 
@@ -141,46 +130,58 @@ namespace SnakeGame
                 Rectangle leftWall = new Rectangle(0, 0, pixelsPerCell, height * pixelsPerCell);
                 e.Graphics.FillRectangle(drawBrush, leftWall);
 
-                // Food
-                foreach (KeyValuePair<int, Food> food in foods)
+                // Draw Food
+                lock (foodLock)
                 {
-                    Rectangle circle = new Rectangle(food.Value.loc.x, food.Value.loc.y, pixelsPerCell, pixelsPerCell);
-                    e.Graphics.FillEllipse(drawBrush, circle);
-                }
-            }
-
-
-            // Snake
-            foreach (KeyValuePair<int, Snake> snake in snakes)
-            {
-                using (SolidBrush drawBrusher = new SolidBrush(snake.Value.color))
-                {
-                    foreach (Point p in snake.Value.vertices)
+                    foreach (KeyValuePair<int, Food> food in foods)
                     {
-                        Point lastPoint = null;
+                        Rectangle circle = new Rectangle(food.Value.loc.x * pixelsPerCell, food.Value.loc.y * pixelsPerCell, pixelsPerCell, pixelsPerCell);
+                        e.Graphics.FillEllipse(drawBrush, circle);
+                    }
 
-                        if (ReferenceEquals(lastPoint, null)) // if first vertice
+                }
+
+                // Draw Snake
+                lock (snakeLock)
+                {
+
+                    foreach (KeyValuePair<int, Snake> snake in snakes)
+                    {
+                        using (SolidBrush drawBrusher = new SolidBrush(Color.Black))
                         {
-                            lastPoint = p;
-                            continue;
-                        }
-                        if (lastPoint == p)
-                        {
-                            break;
+                            Point lastPoint = null;
+                            foreach (Point p in snake.Value.vertices)
+                            {
+
+
+                                if (ReferenceEquals(lastPoint, null)) // if first vertice
+                                {
+                                    lastPoint = p;
+                                    continue;
+                                }
+                                if (lastPoint == p)
+                                {
+                                    break;
+                                }
+                                if ((lastPoint.x - p.x) == 0) // Going up or down
+                                {
+                                    Rectangle segment = new Rectangle(lastPoint.x * pixelsPerCell, lastPoint.y * pixelsPerCell, pixelsPerCell, pixelsPerCell * (lastPoint.y - p.y));
+                                    e.Graphics.FillRectangle(drawBrusher, segment);
+                                }
+                                else if ((lastPoint.y - p.y) == 0) // Going sideways
+                                {
+                                    Rectangle segment = new Rectangle(lastPoint.x * pixelsPerCell, lastPoint.y * pixelsPerCell, pixelsPerCell * (lastPoint.x - p.x), pixelsPerCell);
+                                    e.Graphics.FillRectangle(drawBrusher, segment);
+                                }
+
+                                lastPoint = p;
+                            }
                         }
 
-                        Rectangle segment = new Rectangle(lastPoint.x, lastPoint.y, pixelsPerCell * (lastPoint.x - p.x), pixelsPerCell * (lastPoint.y - p.y));
-                        e.Graphics.FillRectangle(drawBrusher, segment);
 
-                        lastPoint = p;
                     }
                 }
-
-
             }
-
-            // Draw e??
-
         }
     }
 }

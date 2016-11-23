@@ -89,18 +89,6 @@
       <Project>{56829827-acc0-49d0-a35f-eccaf9cf01b4}</Project>
       <Name>NetworkControl</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Controller\Controller.csproj">
-      <Project>{11cad1e5-bbf0-4225-ad34-7836b0d6bc51}</Project>
-      <Name>Controller</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\DrawingPanel\DrawingPanel.csproj">
-      <Project>{58aa4d6e-6475-4252-8f61-52291e36958b}</Project>
-      <Name>DrawingPanel</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\DrawWorld\DrawWorld.csproj">
-      <Project>{c716c7f5-3de4-43c8-9143-b0db745926aa}</Project>
-      <Name>DrawWorld</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Food\Food.csproj">
       <Project>{c5e9c0d5-da93-4770-92c5-874fc435a12e}</Project>
       <Name>Food</Name>

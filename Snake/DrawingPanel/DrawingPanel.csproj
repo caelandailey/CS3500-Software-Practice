@@ -42,16 +42,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DrawingPanel.cs">
-      <SubType>Component</SubType>
-    </Compile>
+    <Compile Include="DrawingPanel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\DrawWorld\DrawWorld.csproj">
-      <Project>{c716c7f5-3de4-43c8-9143-b0db745926aa}</Project>
-      <Name>DrawWorld</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
