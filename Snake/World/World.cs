@@ -10,28 +10,31 @@ using System.Windows.Forms;
 
 namespace SnakeGame
 {
-    public class World : Panel
+    public class World : Panel 
     {
 
         // Determines the size in pixels of each grid cell in the world
         public const int pixelsPerCell = 5;
 
-
         private Dictionary<int, Food> foods;
         private Dictionary<int, Snake> snakes;
+        
+
+          
 
         private Object foodLock;
 
         private Object snakeLock;
-
+  
         public World()
         {
             foods = new Dictionary<int, Food>();
             snakes = new Dictionary<int, Snake>();
             snakeLock = new Object();
             foodLock = new Object();
-            width = 200;
-            height = 200;
+            
+            width = 0;
+            height = 0;
 
             // Setting this property to true prevents flickering
             this.DoubleBuffered = true;
@@ -78,6 +81,7 @@ namespace SnakeGame
                 {
                     snakes.Remove(id);
                 }
+
             }
         }
 
@@ -105,6 +109,9 @@ namespace SnakeGame
             //// If we don't have a reference to the world yet, nothing to draw.
             //if (drawWorld == null)
             //   return;
+
+
+            
 
             using (SolidBrush drawBrush = new SolidBrush(Color.Black))
             {
@@ -147,7 +154,17 @@ namespace SnakeGame
 
                     foreach (KeyValuePair<int, Snake> snake in snakes)
                     {
-                        using (SolidBrush drawBrusher = new SolidBrush(Color.Black))
+
+                     //  if (!snakeColor.ContainsKey(snake.Key))
+                       // {
+                       //     Random random = new Random();
+                        //    Color color = Color.FromArgb(random.Next(0, 255), random.Next(0, 255), random.Next(0, 255));
+                        //    snakeColor[snake.Key] = color;
+                        //}
+
+                        
+                        
+                        using (SolidBrush drawBrusher = new SolidBrush(snake.Value.color))
                         {
                             Point lastPoint = null;
                             foreach (Point p in snake.Value.vertices)
@@ -165,13 +182,30 @@ namespace SnakeGame
                                 }
                                 if ((lastPoint.x - p.x) == 0) // Going up or down
                                 {
-                                    Rectangle segment = new Rectangle(lastPoint.x * pixelsPerCell, lastPoint.y * pixelsPerCell, pixelsPerCell, pixelsPerCell * (lastPoint.y - p.y));
-                                    e.Graphics.FillRectangle(drawBrusher, segment);
+                                    if (lastPoint.y - p.y > 0) // going up
+                                    {
+                                        Rectangle segment = new Rectangle(p.x * pixelsPerCell, p.y * pixelsPerCell, pixelsPerCell, pixelsPerCell * (lastPoint.y - p.y) + pixelsPerCell);
+                                        e.Graphics.FillRectangle(drawBrusher, segment);
+                                    }
+                                    else // Going down
+
+                                    {
+                                        Rectangle segment = new Rectangle(lastPoint.x * pixelsPerCell, lastPoint.y * pixelsPerCell, pixelsPerCell, pixelsPerCell * (p.y - lastPoint.y) + pixelsPerCell);
+                                        e.Graphics.FillRectangle(drawBrusher, segment);
+                                    }
                                 }
                                 else if ((lastPoint.y - p.y) == 0) // Going sideways
                                 {
-                                    Rectangle segment = new Rectangle(lastPoint.x * pixelsPerCell, lastPoint.y * pixelsPerCell, pixelsPerCell * (lastPoint.x - p.x), pixelsPerCell);
-                                    e.Graphics.FillRectangle(drawBrusher, segment);
+                                    if (lastPoint.x - p.x > 0) // Going Left
+                                    {
+                                        Rectangle segment = new Rectangle(p.x * pixelsPerCell, p.y * pixelsPerCell, pixelsPerCell * (lastPoint.x - p.x) + pixelsPerCell, pixelsPerCell);
+                                        e.Graphics.FillRectangle(drawBrusher, segment);
+                                    }
+                                    else // Going right
+                                    {
+                                        Rectangle segment = new Rectangle(lastPoint.x * pixelsPerCell, lastPoint.y * pixelsPerCell, pixelsPerCell * (p.x - lastPoint.x) + pixelsPerCell, pixelsPerCell);
+                                        e.Graphics.FillRectangle(drawBrusher, segment);
+                                    }
                                 }
 
                                 lastPoint = p;

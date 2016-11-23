@@ -24,11 +24,11 @@ namespace SnakeGame
 
         public Color color;
 
-        public void setColor()
+        public int length;
+
+        public void setColor(Color _color)
         {
-            //read id and set it to a random color
-            Random random = new Random();
-            color = Color.FromArgb(random.Next(0, 255), random.Next(0, 255), random.Next(0, 255));
+            color = _color;
         }
 
         public Color getColor()
@@ -40,20 +40,23 @@ namespace SnakeGame
         public int getSnakeLength()
         {
             Point lastPoint = null;
-            int length = 0;
+            int snakeLength = 0;
 
             foreach (Point p in this.vertices)
             {
                 if (ReferenceEquals(lastPoint, null)) // if first vertice
                 {
-                    length += Math.Abs(p.x - lastPoint.x);
-                    length += Math.Abs(p.y - lastPoint.y);
+                    lastPoint = p;
+                    continue;
+
                 }
+                length += Math.Abs(p.x - lastPoint.x);
+                length += Math.Abs(p.y - lastPoint.y);
 
                 lastPoint = p;
             }
 
-            return length;
+            return snakeLength;
         }
     }
 }

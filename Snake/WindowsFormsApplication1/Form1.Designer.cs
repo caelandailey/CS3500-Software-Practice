@@ -34,6 +34,7 @@
             this.nameTextBox = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
             this.worldPanel = new SnakeGame.World();
+            this.scoreBoard = new System.Windows.Forms.RichTextBox();
             this.SuspendLayout();
             // 
             // connectButton
@@ -82,16 +83,30 @@
             // 
             // worldPanel
             // 
+            this.worldPanel.height = 0;
             this.worldPanel.Location = new System.Drawing.Point(15, 63);
             this.worldPanel.Name = "worldPanel";
-            this.worldPanel.Size = new System.Drawing.Size(803, 595);
+            this.worldPanel.Size = new System.Drawing.Size(255, 247);
             this.worldPanel.TabIndex = 5;
+            this.worldPanel.width = 0;
+            // 
+            // scoreBoard
+            // 
+            this.scoreBoard.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.scoreBoard.Enabled = false;
+            this.scoreBoard.Location = new System.Drawing.Point(301, 63);
+            this.scoreBoard.Name = "scoreBoard";
+            this.scoreBoard.ReadOnly = true;
+            this.scoreBoard.Size = new System.Drawing.Size(0, 0);
+            this.scoreBoard.TabIndex = 6;
+            this.scoreBoard.Text = "";
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(830, 607);
+            this.Controls.Add(this.scoreBoard);
             this.Controls.Add(this.worldPanel);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.nameTextBox);
@@ -113,6 +128,7 @@
         private System.Windows.Forms.TextBox nameTextBox;
         private System.Windows.Forms.Label label2;
         private World worldPanel;
+        private System.Windows.Forms.RichTextBox scoreBoard;
     }
 }
 

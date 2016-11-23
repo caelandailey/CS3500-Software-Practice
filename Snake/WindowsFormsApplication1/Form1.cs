@@ -20,7 +20,8 @@ namespace SnakeGame
         private int worldHeight;
         private int playerID;
         private bool connected = false;
-        
+        private Dictionary<string, int> snakeScores;
+        private Dictionary<int, Color> snakeColor;
 
         //private World world;
         public Form1()
@@ -29,6 +30,8 @@ namespace SnakeGame
             // TODO: We would also need to update this form's size to expand or shrink to fit the panel
             // this.Size = (large enough to hold all buttons, panels, etc)
             this.Size = new Size(1000, 1000);
+            snakeScores = new Dictionary<string, int>();
+            snakeColor = new Dictionary<int, Color>();
         }
 
         /// <summary>
@@ -39,6 +42,10 @@ namespace SnakeGame
         /// <returns></returns>
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
+            if (connected == false)
+            {
+                return false;
+            }
             if (keyData == Keys.Up) // If 'up' arrow key is pressed
             {
                 moveUpKey(); // Handle work in another method
@@ -127,9 +134,11 @@ namespace SnakeGame
                 return;
             }
 
-            nameTextBox.Select(0, 0); // Deselect the boxes
-            serverTextBox.Select(0, 0);
+            //nameTextBox.Enabled = false;
+            serverTextBox.Enabled = false;
+  
             playerName = nameTextBox.Text;
+            //connectButton.Enabled = false;
             connectToServer(serverTextBox.Text);
         }
 
@@ -155,6 +164,7 @@ namespace SnakeGame
 
         public void ReceiveWorld(SocketState state)
         {
+            connected = true;
             ProcessWorld(state);
 
             Networking.GetData(state);
@@ -207,7 +217,10 @@ namespace SnakeGame
                     // May need to change the size of the form 'this.size'
 
                     // if the panel is too big for the form then update the form. 
-
+                    Invoke(new MethodInvoker(() => scoreBoard.Size = new Size(500, worldHeight*World.pixelsPerCell)));
+                    
+                    Invoke(new MethodInvoker(() => this.Size = new Size(scoreBoard.Width+worldWidth*World.pixelsPerCell+100, worldPanel.Location.Y + worldHeight * World.pixelsPerCell+ 50))); // add size of score size
+                    
                     // Set the size of the drawing panel to match the world
                     Invoke(new MethodInvoker(() => worldPanel.Size = new Size(worldPanel.width * World.pixelsPerCell, worldPanel.height * World.pixelsPerCell)));
                 }
@@ -216,9 +229,11 @@ namespace SnakeGame
 
             }
 
-            
-            //Invoke(new MethodInvoker(() => worldPanel.Invalidate()));
-            //Invoke(new MethodInvoker(this.Update));
+        }
+
+        private void UpdateScore()
+        {
+           
         }
         private void ProcessWorld(SocketState state)
         {
@@ -249,16 +264,48 @@ namespace SnakeGame
 
                     Snake snake = JsonConvert.DeserializeObject<Snake>(p);
 
+                    if (!snakeScores.ContainsKey(snake.name))
+                    {
+                        Invoke(new MethodInvoker(() => snakeScores[snake.name] = snake.getSnakeLength()));
+                    }
+                    
+
+                    if (!snakeColor.ContainsKey(snake.ID))
+                    {
+                        Random random = new Random();
+                        Color color = Color.FromArgb(random.Next(0, 255), random.Next(0, 255), random.Next(0, 255));
+                        snakeColor[snake.ID] = color;
+                       
+                    }
+                    Invoke(new MethodInvoker(() => snake.color = snakeColor[snake.ID]));
+
+                    Invoke(new MethodInvoker(() => scoreBoard.Clear()));
+                    foreach (KeyValuePair<String, int> scores in snakeScores)
+                    {
+                        string score = scores.Key + ": " + scores.Value;
+                        Invoke(new MethodInvoker(() => scoreBoard.AppendText(score+ "\n")));
+                        Invoke(new MethodInvoker(() => scoreBoard.Find(score)));
+
+                        Invoke(new MethodInvoker(() => scoreBoard.SelectionColor = snakeColor[snake.ID]));
+                        Console.WriteLine(snake.color);
+                        Console.Read();
+                    }
+
+
+
                     Point deadPoint = new Point(-1, -1);
 
                     if (snake.vertices.Contains(deadPoint))
                     {
                         Invoke(new MethodInvoker(() => worldPanel.RemoveSnake(snake.ID)));
+                        Invoke(new MethodInvoker(() => snakeColor.Remove(snake.ID)));
+                        Invoke(new MethodInvoker(() => snakeScores.Remove(snake.name)));
+
 
                     }
                     else
                     {
-                        // snake.setColor();
+
                         Invoke(new MethodInvoker(() => worldPanel.AddSnake(snake)));
                     }
                 }
@@ -271,11 +318,25 @@ namespace SnakeGame
                     if (food.loc.x == -1)
                     {
                         Invoke(new MethodInvoker(() => worldPanel.RemoveFood(food.ID)));
-
+                        
                     }
                     else
                     {
-                        Invoke(new MethodInvoker(() => worldPanel.AddFood(food)));
+                        try
+                        {
+
+
+                            Invoke(new MethodInvoker(() =>
+                            {
+                                try
+                                {
+                                    worldPanel.AddFood(food);
+                                }
+                                catch { }
+                            }
+                              ));
+                        }
+                        catch { }
 
                     }
                 }
@@ -293,7 +354,7 @@ namespace SnakeGame
                     Invoke(new MethodInvoker(() => worldPanel.Invalidate()));
                 }
                 catch { }
-                //Invoke(new MethodInvoker(this.Update));
+                
 
             }
 
