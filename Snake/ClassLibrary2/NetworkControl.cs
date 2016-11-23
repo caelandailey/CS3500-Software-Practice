@@ -1,4 +1,11 @@
-﻿using System;
+﻿/// Caelan Dailey 
+/// Karina Biancone
+/// 11/22/2016
+/// Snake Game
+/// CS 3500 
+
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -22,9 +29,9 @@ namespace SnakeGame
     /// </summary>
     public class SocketState
     {
-        public Socket theSocket;
-        public int ID;
-        public Action<SocketState> callMe;
+        public Socket theSocket; // Holds information
+        public int ID; // Id of socket to keep track
+        public Action<SocketState> callMe; // Action calls back in order to communicate. Takes in a method and calls 'me'
         
 
         // This is the buffer where we will receive message data from the client
@@ -49,7 +56,6 @@ namespace SnakeGame
 
         public static SocketState server;
 
-        // TODO: Move all networking code to this class.
         // Networking code should be completely general-purpose, and useable by any other application.
         // It should contain no references to a specific project.
 
@@ -200,9 +206,6 @@ namespace SnakeGame
         /// </summary>
         public static void SendCallback(IAsyncResult state_in_an_ar_object)
         {
-            Console.WriteLine("SendCallBack: Data has been sent");
-            Console.Read();
-
             SocketState state = (SocketState)state_in_an_ar_object.AsyncState;
             // Nothing much to do here, just conclude the send operation so the socket is happy.
             state.theSocket.EndSend(state_in_an_ar_object);

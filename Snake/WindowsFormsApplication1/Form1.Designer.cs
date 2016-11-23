@@ -33,8 +33,9 @@
             this.serverTextBox = new System.Windows.Forms.TextBox();
             this.nameTextBox = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
-            this.worldPanel = new SnakeGame.World();
             this.scoreBoard = new System.Windows.Forms.RichTextBox();
+            this.worldPanel = new SnakeGame.World();
+            this.helpButton = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // connectButton
@@ -62,7 +63,6 @@
             this.serverTextBox.Name = "serverTextBox";
             this.serverTextBox.Size = new System.Drawing.Size(100, 20);
             this.serverTextBox.TabIndex = 2;
-            this.serverTextBox.Text = "localhost";
             // 
             // nameTextBox
             // 
@@ -70,7 +70,6 @@
             this.nameTextBox.Name = "nameTextBox";
             this.nameTextBox.Size = new System.Drawing.Size(100, 20);
             this.nameTextBox.TabIndex = 3;
-            this.nameTextBox.Text = "testname";
             // 
             // label2
             // 
@@ -81,6 +80,20 @@
             this.label2.TabIndex = 4;
             this.label2.Text = "Server:";
             // 
+            // scoreBoard
+            // 
+            this.scoreBoard.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.scoreBoard.BackColor = System.Drawing.Color.White;
+            this.scoreBoard.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.scoreBoard.Enabled = false;
+            this.scoreBoard.Font = new System.Drawing.Font("Racer", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.scoreBoard.Location = new System.Drawing.Point(301, 63);
+            this.scoreBoard.Name = "scoreBoard";
+            this.scoreBoard.ReadOnly = true;
+            this.scoreBoard.Size = new System.Drawing.Size(0, 0);
+            this.scoreBoard.TabIndex = 6;
+            this.scoreBoard.Text = "";
+            // 
             // worldPanel
             // 
             this.worldPanel.height = 0;
@@ -90,22 +103,22 @@
             this.worldPanel.TabIndex = 5;
             this.worldPanel.width = 0;
             // 
-            // scoreBoard
+            // helpButton
             // 
-            this.scoreBoard.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.scoreBoard.Enabled = false;
-            this.scoreBoard.Location = new System.Drawing.Point(301, 63);
-            this.scoreBoard.Name = "scoreBoard";
-            this.scoreBoard.ReadOnly = true;
-            this.scoreBoard.Size = new System.Drawing.Size(0, 0);
-            this.scoreBoard.TabIndex = 6;
-            this.scoreBoard.Text = "";
+            this.helpButton.Location = new System.Drawing.Point(731, 10);
+            this.helpButton.Name = "helpButton";
+            this.helpButton.Size = new System.Drawing.Size(75, 23);
+            this.helpButton.TabIndex = 7;
+            this.helpButton.Text = "Help";
+            this.helpButton.UseVisualStyleBackColor = true;
+            this.helpButton.Click += new System.EventHandler(this.helpButton_Click);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(830, 607);
+            this.Controls.Add(this.helpButton);
             this.Controls.Add(this.scoreBoard);
             this.Controls.Add(this.worldPanel);
             this.Controls.Add(this.label2);
@@ -129,6 +142,7 @@
         private System.Windows.Forms.Label label2;
         private World worldPanel;
         private System.Windows.Forms.RichTextBox scoreBoard;
+        private System.Windows.Forms.Button helpButton;
     }
 }
 
