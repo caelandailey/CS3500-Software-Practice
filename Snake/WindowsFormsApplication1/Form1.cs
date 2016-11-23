@@ -253,13 +253,13 @@ namespace SnakeGame
 
                     if (snake.vertices.Contains(deadPoint))
                     {
-                        worldPanel.RemoveSnake(snake.ID);
+                        Invoke(new MethodInvoker(() => worldPanel.RemoveSnake(snake.ID)));
 
                     }
                     else
                     {
-                       // snake.setColor();
-                       worldPanel.AddSnake(snake);
+                        // snake.setColor();
+                        Invoke(new MethodInvoker(() => worldPanel.AddSnake(snake)));
                     }
                 }
                 else // if not its food
@@ -270,12 +270,12 @@ namespace SnakeGame
 
                     if (food.loc.x == -1)
                     {
-                        worldPanel.RemoveFood(food.ID);
+                        Invoke(new MethodInvoker(() => worldPanel.RemoveFood(food.ID)));
 
                     }
                     else
                     {
-                        worldPanel.AddFood(food);
+                        Invoke(new MethodInvoker(() => worldPanel.AddFood(food)));
 
                     }
                 }
