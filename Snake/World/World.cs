@@ -1,4 +1,9 @@
-﻿
+﻿/// Caelan Dailey 
+/// Karina Biancone
+/// 11/22/2016
+/// Snake Game
+/// CS 3500 
+
 using SnakeGame;
 using System;
 using System.Collections.Generic;
@@ -10,22 +15,26 @@ using System.Windows.Forms;
 
 namespace SnakeGame
 {
+
+    /// <summary>
+    /// Class that represents our world/panel. It handles the data from the panel and draws it. Handles data of the snake and food. Handles the location of everything on the panel
+    /// </summary>
     public class World : Panel 
     {
 
         // Determines the size in pixels of each grid cell in the world
         public const int pixelsPerCell = 5;
 
-        private Dictionary<int, Food> foods;
-        private Dictionary<int, Snake> snakes;
+        private Dictionary<int, Food> foods; // holds all the food in the world
+        private Dictionary<int, Snake> snakes; // holds all the snakes in the world
         
+        private Object foodLock; // Lock for food
 
-          
-
-        private Object foodLock;
-
-        private Object snakeLock;
+        private Object snakeLock; // Lock for snakes
   
+        /// <summary>
+        /// Constructor. Create empty world
+        /// </summary>
         public World()
         {
             foods = new Dictionary<int, Food>();
@@ -56,28 +65,40 @@ namespace SnakeGame
 
         // Example of world method might be...
 
+        /// <summary>
+        /// Method to add food. When client recieves food data at it to the database
+        /// </summary>
+        /// <param name="food"></param>
         public void AddFood(Food food)
         {
-            lock (foodLock)
+            lock (foodLock) // Changing food, lock it
             {
                 foods[food.ID] = food;
             }
         }
 
+        /// <summary>
+        /// Method to add snakes. When client recieves snake data add it to the database
+        /// </summary>
+        /// <param name="snake"></param>
         public void AddSnake(Snake snake)
         {
-            lock (snakeLock)
+            lock (snakeLock) // Changing snake, lock it. Dont want to make changes while already changing it
             {
                 snakes[snake.ID] = snake;
             }
 
         }
 
+        /// <summary>
+        /// Remove the snake if it deads
+        /// </summary>
+        /// <param name="id"></param>
         public void RemoveSnake(int id)
         {
             lock (snakeLock)
             {
-                if (snakes.ContainsKey(id))
+                if (snakes.ContainsKey(id)) // Check if already a snake
                 {
                     snakes.Remove(id);
                 }
@@ -85,6 +106,10 @@ namespace SnakeGame
             }
         }
 
+        /// <summary>
+        /// Remove food if eaten
+        /// </summary>
+        /// <param name="id"></param>
         public void RemoveFood(int id)
         {
             lock (foodLock)
@@ -96,23 +121,12 @@ namespace SnakeGame
             }
         }
 
-
-        
-
-
         /// <summary>
         /// Override the behavior when the panel is redrawn
         /// </summary>
         /// <param name="e"></param>
         protected override void OnPaint(PaintEventArgs e)
         {
-            //// If we don't have a reference to the world yet, nothing to draw.
-            //if (drawWorld == null)
-            //   return;
-
-
-            
-
             using (SolidBrush drawBrush = new SolidBrush(Color.Black))
             {
 
@@ -149,34 +163,23 @@ namespace SnakeGame
                 }
 
                 // Draw Snake
-                lock (snakeLock)
+                lock (snakeLock) // Lock it dont want to change if alreadying changing
                 {
-
-                    foreach (KeyValuePair<int, Snake> snake in snakes)
+                    foreach (KeyValuePair<int, Snake> snake in snakes) // Loop through snakes
                     {
-
-                     //  if (!snakeColor.ContainsKey(snake.Key))
-                       // {
-                       //     Random random = new Random();
-                        //    Color color = Color.FromArgb(random.Next(0, 255), random.Next(0, 255), random.Next(0, 255));
-                        //    snakeColor[snake.Key] = color;
-                        //}
-
-                        
-                        
-                        using (SolidBrush drawBrusher = new SolidBrush(snake.Value.color))
+                        using (SolidBrush drawBrusher = new SolidBrush(snake.Value.color)) // set color
                         {
                             Point lastPoint = null;
-                            foreach (Point p in snake.Value.vertices)
+                            foreach (Point p in snake.Value.vertices) // Loop through points and draw it
                             {
 
 
                                 if (ReferenceEquals(lastPoint, null)) // if first vertice
                                 {
-                                    lastPoint = p;
+                                    lastPoint = p; // Get vertice and then continue to obtain 2 points.
                                     continue;
                                 }
-                                if (lastPoint == p)
+                                if (lastPoint == p) // if last point dont draw.
                                 {
                                     break;
                                 }
@@ -208,11 +211,9 @@ namespace SnakeGame
                                     }
                                 }
 
-                                lastPoint = p;
+                                lastPoint = p; // Set last point
                             }
                         }
-
-
                     }
                 }
             }
