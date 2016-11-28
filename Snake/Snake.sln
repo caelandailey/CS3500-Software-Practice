@@ -15,6 +15,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Food", "Food\Food.csproj", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Point", "Point\Point.csproj", "{CD7E12E4-6BB9-40C1-961E-CF8621BB96C2}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Resources", "Resources", "{87878DBE-FC57-47E6-92E8-3922713A0597}"
+	ProjectSection(SolutionItems) = preProject
+		README.txt = README.txt
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Server", "ConsoleApplication1\Server.csproj", "{586FA756-EE79-4C5D-BFCF-8B5B1D4A5DEE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +52,10 @@ Global
 		{CD7E12E4-6BB9-40C1-961E-CF8621BB96C2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CD7E12E4-6BB9-40C1-961E-CF8621BB96C2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CD7E12E4-6BB9-40C1-961E-CF8621BB96C2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{586FA756-EE79-4C5D-BFCF-8B5B1D4A5DEE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{586FA756-EE79-4C5D-BFCF-8B5B1D4A5DEE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{586FA756-EE79-4C5D-BFCF-8B5B1D4A5DEE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{586FA756-EE79-4C5D-BFCF-8B5B1D4A5DEE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

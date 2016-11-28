@@ -47,6 +47,19 @@ namespace SnakeGame
         }
     }
 
+    /// <summary>
+    /// This class holds the necesarry information that the networks needs from the server, a TCP listener and  
+    /// delgate.
+    /// </summary>
+    public class ServerState
+    {
+        public TcpListener listener;
+        public Action callMe;
+    }
+
+    /// <summary>
+    /// The communicator between the Server and Client.
+    /// </summary>
     public class Networking
     {
 
@@ -210,5 +223,18 @@ namespace SnakeGame
             // Nothing much to do here, just conclude the send operation so the socket is happy.
             state.theSocket.EndSend(state_in_an_ar_object);
         }
+
+        public static void ServerAwaitingClientLoop(Action callBack)
+        {
+            ServerState state = new ServerState();
+            
+        }
+
+        public static void ExceptNewClient(IAsyncResult ar)
+        {
+
+        }
+
+
     }
 }
