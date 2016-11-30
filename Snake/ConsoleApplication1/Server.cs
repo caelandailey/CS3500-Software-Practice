@@ -20,6 +20,8 @@ namespace SnakeGame
         {
             Server server = new Server();
             server.StartServer();
+            // start timer
+
             Console.Read();
         }
 
@@ -56,7 +58,7 @@ namespace SnakeGame
             // Save the socket in a SocketState, 
             // so we can pass it to the receive callback, so we know which client we are dealing with.
             SocketState newClient = (SocketState)ar.AsyncState;
-            newClient.callMe(RecievePlayerName);
+            newClient.callMe = ReceivePlayerName;
             // Can't have the server modifying the clients list if it's braodcasting a message.
             ///lock (clients)
             //{
@@ -75,9 +77,15 @@ namespace SnakeGame
             Networking.ServerAwaitingClientLoop(FirstContact);
         }
 
-        private void RecievePlayerName(IAsyncResult ar)
+        private void ReceivePlayerName(SocketState state)
         {
-
+            //Make new snake
+            //Create unique id
+            // set socket states id. Equa to unique id
+            // Change callback to a method that handles direction requests
+            // send id and world height/width
+            // add socket to list of client sockets
+            // Then ask for data
         }
 
         /// <summary>
