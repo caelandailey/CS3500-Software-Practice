@@ -32,7 +32,7 @@ namespace SnakeGame
         public Socket theSocket; // Holds information
         public int ID; // Id of socket to keep track
         public Action<SocketState> callMe; // Action calls back in order to communicate. Takes in a method and calls 'me'
-        
+
 
         // This is the buffer where we will receive message data from the client
         public byte[] messageBuffer = new byte[1024];
@@ -54,7 +54,7 @@ namespace SnakeGame
     public class ServerState
     {
         public TcpListener listener;
-        public Action callMe;
+        public Action<SocketState> callMe;
     }
 
     /// <summary>
@@ -68,6 +68,9 @@ namespace SnakeGame
         private static int socketID = 0;
 
         public static SocketState server;
+
+        private static int clientCount = 0;
+        private static object clientLock;
 
         // Networking code should be completely general-purpose, and useable by any other application.
         // It should contain no references to a specific project.
@@ -83,7 +86,7 @@ namespace SnakeGame
         /// <param name=""></param>
         /// <param name=""></param>
         /// <returns></returns>
-        public static SocketState ConnectToServer(Action<SocketState> callbackFunction,  string hostName)
+        public static SocketState ConnectToServer(Action<SocketState> callbackFunction, string hostName)
         {
             // Connect to a remote device.
             try
@@ -119,7 +122,7 @@ namespace SnakeGame
                 }
 
                 Socket socket = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                
+
                 server = new SocketState(socket, socketID);
 
                 socketID++;
@@ -146,7 +149,7 @@ namespace SnakeGame
         /// </summary>
         /// <param name="state_in_an_ar_object"></param>
         public static void ConnectedToServer(IAsyncResult state_in_an_ar_object)
-        { 
+        {
             SocketState state = (SocketState)state_in_an_ar_object.AsyncState;
 
             state.theSocket.EndConnect(state_in_an_ar_object);
@@ -168,7 +171,7 @@ namespace SnakeGame
             SocketState state = (SocketState)state_in_an_ar_object.AsyncState;
 
             //state.theSocket.EndReceive(state_in_an_ar_object);
-            
+
             //(append message to state)
 
             int bytesRead = state.theSocket.EndReceive(state_in_an_ar_object);
@@ -185,7 +188,7 @@ namespace SnakeGame
                 state.callMe(state);
             }
 
-            
+
             //state.theSocket.BeginReceive(state.messageBuffer, 0, state.messageBuffer.Length, SocketFlags.None, ReceiveCallback, state);
 
         }
@@ -224,15 +227,37 @@ namespace SnakeGame
             state.theSocket.EndSend(state_in_an_ar_object);
         }
 
-        public static void ServerAwaitingClientLoop(Action callBack)
+        /// <summary>
+        /// Stores a delegate and listener in a state to then begin accepting a connection
+        /// </summary>
+        /// <param name="callBack"></param>
+        static void ServerAwaitingClientLoop(Action<SocketState> callBack)
         {
+            //the new state to hold delegate and listener
             ServerState state = new ServerState();
-            
+            state.listener = new TcpListener(IPAddress.Any, Networking.DEFAULT_PORT);
+            state.callMe = callBack;
+
+            //begin accepting socket which will call on AcceptNewClient
+            state.listener.BeginAcceptSocket(AcceptNewClient, state);
         }
 
-        public static void ExceptNewClient(IAsyncResult ar)
+        /// <summary>
+        /// Will add a new client to the server and begin the event loop.
+        /// </summary>
+        /// <param name="ar"></param>
+        static void AcceptNewClient(IAsyncResult ar)
         {
+            ServerState state = (ServerState)ar.AsyncState;
+            Socket socket = state.listener.EndAcceptSocket(ar);
+            lock (Networking.clientLock)
+            {
+                Networking.clientCount++;
+                SocketState socketState = new SocketState(socket, Networking.clientCount);
+                state.callMe(socketState);
+            }            
 
+            state.listener.BeginAcceptSocket(AcceptNewClient, state);
         }
 
 
