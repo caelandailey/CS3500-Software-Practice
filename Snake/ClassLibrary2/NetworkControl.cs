@@ -54,7 +54,7 @@ namespace SnakeGame
     public class ServerState
     {
         public TcpListener listener;
-        public Action<SocketState> callMe;
+        public AsyncCallback callMe;
     }
 
     /// <summary>
@@ -70,7 +70,7 @@ namespace SnakeGame
         public static SocketState server;
 
         private static int clientCount = 0;
-        private static object clientLock;
+        private static object clientLock = new object();
 
         // Networking code should be completely general-purpose, and useable by any other application.
         // It should contain no references to a specific project.
@@ -231,7 +231,7 @@ namespace SnakeGame
         /// Stores a delegate and listener in a state to then begin accepting a connection
         /// </summary>
         /// <param name="callBack"></param>
-        static void ServerAwaitingClientLoop(Action<SocketState> callBack)
+        public static void ServerAwaitingClientLoop(AsyncCallback callBack)
         {
             //the new state to hold delegate and listener
             ServerState state = new ServerState();
@@ -254,7 +254,7 @@ namespace SnakeGame
             {
                 Networking.clientCount++;
                 SocketState socketState = new SocketState(socket, Networking.clientCount);
-                state.callMe(socketState);
+                state.callMe((IAsyncResult) socketState);
             }            
 
             state.listener.BeginAcceptSocket(AcceptNewClient, state);
