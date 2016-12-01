@@ -14,22 +14,30 @@ namespace SnakeGame
     {
         private List<SocketState> clients;
         private TcpListener listener;
-        private int serverCount = 0;
+        private int clientCount;
+        private object clientLock = new object();
+
+        private int worldHeight;
+        private int worldWidth;
 
         static void Main(string[] args)
         {
             Server server = new Server();
+            
             server.StartServer();
             // start timer
+            // read xml
 
             Console.Read();
         }
 
         public Server()
         {
-            listener = new TcpListener(IPAddress.Any, 11000);
+           
 
             clients = new List<SocketState>();
+
+            clientCount = 0;
         }
 
 
@@ -40,8 +48,8 @@ namespace SnakeGame
         {
             Console.WriteLine("Server waiting for client");
 
-            listener.Start();
-            
+           
+
             Networking.ServerAwaitingClientLoop(FirstContact);
         }
 
@@ -69,8 +77,8 @@ namespace SnakeGame
             // Start listening for a message
             // When a message arrives, handle it on a new thread with ReceiveCallback
             //                                  the buffer          buffer offset        max bytes to receive                         method to call when data arrives    "state" object representing the socket
-            newClient.theSocket.BeginReceive(newClient.messageBuffer, 0, newClient.messageBuffer.Length, SocketFlags.None, ReceiveCallback, newClient);
-
+            //newClient.theSocket.BeginReceive(newClient.messageBuffer, 0, newClient.messageBuffer.Length, SocketFlags.None, , newClient);
+            Networking.GetData(newClient);
             // Continue the "event loop" that was started on line 53
             // Start listening for the next client, on a new thread
             //listener.BeginAcceptSocket(ConnectionRequested, null);
@@ -80,12 +88,70 @@ namespace SnakeGame
         private void ReceivePlayerName(SocketState state)
         {
             //Make new snake
-            //Create unique id
-            // set socket states id. Equa to unique id
+
+            // Create unique id
             // Change callback to a method that handles direction requests
+            // set socket states id. Equa to unique id
             // send id and world height/width
+            // data is unique id, world height and width 
             // add socket to list of client sockets
             // Then ask for data
+
+            // MAKE SNAKE
+            ProcessMessage(state);
+            
+            
+            
+            state.callMe = handleDirectionRequests; // change callback to handle requests
+
+
+            byte[] messageBytes = Encoding.UTF8.GetBytes(clientCount-1 + "\n" + worldWidth + "\n" + worldHeight + "\n"); // Set world info + id
+            state.theSocket.BeginSend(messageBytes, 0, messageBytes.Length, SocketFlags.None, SendCallback, state);
+
+            lock (clientLock)
+            {
+                state.ID = clientCount; // set state id
+
+                clients.Add(state); // add to client list
+
+                clientCount++; // increment clientcount
+            }
+
+            //state.theSocket.BeginReceive(state.messageBuffer, 0, state.messageBuffer.Length, SocketFlags.None, ReceiveCallback, state); // Ask for more info
+            // Dont need since processmessage asks to receive more info
+
+        }
+
+        private void handleDirectionRequests(SocketState state)
+        {
+            string totalData = state.sb.ToString();
+
+            string[] parts = Regex.Split(totalData, @"(?<=[\n])");
+
+            // Loop until we have processed all messages.
+            // We may have received more than one.
+            foreach (string p in parts)
+            {
+
+                // Ignore empty strings added by the regex splitter
+                if (p.Length == 0)
+                    continue;
+                // The regex splitter will include the last string even if it doesn't end with a '\n',
+                // So we need to ignore it if this happens. 
+                if (p[p.Length - 1] != '\n')
+                    break;
+
+                Console.WriteLine("received message: \"" + p + "\"");
+
+                byte[] messageBytes = Encoding.UTF8.GetBytes(p);
+
+                // Remove it from the SocketState's growable buffer
+                state.sb.Remove(0, p.Length);
+
+                // Start listening for more parts of a message, or more new messages
+                state.theSocket.BeginReceive(state.messageBuffer, 0, state.messageBuffer.Length, SocketFlags.None, ReceiveCallback, state);
+
+            }
         }
 
         /// <summary>
@@ -108,7 +174,7 @@ namespace SnakeGame
                 // Append the received data to the growable buffer.
                 // It may be an incomplete message, so we need to start building it up piece by piece
                 sender.sb.Append(theMessage);
-
+                Console.WriteLine("received message: \"" + theMessage + "\"");
                 // TODO: If we had an "EventProcessor" delagate associated with the socket state,
                 //       We could call that here, instead of hard-coding this method to call.
                 ProcessMessage(sender);
@@ -153,14 +219,8 @@ namespace SnakeGame
                 // Remove it from the SocketState's growable buffer
                 sender.sb.Remove(0, p.Length);
 
-                // Broadcast the message
-                // Can't have new connections popping up while looping through the clients list.
-                lock (clients)
-                {
-                    foreach (SocketState client in clients)
-                        client.theSocket.BeginSend(messageBytes, 0, messageBytes.Length, SocketFlags.None, SendCallback, client);
-
-                }
+                // Start listening for more parts of a message, or more new messages
+                sender.theSocket.BeginReceive(sender.messageBuffer, 0, sender.messageBuffer.Length, SocketFlags.None, ReceiveCallback, sender);
 
             }
 

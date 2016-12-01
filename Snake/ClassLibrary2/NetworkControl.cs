@@ -183,6 +183,7 @@ namespace SnakeGame
                 // Append the received data to the growable buffer.
                 // It may be an incomplete message, so we need to start building it up piece by piece
                 state.sb.Append(theMessage);
+                
 
                 //ProcessMessage(state);
                 state.callMe(state);
@@ -235,9 +236,9 @@ namespace SnakeGame
         {
             //the new state to hold delegate and listener
             ServerState state = new ServerState();
-            state.listener = new TcpListener(IPAddress.Any, Networking.DEFAULT_PORT);
+            state.listener = new TcpListener(IPAddress.Any, 11000);
             state.callMe = callBack;
-
+            state.listener.Start();
             //begin accepting socket which will call on AcceptNewClient
             state.listener.BeginAcceptSocket(AcceptNewClient, state);
         }
@@ -255,6 +256,7 @@ namespace SnakeGame
                 Networking.clientCount++;
                 SocketState socketState = new SocketState(socket, Networking.clientCount);
                 state.callMe((IAsyncResult) socketState);
+                
             }            
 
             state.listener.BeginAcceptSocket(AcceptNewClient, state);
