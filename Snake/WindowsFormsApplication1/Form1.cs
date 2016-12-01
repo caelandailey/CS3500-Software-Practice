@@ -354,9 +354,7 @@ namespace SnakeGame
                 else // if not its food
                 {
                     Food food = JsonConvert.DeserializeObject<Food>(p);
-
-                    Point deadPoint = new Point(-1, -1);
-
+                    
                     if (food.loc.x == -1)
                     {
                         Invoke(new MethodInvoker(() => worldPanel.RemoveFood(food.ID)));

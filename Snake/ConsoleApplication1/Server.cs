@@ -7,6 +7,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Xml;
 
 namespace SnakeGame
 {
@@ -17,8 +18,11 @@ namespace SnakeGame
         private int clientCount;
         private object clientLock = new object();
 
-        private int worldHeight;
-        private int worldWidth;
+        private static int worldHeight;
+        private static int worldWidth;
+        private static int frameRate;
+        private static int foodDensity;
+        private static double snakeRecycle;
 
         static void Main(string[] args)
         {
@@ -27,13 +31,12 @@ namespace SnakeGame
             server.StartServer();
             // start timer
             // read xml
-
+            readXML("settings");//make a setting xml
             Console.Read();
         }
 
         public Server()
-        {
-           
+        {          
 
             clients = new List<SocketState>();
 
@@ -231,7 +234,45 @@ namespace SnakeGame
             SocketState ss = (SocketState)ar.AsyncState;
             // Nothing much to do here, just conclude the send operation so the socket is happy.
             ss.theSocket.EndSend(ar);
-        }                                                      
+        }   
+        
+        private static void readXML(string filename)
+        {
+            using(XmlReader r = XmlReader.Create(filename))
+            {
+                while (r.Read())
+                {
+                    if (r.IsStartElement())
+                    {
+                        switch (r.Name)
+                        {
+                            case "BoardWidth":
+                                r.Read();
+                                worldWidth = Convert.ToInt32(r.Value);
+                                break;
+                            case "BoardHeight":
+                                r.Read();
+                                worldHeight = Convert.ToInt32(r.Value);
+                                break;
+                            case "MSPerFram":
+                                r.Read();
+                                frameRate = Convert.ToInt32(r.Value);
+                                break;
+                            case "FoodDensity":
+                                r.Read();
+                                foodDensity = Convert.ToInt32(r.Value);
+                                break;
+                            case "SnakeRecycle":
+                                r.Read();
+                                snakeRecycle = Convert.ToDouble(r.Value);
+                                break;
+
+                            //read special case
+                        }
+                    }
+                }
+            }
+        }                                                   
     }
 
 }
