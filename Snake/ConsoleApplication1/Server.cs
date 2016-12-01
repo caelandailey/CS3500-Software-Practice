@@ -18,20 +18,20 @@ namespace SnakeGame
         private int clientCount;
         private object clientLock = new object();
 
-        private static int worldHeight;
-        private static int worldWidth;
-        private static int frameRate;
-        private static int foodDensity;
-        private static double snakeRecycle;
+        private int worldHeight;
+        private int worldWidth;
+        private int frameRate;
+        private int foodDensity;
+        private double snakeRecycle;
 
         static void Main(string[] args)
         {
             Server server = new Server();
             
             server.StartServer();
-            // start timer
-            // read xml
-            readXML("settings");//make a setting xml
+            
+           
+            
             Console.Read();
         }
 
@@ -39,7 +39,7 @@ namespace SnakeGame
         {          
 
             clients = new List<SocketState>();
-
+            readXML("settings"); //make a setting xml
             clientCount = 0;
         }
 
@@ -51,16 +51,16 @@ namespace SnakeGame
         {
             Console.WriteLine("Server waiting for client");
 
-           
+            // start timer
 
-            Networking.ServerAwaitingClientLoop(FirstContact);
+            Networking.ServerAwaitingClientLoop(HandleNewClient);
         }
 
         /// <summary>
         /// A callback for invoking when a socket connection is accepted
         /// </summary>
         /// <param name="ar"></param>
-        private void FirstContact(IAsyncResult ar)
+        private void HandleNewClient(SocketState socket)
         {
             Console.WriteLine("Contact from client");
 
@@ -68,8 +68,10 @@ namespace SnakeGame
             
             // Save the socket in a SocketState, 
             // so we can pass it to the receive callback, so we know which client we are dealing with.
-            SocketState newClient = (SocketState)ar.AsyncState;
-            newClient.callMe = ReceivePlayerName;
+
+            //SocketState newClient = (SocketState)ar.AsyncState;
+
+            socket.callMe = ReceivePlayerName;
             // Can't have the server modifying the clients list if it's braodcasting a message.
             ///lock (clients)
             //{
@@ -81,11 +83,13 @@ namespace SnakeGame
             // When a message arrives, handle it on a new thread with ReceiveCallback
             //                                  the buffer          buffer offset        max bytes to receive                         method to call when data arrives    "state" object representing the socket
             //newClient.theSocket.BeginReceive(newClient.messageBuffer, 0, newClient.messageBuffer.Length, SocketFlags.None, , newClient);
-            Networking.GetData(newClient);
+            Networking.GetData(socket);
             // Continue the "event loop" that was started on line 53
             // Start listening for the next client, on a new thread
             //listener.BeginAcceptSocket(ConnectionRequested, null);
-            Networking.ServerAwaitingClientLoop(FirstContact);
+
+
+            //Networking.ServerAwaitingClientLoop(HandleNewClient);
         }
 
         private void ReceivePlayerName(SocketState state)
@@ -236,7 +240,7 @@ namespace SnakeGame
             ss.theSocket.EndSend(ar);
         }   
         
-        private static void readXML(string filename)
+        private void readXML(string filename)
         {
             using(XmlReader r = XmlReader.Create(filename))
             {

@@ -7,6 +7,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -232,10 +233,11 @@ namespace SnakeGame
         /// Stores a delegate and listener in a state to then begin accepting a connection
         /// </summary>
         /// <param name="callBack"></param>
-        public static void ServerAwaitingClientLoop(AsyncCallback callBack)
+        public static void ServerAwaitingClientLoop(Action<SocketState> callBack)
         {
             //the new state to hold delegate and listener
             ServerState state = new ServerState();
+            
             state.listener = new TcpListener(IPAddress.Any, 11000);
             state.callMe = callBack;
             state.listener.Start();
@@ -255,7 +257,12 @@ namespace SnakeGame
             {
                 Networking.clientCount++;
                 SocketState socketState = new SocketState(socket, Networking.clientCount);
-                state.callMe((IAsyncResult) socketState);
+
+                socketState.theSocket = socket; // ?
+                //socketState.callMe = state.callMe;
+
+                //state.callMe(socketState);
+                socketState.callMe(socketState);
                 
             }            
 
