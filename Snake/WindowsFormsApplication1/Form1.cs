@@ -40,7 +40,7 @@ namespace SnakeGame
         private bool connected = false;
         private Dictionary<string, int> snakeScores; // Holds snake scores
         private Dictionary<string, Color> snakeColor; // Holds snake colors
-
+        private SocketState socket;
         public Form1()
         {
             InitializeComponent();
@@ -153,17 +153,10 @@ namespace SnakeGame
             connectButton.Enabled = false;
 
             //Connect
-            connectToServer(serverTextBox.Text);
+            socket = Networking.ConnectToServer(FirstContact, serverTextBox.Text);
         }
 
-        /// <summary>
-        /// Connects to the server
-        /// </summary>
-        /// <param name="serverIP"></param>
-        public void connectToServer(string serverIP)
-        {
-            Networking.ConnectToServer(FirstContact, serverIP);
-        }
+
 
         /// <summary>
         /// The first contact with server. Send the playername. 
@@ -206,7 +199,7 @@ namespace SnakeGame
         /// <param name="data"></param>
         public void sendMessage(string data)
         {
-            Networking.Send(Networking.server.theSocket, data);
+            Networking.Send(socket.theSocket, data);
         }
 
 
@@ -315,7 +308,7 @@ namespace SnakeGame
                         }
                         catch { }
                     }
-            ));
+                    ));
 
 
                     if (!snakeColor.ContainsKey(snake.name)) // Set color

@@ -55,7 +55,7 @@ namespace SnakeGame
     public class ServerState
     {
         public TcpListener listener;
-        public AsyncCallback callMe;
+        public Action<SocketState> callMe;
     }
 
     /// <summary>
@@ -67,8 +67,6 @@ namespace SnakeGame
         public const int DEFAULT_PORT = 11000;
 
         private static int socketID = 0;
-
-        public static SocketState server;
 
         private static int clientCount = 0;
         private static object clientLock = new object();
@@ -124,7 +122,8 @@ namespace SnakeGame
 
                 Socket socket = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 
-                server = new SocketState(socket, socketID);
+                SocketState server = new SocketState(socket, socketID);
+                //server = new SocketState(socket, socketID);
 
                 socketID++;
                 server.theSocket = socket;
@@ -184,7 +183,6 @@ namespace SnakeGame
                 // Append the received data to the growable buffer.
                 // It may be an incomplete message, so we need to start building it up piece by piece
                 state.sb.Append(theMessage);
-                
 
                 //ProcessMessage(state);
                 state.callMe(state);
@@ -215,7 +213,7 @@ namespace SnakeGame
         public static void Send(Socket socket, String data)
         {
             byte[] messageBytes = Encoding.UTF8.GetBytes(data + "\n");
-            socket.BeginSend(messageBytes, 0, messageBytes.Length, SocketFlags.None, SendCallback, server);
+            socket.BeginSend(messageBytes, 0, messageBytes.Length, SocketFlags.None, SendCallback, socket);
         }
 
         /// <summary>
@@ -224,9 +222,9 @@ namespace SnakeGame
         /// </summary>
         public static void SendCallback(IAsyncResult state_in_an_ar_object)
         {
-            SocketState state = (SocketState)state_in_an_ar_object.AsyncState;
+            Socket state = (Socket)state_in_an_ar_object.AsyncState;
             // Nothing much to do here, just conclude the send operation so the socket is happy.
-            state.theSocket.EndSend(state_in_an_ar_object);
+            state.EndSend(state_in_an_ar_object);
         }
 
         /// <summary>
@@ -258,8 +256,8 @@ namespace SnakeGame
                 Networking.clientCount++;
                 SocketState socketState = new SocketState(socket, Networking.clientCount);
 
-                socketState.theSocket = socket; // ?
-                //socketState.callMe = state.callMe;
+                //socketState.theSocket = socket; // ?
+                socketState.callMe = state.callMe;
 
                 //state.callMe(socketState);
                 socketState.callMe(socketState);

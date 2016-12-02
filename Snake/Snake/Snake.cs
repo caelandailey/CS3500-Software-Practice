@@ -28,19 +28,19 @@ namespace SnakeGame
         /// Id to track the snake
         /// </summary>
         [JsonProperty]
-        public int ID { get; protected set; }
+        public int ID { get; set; }
 
         /// <summary>
         /// Name of the player snake
         /// </summary>
         [JsonProperty]
-        public string name { get; protected set; }
+        public string name { get; set; }
 
         /// <summary>
         /// Location of the snake
         /// </summary>
         [JsonProperty]
-        public List<Point> vertices { get; protected set; }
+        public List<Point> vertices { get; set; }
 
         /// <summary>
         /// Color to draw

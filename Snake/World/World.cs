@@ -25,8 +25,8 @@ namespace SnakeGame
         // Determines the size in pixels of each grid cell in the world
         public const int pixelsPerCell = 5;
 
-        private Dictionary<int, Food> foods; // holds all the food in the world
-        private Dictionary<int, Snake> snakes; // holds all the snakes in the world
+        public Dictionary<int, Food> foods; // holds all the food in the world
+        public Dictionary<int, Snake> snakes; // holds all the snakes in the world
         
         private Object foodLock; // Lock for food
 
@@ -119,6 +119,11 @@ namespace SnakeGame
                     foods.Remove(id);
                 }
             }
+        }
+
+        public bool detectCollision()
+        {
+            return false;
         }
 
         /// <summary>

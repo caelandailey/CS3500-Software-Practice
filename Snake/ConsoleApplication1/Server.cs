@@ -1,13 +1,17 @@
 ﻿using SnakeGame;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Timers;
 using System.Xml;
+using System.Xml.Serialization;
+using Newtonsoft.Json;
 
 namespace SnakeGame
 {
@@ -17,12 +21,13 @@ namespace SnakeGame
         private TcpListener listener;
         private int clientCount;
         private object clientLock = new object();
-
-        private int worldHeight;
-        private int worldWidth;
-        private int frameRate;
-        private int foodDensity;
+        private Dictionary<int, int> snakeDirection;
+        private int worldHeight = 150;
+        private int worldWidth = 150;
+        private int frameRate = 33;
+        private int foodDensity = 1;
         private double snakeRecycle;
+        World world;
 
         static void Main(string[] args)
         {
@@ -39,11 +44,78 @@ namespace SnakeGame
         {          
 
             clients = new List<SocketState>();
-            readXML("settings"); //make a setting xml
+            //readXML("settings"); //make a setting xml
             clientCount = 0;
+            world = new World();
+            Timer timer = new Timer(frameRate);
+            timer.Elapsed += updateWorld;
+            timer.AutoReset = true;
+            timer.Start();
+            snakeDirection = new Dictionary<int, int>();
         }
 
+        /// <summary>
+        /// Updates the game board for one frame.
+        /// Moves snakes forward in their direction
+        /// Eats food, replenishes food
+        /// Determines if snakes die, and recycles them
+        /// Used by the server only
+        /// </summary>
+        private void updateWorld(Object source, ElapsedEventArgs e)
+        {
 
+            foreach (SocketState socketState in clients)
+            {
+                for (int i = world.snakes.Count - 1; i >= 0; i--)
+                {
+                    MoveSnake(world.snakes[socketState.ID]);
+
+                    Networking.Send(socketState.theSocket, JsonConvert.SerializeObject(world.snakes[socketState.ID]));
+                }
+
+            
+                foreach (KeyValuePair<int, Food> food in world.foods)
+                {
+                    Networking.Send(socketState.theSocket, JsonConvert.SerializeObject(food.Value));
+                }
+
+            }
+                
+        }
+
+        private void MoveSnake(Snake snake)
+        {
+            //remove tail
+            //add to head in direction of choice
+            // if not same direction add vertice
+            // if same direction increase last point?
+            
+            snake.vertices.RemoveAt(0);
+            Point head = snake.vertices.Last();
+           
+            
+            switch (snakeDirection[snake.ID])
+            {
+                case 1:
+                    head.y = head.y - 1;
+                    break;
+                case 2:
+                    head.x = head.x + 1;
+                    break;
+                case 3:
+                    head.y = head.y + 1;
+                    break;
+                case 4:
+                    head.x = head.x - 1;
+                    break;
+
+            }
+            snake.vertices.Add(head);
+            lock (clientLock)
+            {
+                world.AddSnake(snake);
+            }
+        }
         /// <summary>
         /// Start accepting Tcp sockets connections from clients
         /// </summary>
@@ -92,29 +164,26 @@ namespace SnakeGame
             //Networking.ServerAwaitingClientLoop(HandleNewClient);
         }
 
+        /// Make new snake
+        /// Create unique id
+        /// Change callback to a method that handles direction requests
+        /// set socket states id. Equa to unique id
+        /// send id and world height/width
+        /// data is unique id, world height and width 
+        /// add socket to list of client sockets
+        /// Then ask for data
         private void ReceivePlayerName(SocketState state)
         {
-            //Make new snake
-
-            // Create unique id
-            // Change callback to a method that handles direction requests
-            // set socket states id. Equa to unique id
-            // send id and world height/width
-            // data is unique id, world height and width 
-            // add socket to list of client sockets
-            // Then ask for data
 
             // MAKE SNAKE
-            ProcessMessage(state);
-            
-            
+
+            //add fifteen to either the x or the y
+
+            ProcessName(state);
             
             state.callMe = handleDirectionRequests; // change callback to handle requests
 
-
-            byte[] messageBytes = Encoding.UTF8.GetBytes(clientCount-1 + "\n" + worldWidth + "\n" + worldHeight + "\n"); // Set world info + id
-            state.theSocket.BeginSend(messageBytes, 0, messageBytes.Length, SocketFlags.None, SendCallback, state);
-
+            Networking.Send(state.theSocket, clientCount + "\n" + worldWidth + "\n" + worldHeight + "\n");
             lock (clientLock)
             {
                 state.ID = clientCount; // set state id
@@ -149,14 +218,16 @@ namespace SnakeGame
                     break;
 
                 Console.WriteLine("received message: \"" + p + "\"");
-
+  
+                snakeDirection[state.ID] = (Int32.Parse(p.ElementAt(1).ToString()));
+                
                 byte[] messageBytes = Encoding.UTF8.GetBytes(p);
 
                 // Remove it from the SocketState's growable buffer
                 state.sb.Remove(0, p.Length);
 
                 // Start listening for more parts of a message, or more new messages
-                state.theSocket.BeginReceive(state.messageBuffer, 0, state.messageBuffer.Length, SocketFlags.None, ReceiveCallback, state);
+                Networking.GetData(state);
 
             }
         }
@@ -167,7 +238,6 @@ namespace SnakeGame
         /// <param name="ar">The result that includes the "state" parameter from BeginReceive</param>
         private void ReceiveCallback(IAsyncResult ar)
         {
-
             // Get the socket state out of the AsyncState
             // This is the object that we passed to BeginReceive that represents the socket
             SocketState sender = (SocketState)ar.AsyncState;
@@ -184,7 +254,7 @@ namespace SnakeGame
                 Console.WriteLine("received message: \"" + theMessage + "\"");
                 // TODO: If we had an "EventProcessor" delagate associated with the socket state,
                 //       We could call that here, instead of hard-coding this method to call.
-                ProcessMessage(sender);
+                ProcessName(sender);
             }
 
             // Continue the "event loop" that was started on line 80.
@@ -200,7 +270,7 @@ namespace SnakeGame
         /// and process it (print it).
         /// </summary>
         /// <param name="sender">The SocketState that represents the client</param>
-        private void ProcessMessage(SocketState sender)
+        private void ProcessName(SocketState sender)
         {
             string totalData = sender.sb.ToString();
 
@@ -221,15 +291,55 @@ namespace SnakeGame
 
                 Console.WriteLine("received message: \"" + p + "\"");
 
+                createSnake(p.Substring(0,p.Length-1));
+                
+                //createSnake(JsonConvert.DeserializeObject<string>(p));
                 byte[] messageBytes = Encoding.UTF8.GetBytes(p);
 
                 // Remove it from the SocketState's growable buffer
                 sender.sb.Remove(0, p.Length);
 
                 // Start listening for more parts of a message, or more new messages
-                sender.theSocket.BeginReceive(sender.messageBuffer, 0, sender.messageBuffer.Length, SocketFlags.None, ReceiveCallback, sender);
+                Networking.GetData(sender);
 
             }
+
+        }
+
+        private void createSnake(string name)
+        {
+            //create random x,y coordinates for tail
+            Random rnd = new Random();
+
+            int x = rnd.Next(worldWidth/10, worldWidth - worldWidth / 10);
+            int y = rnd.Next(worldHeight/10, worldHeight - worldHeight / 10);
+            Point head = new Point(x, y);
+            Point tail = new Point(x, y);
+            switch(rnd.Next(1, 4))
+                {
+                case 1:
+                    tail.x = x - 15;
+                    break;
+                case 2:
+                    tail.x = x + 15;
+                    break;
+                case 3:
+                    tail.y = y - 15;
+                    break;
+                case 4:
+                    tail.y = y + 15;
+                    break;
+            }
+
+            Snake snake = new Snake();
+            snake.name = name;
+            snake.ID = clientCount;
+            List<Point> snakeVertices = new List<Point>();
+            snakeVertices.Add(tail);
+            snakeVertices.Add(head);
+            snake.vertices = snakeVertices;
+            snakeDirection[snake.ID] = rnd.Next(1, 4);
+            world.AddSnake(snake);
 
         }
 
