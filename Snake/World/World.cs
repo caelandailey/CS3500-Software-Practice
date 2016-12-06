@@ -210,7 +210,7 @@ namespace SnakeGame
             // set new head to 
             
             
-            if (verticeDirection[oldHead];  == verticeDirection[newHead])
+            if (verticeDirection[oldHead]  == verticeDirection[newHead])
             {
                 verticeDirection.Remove(oldHead); // If same direction remove old head
             }
