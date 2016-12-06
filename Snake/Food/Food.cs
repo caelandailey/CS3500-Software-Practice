@@ -24,13 +24,13 @@ namespace SnakeGame
         /// Id to track individual food
         /// </summary>
         [JsonProperty]
-        public int ID { get; protected set; }
+        public int ID { get; set; }
 
         /// <summary>
         /// Location to track and draw food
         /// </summary>
         [JsonProperty]
-        public Point loc { get; protected set; }
+        public Point loc { get; set; }
 
 
     }

@@ -19,7 +19,7 @@ namespace SnakeGame
     /// <summary>
     /// Class that represents our world/panel. It handles the data from the panel and draws it. Handles data of the snake and food. Handles the location of everything on the panel
     /// </summary>
-    public class World : Panel 
+    public class World : Panel
     {
 
         // Determines the size in pixels of each grid cell in the world
@@ -27,15 +27,48 @@ namespace SnakeGame
 
         public Dictionary<int, Food> foods; // holds all the food in the world
         public Dictionary<int, Snake> snakes; // holds all the snakes in the world
-        
+
+        private Dictionary<Point,int> foodLoc;
+
         private Object foodLock; // Lock for food
 
         private Object snakeLock; // Lock for snakes
-  
-        /// <summary>
-        /// Constructor. Create empty world
-        /// </summary>
-        public World()
+
+        private int foodCount = 0;
+
+        public void createFood(int foodDensity)
+        {
+            while (foodCount < snakes.Keys.Count * foodDensity)
+            {
+
+                Random rnd = new Random();
+
+                int x = rnd.Next(1, width - 1);
+                int y = rnd.Next(1, height - 1);
+                Point cords = new Point(rnd.Next(1, height - 1), rnd.Next(1, width - 1));
+                // check if food already exists there
+                if (foodLoc.ContainsKey(cords))
+                {
+                    continue;
+                }
+
+                Food food = new Food();
+                food.loc = new Point(x, y);
+
+                AddFood(food);
+                foodLoc[cords] = 1; // 1 means theres food
+            }
+
+    }
+    //if the space is open
+    // no snakes or food there
+
+
+
+/// <summary>
+/// Constructor. Create empty world
+/// </summary>
+public World()
         {
             foods = new Dictionary<int, Food>();
             snakes = new Dictionary<int, Snake>();
