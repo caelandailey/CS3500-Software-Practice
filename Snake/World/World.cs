@@ -28,13 +28,15 @@ namespace SnakeGame
         public Dictionary<int, Food> foods; // holds all the food in the world
         public Dictionary<int, Snake> snakes; // holds all the snakes in the world
 
-        private Dictionary<Point,int> foodLoc;
+        private Dictionary<Point, int> foodLoc;
 
         private Object foodLock; // Lock for food
 
         private Object snakeLock; // Lock for snakes
 
         private int foodCount = 0;
+
+        private Dictionary<Point, int> verticeDirection;
 
         public void createFood(int foodDensity)
         {
@@ -59,22 +61,23 @@ namespace SnakeGame
                 foodLoc[cords] = 1; // 1 means theres food
             }
 
-    }
-    //if the space is open
-    // no snakes or food there
+        }
+        //if the space is open
+        // no snakes or food there
 
 
 
-/// <summary>
-/// Constructor. Create empty world
-/// </summary>
-public World()
+        /// <summary>
+        /// Constructor. Create empty world
+        /// </summary>
+        public World()
         {
             foods = new Dictionary<int, Food>();
             snakes = new Dictionary<int, Snake>();
             snakeLock = new Object();
             foodLock = new Object();
-            
+            verticeDirection = new Dictionary<Point, int>();
+
             width = 0;
             height = 0;
 
@@ -154,10 +157,133 @@ public World()
             }
         }
 
+        public void createVertice(Point p, int direction)
+        {
+            verticeDirection[p] = direction;
+        }
+
         public bool detectCollision()
         {
             return false;
         }
+
+        public void MoveSnake(Snake snake, int direction)
+        {
+            //remove tail
+            //add to head in direction of choice
+            // if not same direction add vertice
+            // if same direction increase last point?
+
+
+
+            //snake.vertices.RemoveAt(0);
+
+
+            //***********************HEAD*************************
+
+            Point head = new Point(snake.vertices[snake.vertices.Count - 1].x, snake.vertices[snake.vertices.Count - 1].y);
+            
+            int oldHeadX = head.x;
+            int oldHeadY = head.y;
+            Point oldHead = new Point(oldHeadX, oldHeadY);
+            // Track old head
+
+            switch (direction)      // Get point of new head       
+            {
+                case 1:
+                    head.y = head.y - 1;
+                    break;
+                case 2:
+                    head.x = head.x + 1;
+                    break;
+                case 3:
+                    head.y = head.y + 1;
+                    break;
+                case 4:
+                    head.x = head.x - 1;
+                    break;
+
+            }
+            Point newHead = new Point(head.x, head.y);
+            verticeDirection[newHead] = direction; // Add head to snakes direction
+
+            // set new head to 
+            
+            
+            if (verticeDirection[oldHead];  == verticeDirection[newHead])
+            {
+                verticeDirection.Remove(oldHead); // If same direction remove old head
+            }
+            else // if not same direction
+            {
+
+                verticeDirection[oldHead] = direction; // If not set new direction to that vertice
+
+            }
+
+            snake.vertices.Add(head);
+
+            //*********************************TAIL**************************
+            //calculate what the new tail vertice is
+            newTail(snake);
+
+        }
+
+        // <summary>
+        // Update new tail vertice
+        // </summary>
+        // <param name = "snake" ></ param >
+        public void newTail(Snake snake)
+        {
+            //current tail
+            Point tail = snake.vertices[0];            // get tail
+            int oldTailX = tail.x;
+            int oldTailY = tail.y;
+            Point oldTail = new Point(oldTailX, oldTailY); // save old tail since we're updating with new tail
+
+            //the direction the tail is going
+            int direction = verticeDirection[tail];
+
+            //update new point for the tail
+            switch (direction)
+            {
+                case 1:
+                    tail.y = tail.y - 1;
+                    break;
+                case 2:
+                    tail.x = tail.x + 1;
+                    break;
+                case 3:
+                    tail.y = tail.y + 1;
+                    break;
+                case 4:
+                    tail.x = tail.x - 1;
+                    break;
+            }
+
+
+            //update dictionary and snake
+            if (verticeDirection.ContainsKey(tail)) // snake turned
+            {
+
+                snake.vertices.Remove(oldTail); // remove old tail since snake turned at next vertice
+                verticeDirection.Remove(oldTail);
+
+            }
+
+            //the tail needs to become a new vertice
+            else // new tail is in same direction as old tail
+            {
+
+                verticeDirection.Remove(oldTail);
+                verticeDirection[tail] = direction;
+
+                //update snake
+                snake.vertices.Remove(oldTail);
+                snake.vertices.Insert(0, tail); //
+            }
+        }
+
 
         /// <summary>
         /// Override the behavior when the panel is redrawn

@@ -22,12 +22,12 @@ namespace SnakeGame
         private int clientCount;
         private object clientLock = new object();
         private Dictionary<int, int> snakeDirection;
-        private Dictionary<Point, int> verticeDirection;
+
         private int worldHeight = 150;
         private int worldWidth = 150;
         private int frameRate = 1;
         private int foodDensity = 1;
-       
+
         private int snakeCount = 0;
         private double snakeRecycle;
         World world;
@@ -54,7 +54,7 @@ namespace SnakeGame
             timer.Elapsed += updateWorld;
             timer.AutoReset = true;
             timer.Start();
-            verticeDirection = new Dictionary<Point, int>();
+
             snakeDirection = new Dictionary<int, int>();
         }
 
@@ -73,7 +73,7 @@ namespace SnakeGame
                 {
                     for (int i = world.snakes.Count - 1; i >= 0; i--)
                     {
-                        MoveSnake(world.snakes[socketState.ID]);
+                        world.MoveSnake(world.snakes[socketState.ID], snakeDirection[socketState.ID]);
                         world.createFood(foodDensity);
                         //world.moveSnake(world.snakes[socketState.ID]);
                         Networking.Send(socketState.theSocket, JsonConvert.SerializeObject(world.snakes[socketState.ID]));
@@ -88,134 +88,9 @@ namespace SnakeGame
         }
 
 
-        private void MoveSnake(Snake snake)
-        {
-            //remove tail
-            //add to head in direction of choice
-            // if not same direction add vertice
-            // if same direction increase last point?
-
-
-
-            //snake.vertices.RemoveAt(0);
-
-
-            //***********************HEAD*************************
-            
-            Point head = new Point( snake.vertices[snake.vertices.Count - 1].x, snake.vertices[snake.vertices.Count - 1].y);
-            int oldHeadX = head.x;
-            int oldHeadY = head.y;
-            Point oldHead = new Point(oldHeadX, oldHeadY);
-           // Track old head
-            int headDirection = snakeDirection[snake.ID];
-            switch (headDirection)      // Get point of new head       
-            {
-                case 1:
-                    head.y = head.y - 1;
-                    break;
-                case 2:
-                    head.x = head.x + 1;
-                    break;
-                case 3:
-                    head.y = head.y + 1;
-                    break;
-                case 4:
-                    head.x = head.x - 1;
-                    break;
-
-            }
-            Point newHead = new Point(head.x, head.y);
-            verticeDirection[newHead] = headDirection; // Add head to snakes direction
-
-            // set new head to 
-
-            if (verticeDirection[oldHead] == verticeDirection[newHead])
-            {
-                lock (clientLock)
-                {
-                    verticeDirection.Remove(oldHead); // If same direction remove old head
-                }
-            }
-            else // if not same direction
-            {
-                lock (clientLock)
-                {
-                    verticeDirection[oldHead] = verticeDirection[head]; // If not set new direction to that vertice
-                }
-            }
-            
-            snake.vertices.Add(head);
-
-            //*********************************TAIL**************************
-            //calculate what the new tail vertice is
-            newTail(snake);
-
-
-            lock (clientLock)
-            {
-                world.AddSnake(snake);
-            }
-        }
-
-        // <summary>
-        // Update new tail vertice
-        // </summary>
-        // <param name = "snake" ></ param >
-        public void newTail(Snake snake)
-        {
-            //current tail
-            Point tail = snake.vertices[0];            // get tail
-            Point oldtail = tail; // save old tail since we're updating with new tail
-
-            //the direction the tail is going
-            int direction = verticeDirection[tail];
-
-            //update new point for the tail
-            switch (direction)
-            {
-                case 1:
-                    tail.y = tail.y - 1;
-                    break;
-                case 2:
-                    tail.x = tail.x + 1;
-                    break;
-                case 3:
-                    tail.y = tail.y + 1;
-                    break;
-                case 4:
-                    tail.x = tail.x - 1;
-                    break;
-            }
-
-            lock (clientLock)
-            {
-                //update dictionary and snake
-                if (verticeDirection.ContainsKey(tail)) // snake turned
-                {
-
-                    snake.vertices.Remove(oldtail); // remove old tail since snake turned at next vertice
-                    verticeDirection.Remove(oldtail);
-
-                }
-
-                //the tail needs to become a new vertice
-                else // new tail is in same direction as old tail
-                {
-
-                    verticeDirection.Remove(oldtail);
-                    verticeDirection[tail] = direction;
-
-                    //update snake
-                    snake.vertices.Remove(oldtail);
-                    snake.vertices.Insert(0, tail); //
-                }
-            }
-
-        }
-
-            /// <summary>
-            /// Start accepting Tcp sockets connections from clients
-            /// </summary>
+        /// <summary>
+        /// Start accepting Tcp sockets connections from clients
+        /// </summary>
         public void StartServer()
         {
             Console.WriteLine("Server waiting for client");
@@ -346,11 +221,11 @@ namespace SnakeGame
                         break;
                 }
 
-                if (setDirection) 
+                if (setDirection)
                 {
                     snakeDirection[state.ID] = (Int32.Parse(p.ElementAt(1).ToString()));
                 }
-                
+
                 byte[] messageBytes = Encoding.UTF8.GetBytes(p);
 
                 // Remove it from the SocketState's growable buffer
@@ -473,8 +348,8 @@ namespace SnakeGame
             world.AddSnake(snake); // Add snake
             snakeCount++;
             //update dictionary of vertices
-            verticeDirection[tail] = direction;
-            verticeDirection[head] = direction;
+            world.createVertice(tail, direction);
+            world.createVertice(head, direction);
         }
 
         private void SendCallback(IAsyncResult ar)
