@@ -22,6 +22,7 @@ namespace SnakeGame
         private int clientCount;
         private object clientLock = new object();
         private Dictionary<int, int> snakeDirection;
+        private Dictionary<Point, int> verticeDirection;
         private int worldHeight = 150;
         private int worldWidth = 150;
         private int frameRate = 33;
@@ -32,16 +33,16 @@ namespace SnakeGame
         static void Main(string[] args)
         {
             Server server = new Server();
-            
+
             server.StartServer();
-            
-           
-            
+
+
+
             Console.Read();
         }
 
         public Server()
-        {          
+        {
 
             clients = new List<SocketState>();
             //readXML("settings"); //make a setting xml
@@ -51,6 +52,7 @@ namespace SnakeGame
             timer.Elapsed += updateWorld;
             timer.AutoReset = true;
             timer.Start();
+            verticeDirection = new Dictionary<Point, int>();
             snakeDirection = new Dictionary<int, int>();
         }
 
@@ -73,14 +75,14 @@ namespace SnakeGame
                     Networking.Send(socketState.theSocket, JsonConvert.SerializeObject(world.snakes[socketState.ID]));
                 }
 
-            
+
                 foreach (KeyValuePair<int, Food> food in world.foods)
                 {
                     Networking.Send(socketState.theSocket, JsonConvert.SerializeObject(food.Value));
                 }
 
             }
-                
+
         }
 
         private void MoveSnake(Snake snake)
@@ -89,12 +91,16 @@ namespace SnakeGame
             //add to head in direction of choice
             // if not same direction add vertice
             // if same direction increase last point?
-            
-            snake.vertices.RemoveAt(0);
+
+            //calculate what the new tail vertice is
+            newTail(snake);
+            //snake.vertices.RemoveAt(0);
+
             Point head = snake.vertices.Last();
-           
-            
-            switch (snakeDirection[snake.ID])
+            Point oldhead = head;
+
+
+            switch (snakeDirection[snake.ID])            
             {
                 case 1:
                     head.y = head.y - 1;
@@ -110,15 +116,64 @@ namespace SnakeGame
                     break;
 
             }
+            verticeDirection.Add(head, snakeDirection[snake.ID]);
+            //change the direction of the second vertice, connected to the head
+            verticeDirection[oldhead] = verticeDirection[head];
             snake.vertices.Add(head);
             lock (clientLock)
             {
                 world.AddSnake(snake);
             }
         }
-        /// <summary>
-        /// Start accepting Tcp sockets connections from clients
-        /// </summary>
+
+        // <summary>
+        // Update new tail vertice
+        // </summary>
+        // <param name = "snake" ></ param >
+        public void newTail(Snake snake)
+        {
+            //current tail
+            Point tail = snake.vertices[0];            
+            Point oldtail = tail;
+            //the direction the tail is going
+            int direction = verticeDirection[tail];
+
+            //update new point for the tail
+            switch (direction)
+            {
+                case 1:
+                    tail.y = tail.y - 1;
+                    break;
+                case 2:
+                    tail.x = tail.x + 1;
+                    break;
+                case 3:
+                    tail.y = tail.y + 1;
+                    break;
+                case 4:
+                    tail.x = tail.x - 1;
+                    break;
+            }
+            //update dictionary and snake
+            if (verticeDirection.ContainsKey(tail))
+            {
+                snake.vertices.Remove(oldtail);
+            }
+            //the tail needs to become a new vertice
+            else
+            {
+                verticeDirection.Remove(oldtail);
+                verticeDirection.Add(tail, direction);
+                //update snake
+                snake.vertices.Remove(oldtail);
+                snake.vertices.Add(tail); //PROBLEM, adds it to the end
+            }
+
+        }
+
+            /// <summary>
+            /// Start accepting Tcp sockets connections from clients
+            /// </summary>
         public void StartServer()
         {
             Console.WriteLine("Server waiting for client");
@@ -137,7 +192,7 @@ namespace SnakeGame
             Console.WriteLine("Contact from client");
 
             //  Socket s = listener.EndAcceptSocket(ar);
-            
+
             // Save the socket in a SocketState, 
             // so we can pass it to the receive callback, so we know which client we are dealing with.
 
@@ -180,7 +235,7 @@ namespace SnakeGame
             //add fifteen to either the x or the y
 
             ProcessName(state);
-            
+
             state.callMe = handleDirectionRequests; // change callback to handle requests
 
             Networking.Send(state.theSocket, clientCount + "\n" + worldWidth + "\n" + worldHeight + "\n");
@@ -218,9 +273,9 @@ namespace SnakeGame
                     break;
 
                 Console.WriteLine("received message: \"" + p + "\"");
-  
+
                 snakeDirection[state.ID] = (Int32.Parse(p.ElementAt(1).ToString()));
-                
+
                 byte[] messageBytes = Encoding.UTF8.GetBytes(p);
 
                 // Remove it from the SocketState's growable buffer
@@ -291,8 +346,8 @@ namespace SnakeGame
 
                 Console.WriteLine("received message: \"" + p + "\"");
 
-                createSnake(p.Substring(0,p.Length-1));
-                
+                createSnake(p.Substring(0, p.Length - 1));
+
                 //createSnake(JsonConvert.DeserializeObject<string>(p));
                 byte[] messageBytes = Encoding.UTF8.GetBytes(p);
 
@@ -311,12 +366,12 @@ namespace SnakeGame
             //create random x,y coordinates for tail
             Random rnd = new Random();
 
-            int x = rnd.Next(worldWidth/10, worldWidth - worldWidth / 10);
-            int y = rnd.Next(worldHeight/10, worldHeight - worldHeight / 10);
+            int x = rnd.Next(worldWidth / 10, worldWidth - worldWidth / 10);
+            int y = rnd.Next(worldHeight / 10, worldHeight - worldHeight / 10);
             Point head = new Point(x, y);
             Point tail = new Point(x, y);
-            switch(rnd.Next(1, 4))
-                {
+            switch (rnd.Next(1, 4))
+            {
                 case 1:
                     tail.x = x - 15;
                     break;
@@ -338,8 +393,13 @@ namespace SnakeGame
             snakeVertices.Add(tail);
             snakeVertices.Add(head);
             snake.vertices = snakeVertices;
-            snakeDirection[snake.ID] = rnd.Next(1, 4);
+            int direction = rnd.Next(1, 4);
+            snakeDirection[snake.ID] = direction;
             world.AddSnake(snake);
+
+            //update dictionary of vertices
+            verticeDirection[tail] = direction;
+            verticeDirection[head] = direction;
 
         }
 
@@ -348,11 +408,11 @@ namespace SnakeGame
             SocketState ss = (SocketState)ar.AsyncState;
             // Nothing much to do here, just conclude the send operation so the socket is happy.
             ss.theSocket.EndSend(ar);
-        }   
-        
+        }
+
         private void readXML(string filename)
         {
-            using(XmlReader r = XmlReader.Create(filename))
+            using (XmlReader r = XmlReader.Create(filename))
             {
                 while (r.Read())
                 {
@@ -381,12 +441,12 @@ namespace SnakeGame
                                 snakeRecycle = Convert.ToDouble(r.Value);
                                 break;
 
-                            //read special case
+                                //read special case
                         }
                     }
                 }
             }
-        }                                                   
+        }
     }
 
 }
