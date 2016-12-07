@@ -328,7 +328,7 @@ namespace SnakeGame
                         catch { }
                     }
                     ));
-
+                    
                     if (snake.vertices.Last().x == -1) // If snake is dead
                     {
                         // Remove from database

@@ -25,8 +25,8 @@ namespace SnakeGame
 
         private int worldHeight = 150;
         private int worldWidth = 150;
-        private int frameRate = 1;
-        private int foodDensity = 1;
+        private int frameRate = 33;
+        private int foodDensity = 10;
 
         private int snakeCount = 0;
         private double snakeRecycle;
@@ -49,8 +49,8 @@ namespace SnakeGame
             clients = new List<SocketState>();
             //readXML("settings"); //make a setting xml
             clientCount = 0;
-            world = new World();
-            Timer timer = new Timer(frameRate);
+            world = new World(worldWidth,worldHeight);
+            Timer timer = new Timer(100);
             timer.Elapsed += updateWorld;
             timer.AutoReset = true;
             timer.Start();
@@ -73,13 +73,15 @@ namespace SnakeGame
                 {
                     for (int i = world.snakes.Count - 1; i >= 0; i--)
                     {
-                        world.MoveSnake(world.snakes[socketState.ID], snakeDirection[socketState.ID]);
                         world.createFood(foodDensity);
+                        world.MoveSnake(world.snakes[socketState.ID], snakeDirection[socketState.ID]);
+                        
+
                         //world.moveSnake(world.snakes[socketState.ID]);
                         Networking.Send(socketState.theSocket, JsonConvert.SerializeObject(world.snakes[socketState.ID]));
                     }
 
-                    foreach (KeyValuePair<int, Food> food in world.foods)
+                    foreach (KeyValuePair<Point, Food> food in world.foodPoint)
                     {
                         Networking.Send(socketState.theSocket, JsonConvert.SerializeObject(food.Value));
                     }
@@ -165,6 +167,9 @@ namespace SnakeGame
                 clientCount++; // increment clientcount
             }
 
+            // Start listening for more parts of a message, or more new messages
+            Networking.GetData(state);
+
             //state.theSocket.BeginReceive(state.messageBuffer, 0, state.messageBuffer.Length, SocketFlags.None, ReceiveCallback, state); // Ask for more info
             // Dont need since processmessage asks to receive more info
 
@@ -241,32 +246,32 @@ namespace SnakeGame
         /// Callback method for when data is received (started from line 80)
         /// </summary>
         /// <param name="ar">The result that includes the "state" parameter from BeginReceive</param>
-        private void ReceiveCallback(IAsyncResult ar)
-        {
-            // Get the socket state out of the AsyncState
-            // This is the object that we passed to BeginReceive that represents the socket
-            SocketState sender = (SocketState)ar.AsyncState;
+        //private void ReceiveCallback(IAsyncResult ar)
+        //{
+        //    // Get the socket state out of the AsyncState
+        //    // This is the object that we passed to BeginReceive that represents the socket
+        //    SocketState sender = (SocketState)ar.AsyncState;
 
-            int bytesRead = sender.theSocket.EndReceive(ar);
+        //    int bytesRead = sender.theSocket.EndReceive(ar);
 
-            // If the socket is still open
-            if (bytesRead > 0)
-            {
-                string theMessage = Encoding.UTF8.GetString(sender.messageBuffer, 0, bytesRead);
-                // Append the received data to the growable buffer.
-                // It may be an incomplete message, so we need to start building it up piece by piece
-                sender.sb.Append(theMessage);
-                Console.WriteLine("received message: \"" + theMessage + "\"");
-                // TODO: If we had an "EventProcessor" delagate associated with the socket state,
-                //       We could call that here, instead of hard-coding this method to call.
-                ProcessName(sender);
-            }
+        //    // If the socket is still open
+        //    if (bytesRead > 0)
+        //    {
+        //        string theMessage = Encoding.UTF8.GetString(sender.messageBuffer, 0, bytesRead);
+        //        // Append the received data to the growable buffer.
+        //        // It may be an incomplete message, so we need to start building it up piece by piece
+        //        sender.sb.Append(theMessage);
+        //        Console.WriteLine("received message: \"" + theMessage + "\"");
+        //        // TODO: If we had an "EventProcessor" delagate associated with the socket state,
+        //        //       We could call that here, instead of hard-coding this method to call.
+        //        ProcessName(sender);
+        //    }
 
-            // Continue the "event loop" that was started on line 80.
-            // Start listening for more parts of a message, or more new messages
-            sender.theSocket.BeginReceive(sender.messageBuffer, 0, sender.messageBuffer.Length, SocketFlags.None, ReceiveCallback, sender);
+        //    // Continue the "event loop" that was started on line 80.
+        //    // Start listening for more parts of a message, or more new messages
+        //    sender.theSocket.BeginReceive(sender.messageBuffer, 0, sender.messageBuffer.Length, SocketFlags.None, ReceiveCallback, sender);
 
-        }
+        //}
 
         /// <summary>
         /// Given the data that has arrived so far, 
@@ -277,6 +282,7 @@ namespace SnakeGame
         /// <param name="sender">The SocketState that represents the client</param>
         private void ProcessName(SocketState sender)
         {
+            
             string totalData = sender.sb.ToString();
 
             string[] parts = Regex.Split(totalData, @"(?<=[\n])");
@@ -296,60 +302,19 @@ namespace SnakeGame
 
                 Console.WriteLine("received message: \"" + p + "\"");
 
-                createSnake(p.Substring(0, p.Length - 1));
+                lock (clientLock)
+                {
+                    snakeDirection[clientCount] = world.createSnake(p.Substring(0, p.Length - 1), clientCount);
+                }
 
                 //createSnake(JsonConvert.DeserializeObject<string>(p));
-                byte[] messageBytes = Encoding.UTF8.GetBytes(p);
+                //byte[] messageBytes = Encoding.UTF8.GetBytes(p);
 
                 // Remove it from the SocketState's growable buffer
                 sender.sb.Remove(0, p.Length);
 
-                // Start listening for more parts of a message, or more new messages
-                Networking.GetData(sender);
-
             }
 
-        }
-
-        private void createSnake(string name)
-        {
-            //create random x,y coordinates for tail
-            Random rnd = new Random();
-
-            int x = rnd.Next(20, worldWidth - 20);
-            int y = rnd.Next(20, worldHeight - 20);
-            Point head = new Point(x, y);
-            Point tail = new Point(x, y);
-            switch (rnd.Next(1, 4))
-            {
-                case 1:
-                    tail.x = x - 15;
-                    break;
-                case 2:
-                    tail.x = x + 15;
-                    break;
-                case 3:
-                    tail.y = y - 15;
-                    break;
-                case 4:
-                    tail.y = y + 15;
-                    break;
-            }
-
-            Snake snake = new Snake(); // Make snake object
-            snake.name = name; // Set name
-            snake.ID = clientCount; // Set id
-            List<Point> snakeVertices = new List<Point>(); // Create list to hold snake head and tail
-            snakeVertices.Add(tail); // Add tail
-            snakeVertices.Add(head); // Add head
-            snake.vertices = snakeVertices; // Add head and tail to the snake object
-            int direction = rnd.Next(1, 4); // Randomly create direction
-            snakeDirection[snake.ID] = direction; // Set direction to snake ID
-            world.AddSnake(snake); // Add snake
-            snakeCount++;
-            //update dictionary of vertices
-            world.createVertice(tail, direction);
-            world.createVertice(head, direction);
         }
 
         private void SendCallback(IAsyncResult ar)

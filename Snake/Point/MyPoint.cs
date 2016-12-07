@@ -39,5 +39,20 @@ namespace SnakeGame
         public int x { get; set; }
         [JsonProperty]
         public int y { get; set; }
+
+        public override bool Equals(object obj)
+        {
+            return (obj is Point) && (obj as Point).x == x && (obj as Point).y == y;
+        }
+
+        public override int GetHashCode()
+        {
+            return ToString().GetHashCode();
+        }
+
+        public override string ToString()
+        {
+            return x + "," + y;
+        }
     }
 }

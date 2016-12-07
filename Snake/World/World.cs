@@ -27,45 +27,181 @@ namespace SnakeGame
 
         public Dictionary<int, Food> foods; // holds all the food in the world
         public Dictionary<int, Snake> snakes; // holds all the snakes in the world
-
-        private Dictionary<Point, int> foodLoc;
+        public Dictionary<Point, Food> foodPoint;
+        //private Dictionary<Point, int> foodLoc;
 
         private Object foodLock; // Lock for food
 
         private Object snakeLock; // Lock for snakes
 
-        private int foodCount = 0;
+        private int foodCount;
 
         private Dictionary<Point, int> verticeDirection;
 
+        private int snakeCount;
+        private int foodCreated = 0;
+        private int?[,] worldGrid;
+
+        public int createSnake(string name, int ID)
+        {
+            // Look for open spot
+            Random rnd = new Random();
+            bool foundOpenSpot = false;
+            Point head = null;
+            Point tail = null;
+            int randomDirection = 0;
+
+            while (foundOpenSpot == false)
+            {
+                //create random x,y coordinates for tail
+
+                int x = rnd.Next(30, width - 30);
+                int y = rnd.Next(30, height - 30);
+                head = new Point(x, y);
+                tail = new Point(x, y);
+
+                // Loop through snakes positions
+                randomDirection = rnd.Next(1, 4);
+
+
+                for (int i = 0; i<=15; i ++)
+                {
+                    Point point = new Point(x,y);
+
+                    // Get random direction
+
+                    switch (randomDirection)
+                    {
+                        case 1:
+                            point = new Point(x, y-i);
+                            break;
+                        case 2:
+                            point = new Point(x+i, y );
+                            break;
+                        case 3:
+                            point = new Point(x, y -i);
+                            break;
+                        case 4:
+                            point = new Point(x-i,y);
+                            break;
+                    }
+                    
+                    if (!EmptyPoint(point))
+                    {
+                        continue;
+                    }
+                    if (i == 14) // last point
+                    {
+                        tail = point;
+                        foundOpenSpot = true;
+                    }
+                }  
+            }
+            
+            // Create snake object and set values
+
+            Snake snake = new Snake(); // Make snake object
+            snake.name = name; // Set name
+            snake.ID = ID; // Set id
+            List<Point> snakeVertices = new List<Point>(); // Create list to hold snake head and tail
+            snakeVertices.Add(head); // Add head THESE ARE SWITCHED BECAUSE THE TAIL IS IN THE FRONT OF THE SNAKE
+            snakeVertices.Add(tail); // Add tail
+            snake.vertices = snakeVertices; // Add head and tail to the snake object
+            AddSnake(snake); // Add snake
+
+            // Add snake to world grid
+
+            for (int i = 0; i <= 15; i++)
+            {
+                switch (randomDirection)
+                {
+                    case 1:
+                        worldGrid[head.x, head.y-i] = randomDirection;
+                    break;
+
+                    case 2:
+                        
+                        worldGrid[head.x + i, head.y] = randomDirection;
+                        break;
+
+                    case 3:
+                        worldGrid[head.x, head.y-i] = randomDirection;
+                        break;
+
+                    case 4:
+                        worldGrid[head.x-i, head.y] = randomDirection;
+                        break;
+                }
+            }
+
+            return randomDirection;
+            //snakeDirection[snake.ID] = direction; // Set direction to snake ID
+            //AddSnake(snake); // Add snake
+            //snakeCount++;
+            //update dictionary of vertices
+            //world.createVertice(tail, direction);
+            //world.createVertice(head, direction);
+        }
+
         public void createFood(int foodDensity)
         {
-            while (foodCount < snakes.Keys.Count * foodDensity)
+
+            // While not enough food, make food
+
+            while (foodCount < snakes.Keys.Count * foodDensity) 
             {
+                // Generate random cord
 
-                Random rnd = new Random();
+                Random rnd = new Random(); 
+                int x = rnd.Next(1, width - 2);
+                int y = rnd.Next(1, height - 2);
+                Point point = new Point(x, y);
 
-                int x = rnd.Next(1, width - 1);
-                int y = rnd.Next(1, height - 1);
-                Point cords = new Point(rnd.Next(1, height - 1), rnd.Next(1, width - 1));
-                // check if food already exists there
-                if (foodLoc.ContainsKey(cords))
+                // Check if food is at that location
+
+                if (EmptyPoint(point) == false)
                 {
+                    // Return to while loop if location is taken
+
                     continue;
                 }
 
-                Food food = new Food();
-                food.loc = new Point(x, y);
+                // Create food object
 
-                AddFood(food);
-                foodLoc[cords] = 1; // 1 means theres food
+                Food food = new Food();
+
+                // Set food location to x and y that were randomly generated
+                Point foodLoc = new Point(x, y);
+                food.loc = foodLoc;
+                food.ID = foodCreated;
+                foodCreated++;
+
+                // Add food to list of foods
+
+                lock (foodLock) // Changing food, lock it
+                {
+                    foodPoint[foodLoc] = food;
+                }
+                foodCount++;
+
+                // Add food to world grid to track
+
+                worldGrid[x, y] = 0;
+
+                
             }
 
         }
-        //if the space is open
-        // no snakes or food there
+        
+        private bool EmptyPoint(Point point)
+        {
+            if (worldGrid[point.x, point.y].HasValue)
+            {
+                return false;
+            }
 
-
+            return true;
+        }
 
         /// <summary>
         /// Constructor. Create empty world
@@ -73,17 +209,38 @@ namespace SnakeGame
         public World()
         {
             foods = new Dictionary<int, Food>();
+            foodPoint = new Dictionary<Point, Food>();
             snakes = new Dictionary<int, Snake>();
             snakeLock = new Object();
             foodLock = new Object();
             verticeDirection = new Dictionary<Point, int>();
-
+            worldGrid = new int?[,] { };
             width = 0;
             height = 0;
-
+            foodCount = 0;
             // Setting this property to true prevents flickering
             this.DoubleBuffered = true;
         }
+
+        /// <summary>
+        /// Constructor. Create empty world
+        /// </summary>
+        public World(int _width, int _height)
+        {
+            foods = new Dictionary<int, Food>();
+            foodPoint = new Dictionary<Point, Food>();
+            snakes = new Dictionary<int, Snake>();
+            snakeLock = new Object();
+            foodLock = new Object();
+            verticeDirection = new Dictionary<Point, int>();
+            worldGrid = new int?[_width,_height];
+            width = _width;
+            height = _height;
+            foodCount = 0;
+            // Setting this property to true prevents flickering
+            this.DoubleBuffered = true;
+        }
+
 
         // Width of the world in cells (not pixels)
         public int width
@@ -178,55 +335,81 @@ namespace SnakeGame
 
             //snake.vertices.RemoveAt(0);
 
-
+            if (snake.vertices.Count == 0)
+            {
+                return;
+            }
             //***********************HEAD*************************
 
-            Point head = new Point(snake.vertices[snake.vertices.Count - 1].x, snake.vertices[snake.vertices.Count - 1].y);
+            int headX = snake.vertices[snake.vertices.Count - 1].x;
+            int headY = snake.vertices[snake.vertices.Count - 1].y;
             
-            int oldHeadX = head.x;
-            int oldHeadY = head.y;
-            Point oldHead = new Point(oldHeadX, oldHeadY);
+            int oldHeadX = headX;
+            int oldHeadY = headY;
+            
             // Track old head
 
             switch (direction)      // Get point of new head       
             {
                 case 1:
-                    head.y = head.y - 1;
+                    headY = headY - 1;
                     break;
                 case 2:
-                    head.x = head.x + 1;
+                    headX = headX + 1;
                     break;
                 case 3:
-                    head.y = head.y + 1;
+                    headY = headY + 1;
                     break;
                 case 4:
-                    head.x = head.x - 1;
+                    headX = headX - 1;
                     break;
 
             }
-            Point newHead = new Point(head.x, head.y);
-            verticeDirection[newHead] = direction; // Add head to snakes direction
-
-            // set new head to 
-            
-            
-            if (verticeDirection[oldHead]  == verticeDirection[newHead])
+            if (headX == 149 || headY == 149 || headY == 0 || headX == 0) // Wall
             {
-                verticeDirection.Remove(oldHead); // If same direction remove old head
-            }
-            else // if not same direction
-            {
-
-                verticeDirection[oldHead] = direction; // If not set new direction to that vertice
+                // remove snek
+                return;
 
             }
+            //check that updated coordinate is in an empty grid space
+            if (worldGrid[headX, headY].HasValue)
+            {
+                //collision
+                if (worldGrid[headX, headY] == 0) // there's food
+                {
+                    worldGrid[headX, headY] = direction;
+                    Point newHead = new Point(headX, headY);
+                    //check if direction of new head and old head is the same
+                    if (worldGrid[oldHeadX, oldHeadY] == worldGrid[headX, headY])
+                    {
+                        snake.vertices.RemoveAt(snake.vertices.Count - 1); // Removes last position
+                    }
+                    snake.vertices.Add(newHead);
+                    lock (foodLock)
+                    {
+                        if (foodPoint.ContainsKey(newHead))
+                        {
+                            foodPoint.Remove(newHead);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                worldGrid[headX, headY] = direction;
+                Point newHead = new Point(headX, headY);
+                //check if direction of new head and old head is the same
+                if(worldGrid[oldHeadX, oldHeadY] == worldGrid[headX, headY])
+                {
+                    snake.vertices.RemoveAt(snake.vertices.Count - 1); // Removes last position
+                }
+                snake.vertices.Add(newHead);
+                
+                //calculate what the new tail vertice is
+                newTail(snake);
+            }
 
-            snake.vertices.Add(head);
-
-            //*********************************TAIL**************************
-            //calculate what the new tail vertice is
-            newTail(snake);
-
+            snakes[snake.ID] = snake;
         }
 
         // <summary>
@@ -236,52 +419,45 @@ namespace SnakeGame
         public void newTail(Snake snake)
         {
             //current tail
-            Point tail = snake.vertices[0];            // get tail
-            int oldTailX = tail.x;
-            int oldTailY = tail.y;
-            Point oldTail = new Point(oldTailX, oldTailY); // save old tail since we're updating with new tail
+            int tailX = snake.vertices[0].x;            // get tail
+            int tailY = snake.vertices[0].y;
+
+            int oldTailX = tailX;
+            int oldTailY = tailY;
 
             //the direction the tail is going
-            int direction = verticeDirection[tail];
+            int direction = worldGrid[tailX, tailY].Value;
 
             //update new point for the tail
             switch (direction)
             {
                 case 1:
-                    tail.y = tail.y - 1;
+                    tailY = tailY - 1;
                     break;
                 case 2:
-                    tail.x = tail.x + 1;
+                    tailX = tailX + 1;
                     break;
                 case 3:
-                    tail.y = tail.y + 1;
+                    tailY = tailY + 1;
                     break;
                 case 4:
-                    tail.x = tail.x - 1;
+                    tailX = tailX - 1;
                     break;
             }
 
+            snake.vertices.RemoveAt(0); // remove old tail since snake turned at next vertice
 
             //update dictionary and snake
-            if (verticeDirection.ContainsKey(tail)) // snake turned
+            if (worldGrid[oldTailX, oldTailY] == worldGrid[tailX, tailY]) // snake turned
             {
-
-                snake.vertices.Remove(oldTail); // remove old tail since snake turned at next vertice
-                verticeDirection.Remove(oldTail);
-
+               
+                Point newTail = new Point(tailX, tailY);
+                snake.vertices.Insert(0, newTail);
             }
-
-            //the tail needs to become a new vertice
-            else // new tail is in same direction as old tail
-            {
-
-                verticeDirection.Remove(oldTail);
-                verticeDirection[tail] = direction;
-
-                //update snake
-                snake.vertices.Remove(oldTail);
-                snake.vertices.Insert(0, tail); //
-            }
+           
+            snakes[snake.ID] = snake;
+            worldGrid[oldTailX, oldTailY] = null;
+            
         }
 
 
