@@ -166,27 +166,7 @@ namespace SnakeGame
                     continue;
                 }
 
-                // Create food object
-
-                Food food = new Food();
-
-                // Set food location to x and y that were randomly generated
-                Point foodLoc = new Point(x, y);
-                food.loc = foodLoc;
-                food.ID = foodCreated;
-                foodCreated++;
-
-                // Add food to list of foods
-
-                lock (foodLock) // Changing food, lock it
-                {
-                    foodPoint[foodLoc] = food;
-                }
-                foodCount++;
-
-                // Add food to world grid to track
-
-                worldGrid[x, y] = 0;
+                MakeFood(point);
 
                 
             }
@@ -369,6 +349,11 @@ namespace SnakeGame
             {
                 // remove snek
                 KillSnake(snake);
+                Snake newSnake = new Snake();
+                newSnake.ID = snake.ID;
+                List<Point> verticeList = new List<Point>();
+                verticeList.Add(new Point(-1, -1));
+                newSnake.vertices = verticeList;
                 return;
 
             }
@@ -471,9 +456,113 @@ namespace SnakeGame
             
         }
 
-        private void killSnake(Snake snake)
-        {
+        private void KillSnake(Snake snake)
+        {            
+            for(int i = 0; i < snake.vertices.Count-1; i ++)
+            {
+                Point vertice = snake.vertices[i]; 
+                Point nextVertice = snake.vertices[i+1];
+                if(vertice.x == nextVertice.x)
+                {
+                    Random rnd = new Random();                    
+                    int x = vertice.x;
+                    if (vertice.y < nextVertice.y)
+                    {
+                        for(int k = vertice.y; k <= nextVertice.y; k++)
+                        {
+                            int random = rnd.Next(0, 3);
+                            if (random == 1)
+                            {
+                                Point point = new Point(x, k);
+                                MakeFood(point);
+                            }
+                            else
+                            {
+                                worldGrid[x, k] = null;
+                            }
+                        }                        
+                    }
+                    else
+                    {
+                        for(int k = nextVertice.y; k <= vertice.y; k++)
+                        {
+                            int random = rnd.Next(0, 3);
+                            if(random == 1)
+                            {
+                                Point point = new Point(x, k);
+                                MakeFood(point);
+                            }
+                            else
+                            {
+                                worldGrid[x, k] = null;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    Random rnd = new Random();
+                    int y = vertice.y;
+                    if (vertice.x < nextVertice.x)
+                    {
+                        for (int k = vertice.x; k <= nextVertice.x; k++)
+                        {
+                            int random = rnd.Next(0, 3);
+                            if (random == 1)
+                            {
+                                Point point = new Point(k,y);
+                                MakeFood(point);
+                            }
+                            else
+                            {
+                                worldGrid[k,y] = null;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        for (int k = nextVertice.x; k <= vertice.x; k++)
+                        {
+                            int random = rnd.Next(0, 3);
+                            if (random == 1)
+                            {
+                                Point point = new Point(k,y);
+                                MakeFood(point);
+                            }
+                            else
+                            {
+                                worldGrid[k,y] = null;
+                            }
+                        }
+                    }
+                }
+                
+            }
+        }
 
+        private void MakeFood(Point point)
+        {
+            // Create food object
+
+            Food food = new Food();
+
+            // Set food location to x and y that were randomly generated
+            Point foodLoc = point;
+            food.loc = foodLoc;
+            food.ID = foodCreated;
+            foodCreated++;
+
+            // Add food to list of foods
+
+            lock (foodLock) // Changing food, lock it
+            {
+                foodPoint[foodLoc] = food;
+            }
+            foodCount++;
+
+            // Add food to world grid to track
+
+            worldGrid[food.loc.x, food.loc.y] = 0;
         }
 
         /// <summary>

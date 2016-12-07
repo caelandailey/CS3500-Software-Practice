@@ -79,6 +79,10 @@ namespace SnakeGame
 
                         //world.moveSnake(world.snakes[socketState.ID]);
                         Networking.Send(socketState.theSocket, JsonConvert.SerializeObject(world.snakes[socketState.ID]));
+                        if (world.snakes[socketState.ID].vertices.Last().x == -1)
+                        {
+                            world.RemoveSnake(socketState.ID);
+                        }
                     }
 
                     foreach (KeyValuePair<Point, Food> food in world.foodPoint.ToList())
