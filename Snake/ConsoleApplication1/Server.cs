@@ -26,7 +26,7 @@ namespace SnakeGame
         private int worldHeight = 150;
         private int worldWidth = 150;
         private int frameRate = 33;
-        private int foodDensity = 100;
+        private int foodDensity = 3;
 
         private int snakeCount = 0;
         private double snakeRecycle;

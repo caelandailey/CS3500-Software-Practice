@@ -349,11 +349,12 @@ namespace SnakeGame
             {
                 // remove snek
                 KillSnake(snake);
-                Snake newSnake = new Snake();
-                newSnake.ID = snake.ID;
+                Snake newSnake = snake;
+                
                 List<Point> verticeList = new List<Point>();
                 verticeList.Add(new Point(-1, -1));
                 newSnake.vertices = verticeList;
+                AddSnake(newSnake);
                 return;
 
             }
@@ -470,7 +471,7 @@ namespace SnakeGame
                     {
                         for(int k = vertice.y; k <= nextVertice.y; k++)
                         {
-                            int random = rnd.Next(0, 3);
+                            int random = rnd.Next(0, nextVertice.y - vertice.y);
                             if (random == 1)
                             {
                                 Point point = new Point(x, k);
@@ -486,7 +487,7 @@ namespace SnakeGame
                     {
                         for(int k = nextVertice.y; k <= vertice.y; k++)
                         {
-                            int random = rnd.Next(0, 3);
+                            int random = rnd.Next(0, vertice.y - nextVertice.y);
                             if(random == 1)
                             {
                                 Point point = new Point(x, k);
@@ -507,7 +508,7 @@ namespace SnakeGame
                     {
                         for (int k = vertice.x; k <= nextVertice.x; k++)
                         {
-                            int random = rnd.Next(0, 3);
+                            int random = rnd.Next(0, nextVertice.x - vertice.x);
                             if (random == 1)
                             {
                                 Point point = new Point(k,y);
@@ -523,7 +524,7 @@ namespace SnakeGame
                     {
                         for (int k = nextVertice.x; k <= vertice.x; k++)
                         {
-                            int random = rnd.Next(0, 3);
+                            int random = rnd.Next(0, vertice.x - nextVertice.y);
                             if (random == 1)
                             {
                                 Point point = new Point(k,y);
@@ -538,6 +539,7 @@ namespace SnakeGame
                 }
                 
             }
+            
         }
 
         private void MakeFood(Point point)
