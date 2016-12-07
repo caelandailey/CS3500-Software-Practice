@@ -90,7 +90,7 @@ namespace SnakeGame
                     {
                         continue;
                     }
-                    if (i == 14) // last point
+                    if (i == 15) // last point
                     {
                         tail = point;
                         foundOpenSpot = true;
@@ -378,12 +378,14 @@ namespace SnakeGame
                 if (worldGrid[headX, headY] == 0) // there's food
                 {
                     worldGrid[headX, headY] = direction;
+                    
                     Point newHead = new Point(headX, headY);
                     //check if direction of new head and old head is the same
                     if (worldGrid[oldHeadX, oldHeadY] == worldGrid[headX, headY])
                     {
                         snake.vertices.RemoveAt(snake.vertices.Count - 1); // Removes last position
                     }
+                    worldGrid[oldHeadX, oldHeadY] = direction;
                     snake.vertices.Add(newHead);
                     lock (foodLock)
                     {
@@ -403,6 +405,7 @@ namespace SnakeGame
                 {
                     snake.vertices.RemoveAt(snake.vertices.Count - 1); // Removes last position
                 }
+                worldGrid[oldHeadX, oldHeadY] = direction;
                 snake.vertices.Add(newHead);
                 
                 //calculate what the new tail vertice is
