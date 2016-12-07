@@ -147,12 +147,12 @@ namespace SnakeGame
         {
 
             // While not enough food, make food
-
+            Random rnd = new Random();
             while (foodCount < snakes.Keys.Count * foodDensity) 
             {
                 // Generate random cord
 
-                Random rnd = new Random(); 
+                
                 int x = rnd.Next(1, width - 2);
                 int y = rnd.Next(1, height - 2);
                 Point point = new Point(x, y);
@@ -368,6 +368,7 @@ namespace SnakeGame
             if (headX == 149 || headY == 149 || headY == 0 || headX == 0) // Wall
             {
                 // remove snek
+                KillSnake(snake);
                 return;
 
             }
@@ -391,10 +392,17 @@ namespace SnakeGame
                     {
                         if (foodPoint.ContainsKey(newHead))
                         {
+
+                            Food deadFood = foodPoint[newHead];
+                            deadFood.loc = new Point(-1, -1);
+                            foodPoint[deadFood.loc] = deadFood;
                             foodPoint.Remove(newHead);
+                            foodCount--;
                         }
                     }
+                    
                 }
+                
             }
             else
             {
@@ -409,7 +417,7 @@ namespace SnakeGame
                 snake.vertices.Add(newHead);
                 
                 //calculate what the new tail vertice is
-                newTail(snake);
+                NewTail(snake);
             }
 
             snakes[snake.ID] = snake;
@@ -419,7 +427,7 @@ namespace SnakeGame
         // Update new tail vertice
         // </summary>
         // <param name = "snake" ></ param >
-        public void newTail(Snake snake)
+        public void NewTail(Snake snake)
         {
             //current tail
             int tailX = snake.vertices[0].x;            // get tail
@@ -463,6 +471,10 @@ namespace SnakeGame
             
         }
 
+        private void killSnake(Snake snake)
+        {
+
+        }
 
         /// <summary>
         /// Override the behavior when the panel is redrawn

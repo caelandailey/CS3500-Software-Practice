@@ -26,7 +26,7 @@ namespace SnakeGame
         private int worldHeight = 150;
         private int worldWidth = 150;
         private int frameRate = 33;
-        private int foodDensity = 10;
+        private int foodDensity = 100;
 
         private int snakeCount = 0;
         private double snakeRecycle;
@@ -75,21 +75,25 @@ namespace SnakeGame
                     {
                         world.createFood(foodDensity);
                         world.MoveSnake(world.snakes[socketState.ID], snakeDirection[socketState.ID]);
-                        
+
 
                         //world.moveSnake(world.snakes[socketState.ID]);
                         Networking.Send(socketState.theSocket, JsonConvert.SerializeObject(world.snakes[socketState.ID]));
                     }
 
-                    foreach (KeyValuePair<Point, Food> food in world.foodPoint)
+                    foreach (KeyValuePair<Point, Food> food in world.foodPoint.ToList())
                     {
+
                         Networking.Send(socketState.theSocket, JsonConvert.SerializeObject(food.Value));
+                        if (food.Value.loc.x == -1)
+                        {
+                            world.foodPoint.Remove(food.Key);
+                        }
                     }
                 }
             }
+
         }
-
-
         /// <summary>
         /// Start accepting Tcp sockets connections from clients
         /// </summary>
