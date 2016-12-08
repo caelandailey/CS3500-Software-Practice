@@ -27,7 +27,7 @@ namespace SnakeGame
 
         // Determines the size in pixels of each grid cell in the world
         public const int pixelsPerCell = 5;
-
+        private object gridLock = new object();
         public Dictionary<int, Food> foods; // holds all the food in the world
         public Dictionary<int, Snake> snakes; // holds all the snakes in the world
         public Dictionary<Point, Food> foodPoint;
@@ -373,6 +373,7 @@ namespace SnakeGame
                 return;
 
             }
+ 
             //check that updated coordinate is in an empty grid space
             if (worldGrid[headX, headY].HasValue)
             {
@@ -383,11 +384,14 @@ namespace SnakeGame
                     
                     Point newHead = new Point(headX, headY);
                     //check if direction of new head and old head is the same
-                    if (worldGrid[oldHeadX, oldHeadY] == worldGrid[headX, headY])
+                    if (getGrid(oldHeadX, oldHeadY) == getGrid(headX, headY))
                     {
                         snake.vertices.RemoveAt(snake.vertices.Count - 1); // Removes last position
                     }
-                    worldGrid[oldHeadX, oldHeadY] = direction;
+                    lock (gridLock)
+                    {
+                        worldGrid[oldHeadX, oldHeadY] = direction;
+                    }
                     snake.vertices.Add(newHead);
                     lock (foodLock)
                     {
@@ -411,14 +415,20 @@ namespace SnakeGame
             }
             else
             {
-                worldGrid[headX, headY] = direction;
+                lock (gridLock)
+                {
+                    worldGrid[headX, headY] = direction;
+                }
                 Point newHead = new Point(headX, headY);
                 //check if direction of new head and old head is the same
-                if(worldGrid[oldHeadX, oldHeadY] == worldGrid[headX, headY])
+                if(getGrid(oldHeadX, oldHeadY) == getGrid(headX, headY))
                 {
                     snake.vertices.RemoveAt(snake.vertices.Count - 1); // Removes last position
                 }
-                worldGrid[oldHeadX, oldHeadY] = direction;
+                lock (gridLock)
+                {
+                    worldGrid[oldHeadX, oldHeadY] = direction;
+                }
                 snake.vertices.Add(newHead);
                 
                 //calculate what the new tail vertice is
@@ -442,7 +452,7 @@ namespace SnakeGame
             int oldTailY = tailY;
 
             //the direction the tail is going
-            int direction = worldGrid[tailX, tailY].Value;
+            int direction = getGrid(tailX, tailY);
 
             //update new point for the tail
             switch (direction)
@@ -464,7 +474,7 @@ namespace SnakeGame
             snake.vertices.RemoveAt(0); // remove old tail since snake turned at next vertice
 
             //update dictionary and snake
-            if (worldGrid[oldTailX, oldTailY] == worldGrid[tailX, tailY]) // snake turned
+            if (getGrid(oldTailX, oldTailY) == getGrid(tailX, tailY)) // snake turned
             {
                
                 Point newTail = new Point(tailX, tailY);
@@ -472,8 +482,28 @@ namespace SnakeGame
             }
            
             snakes[snake.ID] = snake;
-            worldGrid[oldTailX, oldTailY] = null;
+            lock (gridLock)
+            {
+                worldGrid[oldTailX, oldTailY] = null;
+            }
             
+        }
+
+        private int getGrid(int x, int y)
+        {
+            if (x < 0 && x > 149)
+            {
+                return 0;
+            }
+            if (y < 0 && y > 149)
+            {
+                return 0;
+            }
+            if (worldGrid[x,y].HasValue)
+            {
+                return (int)worldGrid[x, y];
+            }
+            return 0;
         }
 
         private void KillSnake(Snake snake)
@@ -486,9 +516,9 @@ namespace SnakeGame
             Random random = new Random();
             while (isLooping == true)
             {
-                
 
-                int direction = (int)worldGrid[x, y];
+
+                int direction = getGrid(x, y);
 
                 if (random.Next(0,2) == 1)
                 {

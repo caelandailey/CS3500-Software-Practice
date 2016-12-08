@@ -72,16 +72,16 @@ namespace SnakeGame
             {
                 foreach (SocketState socketState in clients)
                 {
-                    for (int i = world.snakes.Count - 1; i >= 0; i--)
+                    foreach (KeyValuePair<int, Snake> snake in world.snakes.ToList())
                     {
                         world.createFood(foodDensity);
-                        world.MoveSnake(world.snakes[socketState.ID], snakeDirection[socketState.ID]);
+                        world.MoveSnake(snake.Value, snakeDirection[snake.Key]);
 
-                        Networking.Send(socketState.theSocket, JsonConvert.SerializeObject(world.snakes[socketState.ID]));
-                        if (world.snakes[socketState.ID].vertices.Last().x == -1)
+                        Networking.Send(socketState.theSocket, JsonConvert.SerializeObject(snake.Value));
+                        if (snake.Value.vertices.Last().x == -1)
                         {
-                            world.RemoveSnake(socketState.ID);
-                            snakeDirection.Remove(socketState.ID);
+                            world.RemoveSnake(snake.Key);
+                            snakeDirection.Remove(snake.Key);
                         }
                     }
 
