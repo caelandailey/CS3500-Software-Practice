@@ -25,13 +25,14 @@ namespace SnakeGame
         private object directionLock = new object();
         private int worldHeight = 150;
         private int worldWidth = 150;
-        private int frameRate = 33;
-        private int foodDensity = 10;
-        private double recycleRate = .5;
+        private int frameRate = 75;
+        private int foodDensity = 2;
+        private double recycleRate = 1;
         private int snakeCount = 0;
         private double snakeRecycle;
         World world;
 
+        const string filename = "../../../settings.xml";
 
         static void Main(string[] args)
         {
@@ -51,7 +52,7 @@ namespace SnakeGame
             //readXML("settings"); //make a setting xml
             clientCount = 0;
             world = new World(worldWidth,worldHeight, recycleRate);
-            Timer timer = new Timer(100);
+            Timer timer = new Timer(frameRate);
             timer.Elapsed += updateWorld;
             timer.AutoReset = true;
             timer.Start();
@@ -68,22 +69,27 @@ namespace SnakeGame
         /// </summary>
         private void updateWorld(Object source, ElapsedEventArgs e)
         {
+            //Create food if we need to add more food
+            // Move every snake
+            // Send food to everyone
+            // Send snakes to everyone
+            // Remove deadsnakes
             lock (clientLock)
             {
+                
+
+                foreach (KeyValuePair<int, Snake> snake in world.snakes.ToList())
+                {
+
+                    world.MoveSnake(snake.Value, snakeDirection[snake.Key]);
+
+
+                }
+
+                world.createFood(foodDensity);
+
                 foreach (SocketState socketState in clients)
                 {
-                    foreach (KeyValuePair<int, Snake> snake in world.snakes.ToList())
-                    {
-                        world.createFood(foodDensity);
-                        world.MoveSnake(snake.Value, snakeDirection[snake.Key]);
-
-                        Networking.Send(socketState.theSocket, JsonConvert.SerializeObject(snake.Value));
-                        if (snake.Value.vertices.Last().x == -1)
-                        {
-                            world.RemoveSnake(snake.Key);
-                            snakeDirection.Remove(snake.Key);
-                        }
-                    }
 
                     foreach (KeyValuePair<Point, Food> food in world.foodPoint.ToList())
                     {
@@ -94,7 +100,28 @@ namespace SnakeGame
                             world.foodPoint.Remove(food.Key);
                         }
                     }
+
+                    // 1 loop move snakes
+                    // 1 send world ot each client
+
+                    foreach (KeyValuePair<int, Snake> snake in world.snakes.ToList())
+                    {
+
+                        Networking.Send(socketState.theSocket, JsonConvert.SerializeObject(snake.Value));
+                        if (snake.Value.vertices.Last().x == -1)
+                        {
+                            world.RemoveSnake(snake.Key);
+
+                            snakeDirection.Remove(snake.Key);
+                        }
+
+
+                    }
+                    
+
+
                 }
+                
             }
 
         }
@@ -203,12 +230,15 @@ namespace SnakeGame
                 if (p[p.Length - 1] != '\n')
                     break;
 
-                Console.WriteLine("received message: \"" + p + "\"");
+               // Console.WriteLine("received message: \"" + p + "\"");
                 int direction = (Int32.Parse(p.ElementAt(1).ToString()));
                 int headDirection = 0;
                 lock (directionLock)
                 {
-                    headDirection = snakeDirection[state.ID];
+                    if (snakeDirection.ContainsKey(state.ID))
+                    {
+                        headDirection = snakeDirection[state.ID];
+                    }
                 }
                 bool setDirection = true;
                 switch (direction)
@@ -258,6 +288,11 @@ namespace SnakeGame
             }
         }
 
+        private void callMeForException(SocketState state)
+        {
+            // remove from client list
+            clients.Remove(state);
+        }
         /// <summary>
         /// Given the data that has arrived so far, 
         /// potentially from multiple receive operations, 
@@ -285,7 +320,7 @@ namespace SnakeGame
                 if (p[p.Length - 1] != '\n')
                     break;
 
-                Console.WriteLine("received message: \"" + p + "\"");
+                //Console.WriteLine("received message: \"" + p + "\"");
 
                 lock (directionLock)
                 {

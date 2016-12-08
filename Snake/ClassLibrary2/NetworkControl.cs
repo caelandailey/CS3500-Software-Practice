@@ -173,19 +173,32 @@ namespace SnakeGame
             //state.theSocket.EndReceive(state_in_an_ar_object);
 
             //(append message to state)
-
-            int bytesRead = state.theSocket.EndReceive(state_in_an_ar_object);
-
-            // If the socket is still open
-            if (bytesRead > 0)
+            try
             {
-                string theMessage = Encoding.UTF8.GetString(state.messageBuffer, 0, bytesRead);
-                // Append the received data to the growable buffer.
-                // It may be an incomplete message, so we need to start building it up piece by piece
-                state.sb.Append(theMessage);
+                int bytesRead = state.theSocket.EndReceive(state_in_an_ar_object);
 
-                //ProcessMessage(state);
-                state.callMe(state);
+                if (bytesRead == 0) //disconnected
+                {
+
+                   // state.callMe = callMeForException();
+                }
+
+                // If the socket is still open
+                if (bytesRead > 0)
+                {
+                    string theMessage = Encoding.UTF8.GetString(state.messageBuffer, 0, bytesRead);
+                    // Append the received data to the growable buffer.
+                    // It may be an incomplete message, so we need to start building it up piece by piece
+                    state.sb.Append(theMessage);
+
+                    //ProcessMessage(state);
+                    state.callMe(state);
+                }
+            }
+            catch (SocketException)
+            {
+               // state.callMe = callMeForException;
+                
             }
 
 

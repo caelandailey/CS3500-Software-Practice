@@ -22,7 +22,7 @@ namespace SnakeGame
     public class World : Panel
     {
         
-        private double recycleRate;
+        private double recycleRate = 1;
         
 
         // Determines the size in pixels of each grid cell in the world
@@ -113,6 +113,7 @@ namespace SnakeGame
             Snake snake = new Snake(); // Make snake object
             snake.name = name; // Set name
             snake.ID = ID; // Set id
+            snake.length = 15;
             List<Point> snakeVertices = new List<Point>(); // Create list to hold snake head and tail
             snakeVertices.Add(head); // Add head THESE ARE SWITCHED BECAUSE THE TAIL IS IN THE FRONT OF THE SNAKE
             snakeVertices.Add(tail); // Add tail
@@ -381,7 +382,7 @@ namespace SnakeGame
                 if (worldGrid[headX, headY] == 0) // there's food
                 {
                     worldGrid[headX, headY] = direction;
-                    
+                    snake.length = snake.length++;
                     Point newHead = new Point(headX, headY);
                     //check if direction of new head and old head is the same
                     if (getGrid(oldHeadX, oldHeadY) == getGrid(headX, headY))
@@ -435,7 +436,8 @@ namespace SnakeGame
                 NewTail(snake);
             }
 
-            snakes[snake.ID] = snake;
+            //snakes[snake.ID] = snake;
+            AddSnake(snake);
         }
 
         // <summary>
@@ -514,15 +516,20 @@ namespace SnakeGame
             int y = snake.vertices.First().y;
             Point nextPoint = new Point(x, y);
             Random random = new Random();
+            //double foodMade = 0;
             while (isLooping == true)
             {
-
+                
 
                 int direction = getGrid(x, y);
 
-                if (random.Next(0,2) == 1)
+                if (random.NextDouble() < recycleRate)
                 {
-                    MakeFood(new Point(x, y));
+                    //if (foodMade < recycleRate * snake.length)
+                    //{
+                        MakeFood(new Point(x, y));
+                        //foodMade++;
+                    //}
                 }
                 else
                 {
@@ -557,92 +564,11 @@ namespace SnakeGame
                     isLooping = false;
                 }
             }
-            
 
-
-            //for (int i = 0; i < snake.vertices.Count-1; i ++)
-            //{
-            //    Point vertice = snake.vertices[i]; 
-            //    Point nextVertice = snake.vertices[i+1];
-            //    if(vertice.x == nextVertice.x)
-            //    {
-            //        Random rnd = new Random();                    
-            //        int x = vertice.x;
-            //        if (vertice.y < nextVertice.y)
-            //        {
-            //            for(int k = vertice.y; k <= nextVertice.y; k++)
-            //            {
-            //                int random = rnd.Next(0,2);
-            //                if (random == 1)
-            //                {
-            //                    Point point = new Point(x, k);
-            //                    MakeFood(point);
-            //                }
-            //                else
-            //                {
-            //                    worldGrid[x, k] = null;
-            //                }
-            //            }                        
-            //        }
-            //        else
-            //        {
-            //            for(int k = nextVertice.y; k <= vertice.y; k++)
-            //            {
-            //                int random = rnd.Next(0, 2);
-            //                if (random == 1)
-            //                {
-            //                    Point point = new Point(x, k);
-            //                    MakeFood(point);
-            //                }
-            //                else
-            //                {
-            //                    worldGrid[x, k] = null;
-            //                }
-            //            }
-            //        }
-            //    }
-            //    else
-            //    {
-            //        Random rnd = new Random();
-            //        int y = vertice.y;
-            //        if (vertice.x < nextVertice.x)
-            //        {
-            //            for (int k = vertice.x; k <= nextVertice.x; k++)
-            //            {
-            //                int random = rnd.Next(0, 2);
-            //                if (random == 1)
-            //                {
-            //                    Point point = new Point(k,y);
-            //                    MakeFood(point);
-            //                }
-            //                else
-            //                {
-            //                    worldGrid[k,y] = null;
-            //                }
-            //            }
-            //        }
-            //        else
-            //        {
-            //            for (int k = nextVertice.x; k <= vertice.x; k++)
-            //            {
-            //                int random = rnd.Next(0, 2);
-            //                if (random == 1)
-            //                {
-            //                    Point point = new Point(k,y);
-            //                    MakeFood(point);
-            //                }
-            //                else
-            //                {
-            //                    worldGrid[k,y] = null;
-            //                }
-            //            }
-            //        }
-            //    }
-                
-            //}
             Snake newSnake = snake;
 
             List<Point> verticeList = new List<Point>();
+            verticeList.Add(new Point(-1, -1));
             verticeList.Add(new Point(-1, -1));
             newSnake.vertices = verticeList;
             AddSnake(newSnake);
