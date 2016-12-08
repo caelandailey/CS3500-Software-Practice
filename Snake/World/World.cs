@@ -21,6 +21,9 @@ namespace SnakeGame
     /// </summary>
     public class World : Panel
     {
+        
+        private double recycleRate;
+        
 
         // Determines the size in pixels of each grid cell in the world
         public const int pixelsPerCell = 5;
@@ -33,7 +36,7 @@ namespace SnakeGame
         private Object foodLock; // Lock for food
 
         private Object snakeLock; // Lock for snakes
-        private int recycleRate = 50;
+        
         private int foodCount;
         private int startingSnakeLength = 15;
         private Dictionary<Point, int> verticeDirection;
@@ -43,12 +46,16 @@ namespace SnakeGame
 
         public int createSnake(string name, int ID)
         {
+            // GENERATE VARIABLES
+
             // Look for open spot
             Random rnd = new Random();
             bool foundOpenSpot = false;
             Point head = null;
             Point tail = null;
             int randomDirection = 0;
+
+            // CHECK FOR OPEN SLOT
 
             while (foundOpenSpot == false)
             {
@@ -65,26 +72,28 @@ namespace SnakeGame
 
                 for (int i = 0; i<= startingSnakeLength ; i ++)
                 {
-                    Point point = new Point(x,y);
+                   
 
                     // Get random direction
 
+                    int newX = x;
+                    int newY = y;
                     switch (randomDirection)
                     {
                         case 1:
-                            point = new Point(x, y - i);
+                            newY = newY - i;
                             break;
                         case 2:
-                            point = new Point(x+i , y );
+                            newX = newX + i;
                             break;
                         case 3:
-                            point = new Point(x, y + i);
+                            newY = newY + i;
                             break;
                         case 4:
-                            point = new Point(x-i , y);
+                            newX = newX - i;
                             break;
                     }
-                    
+                    Point point = new Point(newX, newY);
                     if (!EmptyPoint(point))
                     {
                         continue;
@@ -97,6 +106,8 @@ namespace SnakeGame
                 }  
             }
             
+            // CREATE SNAKE AND ADD TO OPEN SPOT
+
             // Create snake object and set values
 
             Snake snake = new Snake(); // Make snake object
@@ -108,6 +119,8 @@ namespace SnakeGame
             
             snake.vertices = snakeVertices; // Add head and tail to the snake object
             AddSnake(snake); // Add snake
+
+            // ADD SNAKE POINTS TO WORLD GRID
 
             // Add snake to world grid
 
@@ -205,7 +218,7 @@ namespace SnakeGame
         /// <summary>
         /// Constructor. Create empty world
         /// </summary>
-        public World(int _width, int _height)
+        public World(int _width, int _height, double _recycleRate)
         {
             foods = new Dictionary<int, Food>();
             foodPoint = new Dictionary<Point, Food>();
@@ -217,6 +230,7 @@ namespace SnakeGame
             width = _width;
             height = _height;
             foodCount = 0;
+            recycleRate = _recycleRate;
             // Setting this property to true prevents flickering
             this.DoubleBuffered = true;
         }
@@ -328,8 +342,8 @@ namespace SnakeGame
             }
             //***********************HEAD*************************
 
-            int headX = snake.vertices[snake.vertices.Count - 1].x;
-            int headY = snake.vertices[snake.vertices.Count - 1].y;
+            int headX = snake.vertices[snake.vertices.Count-1].x;
+            int headY = snake.vertices[snake.vertices.Count-1].y;
             
             int oldHeadX = headX;
             int oldHeadY = headY;
@@ -352,7 +366,7 @@ namespace SnakeGame
                     break;
 
             }
-            if (headX == 149 || headY == 149 || headY == 0 || headX == 0) // If it's a wall
+            if (headX == width-1 || headY == width-1 || headY == 0 || headX == 0) // If it's a wall
             {
                 // remove snek
                 KillSnake(snake);
@@ -387,7 +401,6 @@ namespace SnakeGame
                             foodCount--;
                         }
                     }
-                    
                 }
                 else // If value not == to 0 then there's a snake in that location. Kill the snake
                 {
@@ -477,7 +490,7 @@ namespace SnakeGame
 
                 int direction = (int)worldGrid[x, y];
 
-                if (random.Next(0,1) == 1)
+                if (random.Next(0,2) == 1)
                 {
                     MakeFood(new Point(x, y));
                 }

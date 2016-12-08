@@ -26,7 +26,7 @@ namespace SnakeGame
         private int worldHeight = 150;
         private int worldWidth = 150;
         private int frameRate = 33;
-        private int foodDensity = 100;
+        private int foodDensity = 10;
         private double recycleRate = .5;
         private int snakeCount = 0;
         private double snakeRecycle;
@@ -50,7 +50,7 @@ namespace SnakeGame
             clients = new List<SocketState>();
             //readXML("settings"); //make a setting xml
             clientCount = 0;
-            world = new World(worldWidth,worldHeight);
+            world = new World(worldWidth,worldHeight, recycleRate);
             Timer timer = new Timer(100);
             timer.Elapsed += updateWorld;
             timer.AutoReset = true;
@@ -81,6 +81,7 @@ namespace SnakeGame
                         if (world.snakes[socketState.ID].vertices.Last().x == -1)
                         {
                             world.RemoveSnake(socketState.ID);
+                            snakeDirection.Remove(socketState.ID);
                         }
                     }
 
@@ -205,7 +206,7 @@ namespace SnakeGame
                 Console.WriteLine("received message: \"" + p + "\"");
                 int direction = (Int32.Parse(p.ElementAt(1).ToString()));
                 int headDirection = 0;
-                lock (clientLock)
+                lock (directionLock)
                 {
                     headDirection = snakeDirection[state.ID];
                 }
@@ -240,7 +241,7 @@ namespace SnakeGame
 
                 if (setDirection)
                 {
-                    lock (clientLock)
+                    lock (directionLock)
                     {
                         snakeDirection[state.ID] = (Int32.Parse(p.ElementAt(1).ToString()));
                     }
@@ -286,7 +287,7 @@ namespace SnakeGame
 
                 Console.WriteLine("received message: \"" + p + "\"");
 
-                lock (clientLock)
+                lock (directionLock)
                 {
                     snakeDirection[clientCount] = world.createSnake(p.Substring(0, p.Length - 1), clientCount);
                 }
