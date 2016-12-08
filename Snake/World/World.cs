@@ -33,12 +33,11 @@ namespace SnakeGame
         private Object foodLock; // Lock for food
 
         private Object snakeLock; // Lock for snakes
-
+        private int recycleRate = 50;
         private int foodCount;
-
+        private int startingSnakeLength = 15;
         private Dictionary<Point, int> verticeDirection;
 
-        private int snakeCount;
         private int foodCreated = 0;
         private int?[,] worldGrid;
 
@@ -55,16 +54,16 @@ namespace SnakeGame
             {
                 //create random x,y coordinates for tail
 
-                int x = rnd.Next(30, width - 30);
-                int y = rnd.Next(30, height - 30);
+                int x = rnd.Next(startingSnakeLength*2, width - startingSnakeLength * 2);
+                int y = rnd.Next(startingSnakeLength * 2, height - startingSnakeLength * 2);
                 head = new Point(x, y);
                 tail = new Point(x, y);
 
                 // Loop through snakes positions
-                randomDirection = rnd.Next(1, 4);
+                randomDirection = rnd.Next(1, 5);
 
 
-                for (int i = 0; i<=15; i ++)
+                for (int i = 0; i<= startingSnakeLength ; i ++)
                 {
                     Point point = new Point(x,y);
 
@@ -73,16 +72,16 @@ namespace SnakeGame
                     switch (randomDirection)
                     {
                         case 1:
-                            point = new Point(x, y-i);
+                            point = new Point(x, y - i);
                             break;
                         case 2:
-                            point = new Point(x+i, y );
+                            point = new Point(x+i , y );
                             break;
                         case 3:
-                            point = new Point(x, y -i);
+                            point = new Point(x, y + i);
                             break;
                         case 4:
-                            point = new Point(x-i,y);
+                            point = new Point(x-i , y);
                             break;
                     }
                     
@@ -90,7 +89,7 @@ namespace SnakeGame
                     {
                         continue;
                     }
-                    if (i == 15) // last point
+                    if (i == startingSnakeLength) // last point
                     {
                         tail = point;
                         foundOpenSpot = true;
@@ -106,12 +105,13 @@ namespace SnakeGame
             List<Point> snakeVertices = new List<Point>(); // Create list to hold snake head and tail
             snakeVertices.Add(head); // Add head THESE ARE SWITCHED BECAUSE THE TAIL IS IN THE FRONT OF THE SNAKE
             snakeVertices.Add(tail); // Add tail
+            
             snake.vertices = snakeVertices; // Add head and tail to the snake object
             AddSnake(snake); // Add snake
 
             // Add snake to world grid
 
-            for (int i = 0; i <= 15; i++)
+            for (int i = 0; i <= startingSnakeLength; i++)
             {
                 switch (randomDirection)
                 {
@@ -125,7 +125,7 @@ namespace SnakeGame
                         break;
 
                     case 3:
-                        worldGrid[head.x, head.y-i] = randomDirection;
+                        worldGrid[head.x, head.y+i] = randomDirection;
                         break;
 
                     case 4:
@@ -304,6 +304,13 @@ namespace SnakeGame
             return false;
         }
 
+
+        /// <summary>
+        /// Moves the snake by adding to the head in direction of choice and removing the tail
+        /// Takes in a snake object and direction
+        /// </summary>
+        /// <param name="snake"></param>
+        /// <param name="direction"></param>
         public void MoveSnake(Snake snake, int direction)
         {
             //remove tail
@@ -345,16 +352,10 @@ namespace SnakeGame
                     break;
 
             }
-            if (headX == 149 || headY == 149 || headY == 0 || headX == 0) // Wall
+            if (headX == 149 || headY == 149 || headY == 0 || headX == 0) // If it's a wall
             {
                 // remove snek
                 KillSnake(snake);
-                Snake newSnake = snake;
-                
-                List<Point> verticeList = new List<Point>();
-                verticeList.Add(new Point(-1, -1));
-                newSnake.vertices = verticeList;
-                AddSnake(newSnake);
                 return;
 
             }
@@ -387,6 +388,11 @@ namespace SnakeGame
                         }
                     }
                     
+                }
+                else // If value not == to 0 then there's a snake in that location. Kill the snake
+                {
+                    KillSnake(snake); // Remove snek
+                    return;
                 }
                 
             }
@@ -458,88 +464,145 @@ namespace SnakeGame
         }
 
         private void KillSnake(Snake snake)
-        {            
-            for(int i = 0; i < snake.vertices.Count-1; i ++)
+        {
+            bool isLooping = true;
+            
+            int x = snake.vertices.First().x;
+            int y = snake.vertices.First().y;
+            Point nextPoint = new Point(x, y);
+            Random random = new Random();
+            while (isLooping == true)
             {
-                Point vertice = snake.vertices[i]; 
-                Point nextVertice = snake.vertices[i+1];
-                if(vertice.x == nextVertice.x)
+                
+
+                int direction = (int)worldGrid[x, y];
+
+                if (random.Next(0,1) == 1)
                 {
-                    Random rnd = new Random();                    
-                    int x = vertice.x;
-                    if (vertice.y < nextVertice.y)
-                    {
-                        for(int k = vertice.y; k <= nextVertice.y; k++)
-                        {
-                            int random = rnd.Next(0, nextVertice.y - vertice.y);
-                            if (random == 1)
-                            {
-                                Point point = new Point(x, k);
-                                MakeFood(point);
-                            }
-                            else
-                            {
-                                worldGrid[x, k] = null;
-                            }
-                        }                        
-                    }
-                    else
-                    {
-                        for(int k = nextVertice.y; k <= vertice.y; k++)
-                        {
-                            int random = rnd.Next(0, vertice.y - nextVertice.y);
-                            if(random == 1)
-                            {
-                                Point point = new Point(x, k);
-                                MakeFood(point);
-                            }
-                            else
-                            {
-                                worldGrid[x, k] = null;
-                            }
-                        }
-                    }
+                    MakeFood(new Point(x, y));
                 }
                 else
                 {
-                    Random rnd = new Random();
-                    int y = vertice.y;
-                    if (vertice.x < nextVertice.x)
-                    {
-                        for (int k = vertice.x; k <= nextVertice.x; k++)
-                        {
-                            int random = rnd.Next(0, nextVertice.x - vertice.x);
-                            if (random == 1)
-                            {
-                                Point point = new Point(k,y);
-                                MakeFood(point);
-                            }
-                            else
-                            {
-                                worldGrid[k,y] = null;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        for (int k = nextVertice.x; k <= vertice.x; k++)
-                        {
-                            int random = rnd.Next(0, vertice.x - nextVertice.y);
-                            if (random == 1)
-                            {
-                                Point point = new Point(k,y);
-                                MakeFood(point);
-                            }
-                            else
-                            {
-                                worldGrid[k,y] = null;
-                            }
-                        }
-                    }
+                    worldGrid[x, y] = null;
+                }
+
+
+                
+                switch (direction)
+                {
+                    case 1:
+                        nextPoint.y = nextPoint.y - 1;
+                        break;
+                    case 2:
+                        nextPoint.x = nextPoint.x + 1;
+                        break;
+                    case 3:
+                        nextPoint.y = nextPoint.y + 1;
+                        break;
+                    case 4:
+                        nextPoint.x = nextPoint.x - 1;
+                        break;
                 }
                 
+                if (worldGrid[nextPoint.x,nextPoint.y]> 0)
+                {
+                    x = nextPoint.x;
+                    y = nextPoint.y;
+                }
+                else
+                {
+                    isLooping = false;
+                }
             }
             
+
+
+            //for (int i = 0; i < snake.vertices.Count-1; i ++)
+            //{
+            //    Point vertice = snake.vertices[i]; 
+            //    Point nextVertice = snake.vertices[i+1];
+            //    if(vertice.x == nextVertice.x)
+            //    {
+            //        Random rnd = new Random();                    
+            //        int x = vertice.x;
+            //        if (vertice.y < nextVertice.y)
+            //        {
+            //            for(int k = vertice.y; k <= nextVertice.y; k++)
+            //            {
+            //                int random = rnd.Next(0,2);
+            //                if (random == 1)
+            //                {
+            //                    Point point = new Point(x, k);
+            //                    MakeFood(point);
+            //                }
+            //                else
+            //                {
+            //                    worldGrid[x, k] = null;
+            //                }
+            //            }                        
+            //        }
+            //        else
+            //        {
+            //            for(int k = nextVertice.y; k <= vertice.y; k++)
+            //            {
+            //                int random = rnd.Next(0, 2);
+            //                if (random == 1)
+            //                {
+            //                    Point point = new Point(x, k);
+            //                    MakeFood(point);
+            //                }
+            //                else
+            //                {
+            //                    worldGrid[x, k] = null;
+            //                }
+            //            }
+            //        }
+            //    }
+            //    else
+            //    {
+            //        Random rnd = new Random();
+            //        int y = vertice.y;
+            //        if (vertice.x < nextVertice.x)
+            //        {
+            //            for (int k = vertice.x; k <= nextVertice.x; k++)
+            //            {
+            //                int random = rnd.Next(0, 2);
+            //                if (random == 1)
+            //                {
+            //                    Point point = new Point(k,y);
+            //                    MakeFood(point);
+            //                }
+            //                else
+            //                {
+            //                    worldGrid[k,y] = null;
+            //                }
+            //            }
+            //        }
+            //        else
+            //        {
+            //            for (int k = nextVertice.x; k <= vertice.x; k++)
+            //            {
+            //                int random = rnd.Next(0, 2);
+            //                if (random == 1)
+            //                {
+            //                    Point point = new Point(k,y);
+            //                    MakeFood(point);
+            //                }
+            //                else
+            //                {
+            //                    worldGrid[k,y] = null;
+            //                }
+            //            }
+            //        }
+            //    }
+                
+            //}
+            Snake newSnake = snake;
+
+            List<Point> verticeList = new List<Point>();
+            verticeList.Add(new Point(-1, -1));
+            newSnake.vertices = verticeList;
+            AddSnake(newSnake);
         }
 
         private void MakeFood(Point point)

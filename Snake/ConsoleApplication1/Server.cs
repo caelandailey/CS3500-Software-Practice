@@ -22,15 +22,16 @@ namespace SnakeGame
         private int clientCount;
         private object clientLock = new object();
         private Dictionary<int, int> snakeDirection;
-
+        private object directionLock = new object();
         private int worldHeight = 150;
         private int worldWidth = 150;
         private int frameRate = 33;
-        private int foodDensity = 3;
-
+        private int foodDensity = 100;
+        private double recycleRate = .5;
         private int snakeCount = 0;
         private double snakeRecycle;
         World world;
+
 
         static void Main(string[] args)
         {
@@ -76,8 +77,6 @@ namespace SnakeGame
                         world.createFood(foodDensity);
                         world.MoveSnake(world.snakes[socketState.ID], snakeDirection[socketState.ID]);
 
-
-                        //world.moveSnake(world.snakes[socketState.ID]);
                         Networking.Send(socketState.theSocket, JsonConvert.SerializeObject(world.snakes[socketState.ID]));
                         if (world.snakes[socketState.ID].vertices.Last().x == -1)
                         {
@@ -160,9 +159,10 @@ namespace SnakeGame
             // MAKE SNAKE
 
             //add fifteen to either the x or the y
-
-            ProcessName(state);
-
+            lock (clientLock)
+            {
+                ProcessName(state);
+            }
             state.callMe = handleDirectionRequests; // change callback to handle requests
 
             Networking.Send(state.theSocket, clientCount + "\n" + worldWidth + "\n" + worldHeight + "\n");
@@ -204,7 +204,11 @@ namespace SnakeGame
 
                 Console.WriteLine("received message: \"" + p + "\"");
                 int direction = (Int32.Parse(p.ElementAt(1).ToString()));
-                int headDirection = snakeDirection[state.ID];
+                int headDirection = 0;
+                lock (clientLock)
+                {
+                    headDirection = snakeDirection[state.ID];
+                }
                 bool setDirection = true;
                 switch (direction)
                 {
@@ -236,7 +240,10 @@ namespace SnakeGame
 
                 if (setDirection)
                 {
-                    snakeDirection[state.ID] = (Int32.Parse(p.ElementAt(1).ToString()));
+                    lock (clientLock)
+                    {
+                        snakeDirection[state.ID] = (Int32.Parse(p.ElementAt(1).ToString()));
+                    }
                 }
 
                 byte[] messageBytes = Encoding.UTF8.GetBytes(p);
@@ -249,37 +256,6 @@ namespace SnakeGame
 
             }
         }
-
-        /// <summary>
-        /// Callback method for when data is received (started from line 80)
-        /// </summary>
-        /// <param name="ar">The result that includes the "state" parameter from BeginReceive</param>
-        //private void ReceiveCallback(IAsyncResult ar)
-        //{
-        //    // Get the socket state out of the AsyncState
-        //    // This is the object that we passed to BeginReceive that represents the socket
-        //    SocketState sender = (SocketState)ar.AsyncState;
-
-        //    int bytesRead = sender.theSocket.EndReceive(ar);
-
-        //    // If the socket is still open
-        //    if (bytesRead > 0)
-        //    {
-        //        string theMessage = Encoding.UTF8.GetString(sender.messageBuffer, 0, bytesRead);
-        //        // Append the received data to the growable buffer.
-        //        // It may be an incomplete message, so we need to start building it up piece by piece
-        //        sender.sb.Append(theMessage);
-        //        Console.WriteLine("received message: \"" + theMessage + "\"");
-        //        // TODO: If we had an "EventProcessor" delagate associated with the socket state,
-        //        //       We could call that here, instead of hard-coding this method to call.
-        //        ProcessName(sender);
-        //    }
-
-        //    // Continue the "event loop" that was started on line 80.
-        //    // Start listening for more parts of a message, or more new messages
-        //    sender.theSocket.BeginReceive(sender.messageBuffer, 0, sender.messageBuffer.Length, SocketFlags.None, ReceiveCallback, sender);
-
-        //}
 
         /// <summary>
         /// Given the data that has arrived so far, 
