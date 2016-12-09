@@ -46,7 +46,6 @@ namespace SnakeGame
         private double recycleRate;
         private int gameMode;
 
-
         /// <summary>
         /// Constructor. Create empty world
         /// </summary>
