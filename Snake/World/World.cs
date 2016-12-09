@@ -113,7 +113,7 @@ namespace SnakeGame
             Snake snake = new Snake(); // Make snake object
             snake.name = name; // Set name
             snake.ID = ID; // Set id
-            snake.length = 15;
+            snake.length = startingSnakeLength;
             List<Point> snakeVertices = new List<Point>(); // Create list to hold snake head and tail
             snakeVertices.Add(head); // Add head THESE ARE SWITCHED BECAUSE THE TAIL IS IN THE FRONT OF THE SNAKE
             snakeVertices.Add(tail); // Add tail
@@ -544,12 +544,23 @@ namespace SnakeGame
                         nextPoint.x = nextPoint.x - 1;
                         break;
                 }
-                
-                if (worldGrid[nextPoint.x,nextPoint.y]> 0)
+                if (snake.vertices.Last() != new Point(x, y))
                 {
                     x = nextPoint.x;
                     y = nextPoint.y;
                 }
+                if (worldGrid[nextPoint.x,nextPoint.y]> 0)
+                {
+                    if (snake.vertices.Last() != new Point(x, y))
+                    {
+                        x = nextPoint.x;
+                        y = nextPoint.y;
+                    }
+                    else
+                    {
+                        isLooping = false;
+                    }
+               }
                 else
                 {
                     isLooping = false;

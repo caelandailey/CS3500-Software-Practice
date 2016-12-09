@@ -172,17 +172,14 @@ namespace SnakeGame
         {
             SocketState state = (SocketState)state_in_an_ar_object.AsyncState;
 
-            //state.theSocket.EndReceive(state_in_an_ar_object);
-
-            //(append message to state)
             try
             {
                 int bytesRead = state.theSocket.EndReceive(state_in_an_ar_object);
 
                 if (bytesRead == 0) //disconnected
                 {
-
-                   // state.callMe = callMeForException();
+                    OnDisconnect?.Invoke(state);
+                    // state.callMe = callMeForException();
                 }
 
                 // If the socket is still open
@@ -198,15 +195,9 @@ namespace SnakeGame
                 }
             }
             catch (SocketException)
-            {                
+            {
                 OnDisconnect?.Invoke(state);
-               // state.callMe = callMeForException;
-                
             }
-
-
-            //state.theSocket.BeginReceive(state.messageBuffer, 0, state.messageBuffer.Length, SocketFlags.None, ReceiveCallback, state);
-
         }
 
         /// <summary>
@@ -216,8 +207,14 @@ namespace SnakeGame
         /// <param name=""></param>
         public static void GetData(SocketState state)
         {
-            //state.callMe(state);
-            state.theSocket.BeginReceive(state.messageBuffer, 0, state.messageBuffer.Length, SocketFlags.None, ReceiveCallback, state);
+            try
+            {
+                state.theSocket.BeginReceive(state.messageBuffer, 0, state.messageBuffer.Length, SocketFlags.None, ReceiveCallback, state);
+            }
+            catch (SocketException)
+            {
+                OnDisconnect?.Invoke(state);
+            }
         }
 
         /// <summary>
@@ -226,11 +223,17 @@ namespace SnakeGame
         /// </summary>
         /// <param name="socket"></param>
         /// <param name="data"></param>
-        public static void Send(Socket socket, String data)
+        public static void Send(SocketState state, String data)
         {
-             byte[] messageBytes = Encoding.UTF8.GetBytes(data + "\n");
-             socket.BeginSend(messageBytes, 0, messageBytes.Length, SocketFlags.None, SendCallback, socket);
-
+            try
+            {
+                byte[] messageBytes = Encoding.UTF8.GetBytes(data + "\n");
+                state.theSocket.BeginSend(messageBytes, 0, messageBytes.Length, SocketFlags.None, SendCallback, state.theSocket);
+            }
+            catch (SocketException)
+            {
+                OnDisconnect?.Invoke(state);
+            }
         }
 
         /// <summary>
@@ -252,7 +255,7 @@ namespace SnakeGame
         {
             //the new state to hold delegate and listener
             ServerState state = new ServerState();
-            
+
             state.listener = new TcpListener(IPAddress.Any, 11000);
             state.callMe = callBack;
             state.listener.Start();
@@ -266,24 +269,21 @@ namespace SnakeGame
         /// <param name="ar"></param>
         static void AcceptNewClient(IAsyncResult ar)
         {
-            ServerState state = (ServerState)ar.AsyncState;
-            Socket socket = state.listener.EndAcceptSocket(ar);
-            lock (Networking.clientLock)
+            ServerState state = (ServerState)ar.AsyncState; // Get state
+            Socket socket = state.listener.EndAcceptSocket(ar); // end listener
+
+            lock (Networking.clientLock) // Accessing client info, lock it
             {
-                Networking.clientCount++;
-                SocketState socketState = new SocketState(socket, Networking.clientCount);
+                Networking.clientCount++; // Adding client, increment cound
+                SocketState socketState = new SocketState(socket, Networking.clientCount); // Create new socketstate
 
-                //socketState.theSocket = socket; // ?
-                socketState.callMe = state.callMe;
+                socketState.callMe = state.callMe; // Set the call back
 
-                //state.callMe(socketState);
-                socketState.callMe(socketState);
-                
-            }            
+                socketState.callMe(socketState); // Use socketstate
 
-            state.listener.BeginAcceptSocket(AcceptNewClient, state);
+            }
+
+            state.listener.BeginAcceptSocket(AcceptNewClient, state); // Start listening for client
         }
-
-
     }
 }

@@ -18,7 +18,6 @@ namespace SnakeGame
     class Server
     {
         private List<SocketState> clients;
-        //private TcpListener listener;
         private int clientCount;
         private object clientLock = new object();
         private Dictionary<int, int> snakeDirection;
@@ -31,18 +30,15 @@ namespace SnakeGame
         private double recycleRate;
         private int startingSnakeLength;
 
-
         World world;
 
-        const string filename = "C:\\Users\\caeland\\Source\\Repos\\00847451\\Snake\\settings.xml";
+        const string filename = "..\\..\\..\\settings.xml";
 
         static void Main(string[] args)
         {
             Server server = new Server();
             Networking.OnDisconnect += server.callMeForException; 
             server.StartServer();
-
-
 
             Console.Read();
         }
@@ -133,7 +129,7 @@ namespace SnakeGame
                 foreach (SocketState socketState in clients)
                 {
 
-                    Networking.Send(socketState.theSocket,  jsonWorld.ToString());
+                    Networking.Send(socketState,  jsonWorld.ToString());
                 }
 
                 foreach (Point point in deadFood)
@@ -221,7 +217,7 @@ namespace SnakeGame
             }
             state.callMe = handleDirectionRequests; // change callback to handle requests
 
-            Networking.Send(state.theSocket, clientCount + "\n" + worldWidth + "\n" + worldHeight + "\n");
+            Networking.Send(state, clientCount + "\n" + worldWidth + "\n" + worldHeight + "\n");
             lock (clientLock)
             {
                 state.ID = clientCount; // set state id
@@ -339,26 +335,17 @@ namespace SnakeGame
             // We may have received more than one.
             foreach (string p in parts)
             {
-
-                // Ignore empty strings added by the regex splitter
                 if (p.Length == 0)
                     continue;
-                // The regex splitter will include the last string even if it doesn't end with a '\n',
-                // So we need to ignore it if this happens. 
+                 
                 if (p[p.Length - 1] != '\n')
                     break;
-
-                //Console.WriteLine("received message: \"" + p + "\"");
 
                 lock (directionLock)
                 {
                     snakeDirection[clientCount] = world.createSnake(p.Substring(0, p.Length - 1), clientCount);
                 }
 
-                //createSnake(JsonConvert.DeserializeObject<string>(p));
-                //byte[] messageBytes = Encoding.UTF8.GetBytes(p);
-
-                // Remove it from the SocketState's growable buffer
                 sender.sb.Remove(0, p.Length);
 
             }
