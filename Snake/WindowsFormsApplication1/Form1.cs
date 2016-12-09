@@ -165,7 +165,7 @@ namespace SnakeGame
         public void FirstContact(SocketState state)
         {
             state.callMe = ReceieveStartup;
-            Networking.Send(state.theSocket, playerName);
+            Networking.Send(state, playerName);
         }
 
         /// <summary>
@@ -199,7 +199,7 @@ namespace SnakeGame
         /// <param name="data"></param>
         public void sendMessage(string data)
         {
-            Networking.Send(socket.theSocket, data);
+            Networking.Send(socket, data);
         }
 
 
