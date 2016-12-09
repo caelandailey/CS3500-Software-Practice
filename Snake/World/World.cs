@@ -46,7 +46,6 @@ namespace SnakeGame
         private double recycleRate;
         private int gameMode;
 
-
         /// <summary>
         /// Constructor. Create empty world
         /// </summary>
@@ -360,7 +359,7 @@ namespace SnakeGame
 
             // Get new position and then check for collisions
 
-            if (headX == width - 1 || headY == width - 1 || headY <= 0 || headX <= 0) // If it's a wall
+            if (headX == width - 1 || headY == width - 1 || headY == 0 || headX == 0) // If it's a wall
             {
                 KillSnake(snake); // Kill snek and return
                 return;
