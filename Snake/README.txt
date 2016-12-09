@@ -65,8 +65,17 @@ A user can set the 'gamemode' == 1 in the settings.xml if they want to make the 
 8. Kills the snake. Called from move snake if collision
 9. Makes food. Called from create food. Makes food takes in a point and makes food at the point. 
 
-Testing is not complete since we were not about to test everything in the program 
+Testing is not complete since we were not about to test everything in the program. We had issues testing certain cases since a lot of thegame is random.
+We could not figure out how to test random occurences. Snakes are randomly drawn as are food. It's difficult to test the snakes movement when 
+we do not know where they are located. The test program does not contain our server. We ran into issues such as killing snakes since the server handles
+officially killing the snake. Our world kills the snake, but our server waits to read a dead snake and then removes it. Other difficulties were tracking the head 
+of the snake to ensure that it came in contact with certain object. Not being able to see the world as you test it has proven to be difficult. Most of the 'testing'
+we did as programming partners was running the sample client and observing. We would wait to see how the snakes interacted. We ran the client AI and waiting to 
+see if we ran into any issues.
 
 Overall: The idea of the program is to handle server information in the server class and add them to the world object. Then call on the world class to test objects in the world. 
 This is how the server creates the laws of the world. 
+
+IMPORTANT: When we tested our program, we used the client that was given. Results may vary between our
+client and the given client from the assignment. 
 
