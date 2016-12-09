@@ -1,0 +1,8 @@
+﻿<SnakeSettings>
+  <BoardWidth>150</BoardWidth>
+  <BoardHeight>150</BoardHeight>
+  <MSPerFrame>33</MSPerFrame>
+  <FoodDensity>5</FoodDensity>
+  <SnakeRecycleRate>0.5</SnakeRecycleRate>
+  <StartingSnakeLength>35</StartingSnakeLength>
+</SnakeSettings>

@@ -18,26 +18,28 @@ namespace SnakeGame
     class Server
     {
         private List<SocketState> clients;
-        private TcpListener listener;
+        //private TcpListener listener;
         private int clientCount;
         private object clientLock = new object();
         private Dictionary<int, int> snakeDirection;
+        private Dictionary<int, int> updateDirection;
         private object directionLock = new object();
-        private int worldHeight = 150;
-        private int worldWidth = 150;
-        private int frameRate = 75;
-        private int foodDensity = 2;
-        private double recycleRate = 1;
-        private int snakeCount = 0;
-        private double snakeRecycle;
+        private int worldHeight;
+        private int worldWidth;
+        private int frameRate;
+        private int foodDensity;
+        private double recycleRate;
+        private int startingSnakeLength;
+
+
         World world;
 
-        const string filename = "../../../settings.xml";
+        const string filename = "C:\\Users\\caeland\\Source\\Repos\\00847451\\Snake\\settings.xml";
 
         static void Main(string[] args)
         {
             Server server = new Server();
-
+            Networking.OnDisconnect += server.callMeForException; 
             server.StartServer();
 
 
@@ -49,15 +51,16 @@ namespace SnakeGame
         {
 
             clients = new List<SocketState>();
-            //readXML("settings"); //make a setting xml
+            readXML(filename); //make a setting xml
             clientCount = 0;
-            world = new World(worldWidth,worldHeight, recycleRate);
+            world = new World(worldWidth,worldHeight, recycleRate, startingSnakeLength);
             Timer timer = new Timer(frameRate);
             timer.Elapsed += updateWorld;
             timer.AutoReset = true;
             timer.Start();
 
             snakeDirection = new Dictionary<int, int>();
+            updateDirection = new Dictionary<int, int>();
         }
 
         /// <summary>
@@ -76,52 +79,77 @@ namespace SnakeGame
             // Remove deadsnakes
             lock (clientLock)
             {
-                
+                foreach (KeyValuePair<int, int> direction in updateDirection)
+                {
+                    snakeDirection[direction.Key] = direction.Value;
+                }
 
                 foreach (KeyValuePair<int, Snake> snake in world.snakes.ToList())
                 {
 
                     world.MoveSnake(snake.Value, snakeDirection[snake.Key]);
-
-
                 }
 
                 world.createFood(foodDensity);
 
+                StringBuilder jsonWorld = new StringBuilder();
+
+                List<Point> deadFood = new List<Point>();
+
+                // Loop over snakes and add to json string (add snake that needs to be removed to set of snakes to remove)
+                // Loop over food and add to json string (add food that need to be removed to set of food to remove)
+                foreach (KeyValuePair<Point, Food> food in world.foodPoint.ToList())
+                {
+                    jsonWorld.Append(JsonConvert.SerializeObject(food.Value));
+                    jsonWorld.Append('\n');
+                    if (food.Value.loc.x == -1)
+                    {
+                        deadFood.Add(food.Key);
+                    }
+                }
+
+                List<int> deadSnakes = new List<int>();
+
+                // 1 loop move snakes
+                // 1 send world ot each client
+
+                foreach (KeyValuePair<int, Snake> snake in world.snakes.ToList())
+                {
+                    jsonWorld.Append(JsonConvert.SerializeObject(snake.Value));
+                    jsonWorld.Append('\n');
+                    
+
+                    if (snake.Value.vertices.Last().x == -1)
+                    {
+                        deadSnakes.Add(snake.Key);
+                    }
+                }
+                if (jsonWorld.Length > 2)
+                {
+                    jsonWorld.Remove(jsonWorld.Length - 1, 1);
+                }
+
+               
                 foreach (SocketState socketState in clients)
                 {
 
-                    foreach (KeyValuePair<Point, Food> food in world.foodPoint.ToList())
-                    {
-
-                        Networking.Send(socketState.theSocket, JsonConvert.SerializeObject(food.Value));
-                        if (food.Value.loc.x == -1)
-                        {
-                            world.foodPoint.Remove(food.Key);
-                        }
-                    }
-
-                    // 1 loop move snakes
-                    // 1 send world ot each client
-
-                    foreach (KeyValuePair<int, Snake> snake in world.snakes.ToList())
-                    {
-
-                        Networking.Send(socketState.theSocket, JsonConvert.SerializeObject(snake.Value));
-                        if (snake.Value.vertices.Last().x == -1)
-                        {
-                            world.RemoveSnake(snake.Key);
-
-                            snakeDirection.Remove(snake.Key);
-                        }
-
-
-                    }
-                    
-
-
+                    Networking.Send(socketState.theSocket,  jsonWorld.ToString());
                 }
+
+                foreach (Point point in deadFood)
+                {
+                    world.foodPoint.Remove(point);
+                }
+
+                foreach (int ID in deadSnakes)
+                {
+                    world.RemoveSnake(ID);
+
+                    snakeDirection.Remove(ID);
+                }
+
                 
+
             }
 
         }
@@ -237,7 +265,7 @@ namespace SnakeGame
                 {
                     if (snakeDirection.ContainsKey(state.ID))
                     {
-                        headDirection = snakeDirection[state.ID];
+                        headDirection = snakeDirection[state.ID]; // Snakes head direction
                     }
                 }
                 bool setDirection = true;
@@ -273,7 +301,7 @@ namespace SnakeGame
                 {
                     lock (directionLock)
                     {
-                        snakeDirection[state.ID] = (Int32.Parse(p.ElementAt(1).ToString()));
+                        updateDirection[state.ID] = (Int32.Parse(p.ElementAt(1).ToString()));
                     }
                 }
 
@@ -362,7 +390,7 @@ namespace SnakeGame
                                 r.Read();
                                 worldHeight = Convert.ToInt32(r.Value);
                                 break;
-                            case "MSPerFram":
+                            case "MSPerFrame":
                                 r.Read();
                                 frameRate = Convert.ToInt32(r.Value);
                                 break;
@@ -370,9 +398,13 @@ namespace SnakeGame
                                 r.Read();
                                 foodDensity = Convert.ToInt32(r.Value);
                                 break;
-                            case "SnakeRecycle":
+                            case "SnakeRecycleRate":
                                 r.Read();
-                                snakeRecycle = Convert.ToDouble(r.Value);
+                                recycleRate = Convert.ToDouble(r.Value);
+                                break;
+                            case "StartingSnakeLength":
+                                r.Read();
+                                startingSnakeLength = Convert.ToInt32(r.Value);
                                 break;
 
                                 //read special case

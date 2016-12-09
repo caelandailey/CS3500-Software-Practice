@@ -38,7 +38,7 @@ namespace SnakeGame
         private Object snakeLock; // Lock for snakes
         
         private int foodCount;
-        private int startingSnakeLength = 15;
+        private int startingSnakeLength;
         private Dictionary<Point, int> verticeDirection;
 
         private int foodCreated = 0;
@@ -219,7 +219,7 @@ namespace SnakeGame
         /// <summary>
         /// Constructor. Create empty world
         /// </summary>
-        public World(int _width, int _height, double _recycleRate)
+        public World(int _width, int _height, double _recycleRate, int _startingSnakeLength)
         {
             foods = new Dictionary<int, Food>();
             foodPoint = new Dictionary<Point, Food>();
@@ -231,6 +231,8 @@ namespace SnakeGame
             width = _width;
             height = _height;
             foodCount = 0;
+            startingSnakeLength = _startingSnakeLength;
+
             recycleRate = _recycleRate;
             // Setting this property to true prevents flickering
             this.DoubleBuffered = true;
@@ -308,17 +310,6 @@ namespace SnakeGame
                 }
             }
         }
-
-        public void createVertice(Point p, int direction)
-        {
-            verticeDirection[p] = direction;
-        }
-
-        public bool detectCollision()
-        {
-            return false;
-        }
-
 
         /// <summary>
         /// Moves the snake by adding to the head in direction of choice and removing the tail

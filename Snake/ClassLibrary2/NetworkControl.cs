@@ -70,6 +70,8 @@ namespace SnakeGame
 
         private static int clientCount = 0;
         private static object clientLock = new object();
+        public delegate void DisconnectHandler(SocketState s);
+        public static event DisconnectHandler OnDisconnect;
 
         // Networking code should be completely general-purpose, and useable by any other application.
         // It should contain no references to a specific project.
@@ -196,7 +198,8 @@ namespace SnakeGame
                 }
             }
             catch (SocketException)
-            {
+            {                
+                OnDisconnect?.Invoke(state);
                // state.callMe = callMeForException;
                 
             }
@@ -225,8 +228,9 @@ namespace SnakeGame
         /// <param name="data"></param>
         public static void Send(Socket socket, String data)
         {
-            byte[] messageBytes = Encoding.UTF8.GetBytes(data + "\n");
-            socket.BeginSend(messageBytes, 0, messageBytes.Length, SocketFlags.None, SendCallback, socket);
+             byte[] messageBytes = Encoding.UTF8.GetBytes(data + "\n");
+             socket.BeginSend(messageBytes, 0, messageBytes.Length, SocketFlags.None, SendCallback, socket);
+
         }
 
         /// <summary>
