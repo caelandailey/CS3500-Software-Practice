@@ -1,4 +1,8 @@
-﻿/// Caelan Dailey 
+﻿/// <summary>
+/// Represents the data read from the server and creates the game world. Updates snakes and food while using Snake, Food,
+/// and Point class. This is the Model aspect of the program which will help the GUI know what to show for the client.
+/// </summary>
+///Caelan Dailey 
 /// Karina Biancone
 /// 12/8/2016
 /// Snake Game

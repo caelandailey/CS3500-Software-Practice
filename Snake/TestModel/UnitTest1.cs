@@ -1,10 +1,22 @@
-﻿using System;
+﻿//Made to test all Model functions that are public. Mainly checks for adding and removing snakes and food
+//as well as moving the snake. We change the starting length, food density, and recycle rate in different
+//tests.
+// Created by Caelan Dailey and Karina Biancone 12/8/2016 
+// cs 3500 ps8
+// 
+
+using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SnakeGame;
 using System.Collections.Generic;
 
+
 namespace TestModel
 {
+    /// <summary>
+    /// Initiate width, height, food density, recycle rate, starting length, and game mode for most of the worlds
+    /// created.
+    /// </summary>
     [TestClass]
     public class UnitTest1
     {
@@ -15,6 +27,9 @@ namespace TestModel
         int StartingLength = 15;
         int gameMode = 0;
 
+        /// <summary>
+        /// Insure that a snake is created with a random direction.
+        /// </summary>
         [TestMethod]
         public void testNewSnakeDirection()
         {
@@ -25,6 +40,9 @@ namespace TestModel
             Assert.IsTrue(direction.Equals(1) || direction.Equals(2) || direction.Equals(3) || direction.Equals(4));
         }
 
+        /// <summary>
+        /// Check that the snakes tail is the correct distance from the head.
+        /// </summary>
         [TestMethod]
         public void testNewSnakePositionTail()
         {
@@ -39,6 +57,9 @@ namespace TestModel
 
         }
 
+        /// <summary>
+        /// Check that the snake's head is the correct distance from the tail.
+        /// </summary>
         [TestMethod]
         public void testNewSnakePositionHead()
         {
@@ -53,6 +74,9 @@ namespace TestModel
 
         }
 
+        /// <summary>
+        /// Check that the snake is properly added to the world.
+        /// </summary>
         [TestMethod]
         public void testNewSnakeCount()
         {
@@ -63,6 +87,9 @@ namespace TestModel
             Assert.AreEqual(world.snakes.Keys.Count, 1);
         }
 
+        /// <summary>
+        /// Add 99 snakes to the world.
+        /// </summary>
         [TestMethod]
         public void testNewSnakeCountMore()
         {
@@ -76,6 +103,9 @@ namespace TestModel
             Assert.AreEqual(world.snakes.Count, 99);
         }
 
+        /// <summary>
+        /// Check that the snake only has 2 vertices when created.
+        /// </summary>
         [TestMethod]
         public void testNewSnakePoints()
         {
@@ -87,6 +117,9 @@ namespace TestModel
 
         }
 
+        /// <summary>
+        /// Check that the snake is the proper length.
+        /// </summary>
         [TestMethod]
         public void testNewSnakeLength()
         {
@@ -98,6 +131,9 @@ namespace TestModel
         }
 
 
+        /// <summary>
+        /// Tests add snake method.
+        /// </summary>
         [TestMethod]
         public void addSnake()
         {
@@ -110,6 +146,9 @@ namespace TestModel
             Assert.IsTrue(world.snakes.Count == 1);
         }
 
+        /// <summary>
+        /// Test that the correct food is made for number of snakes.
+        /// </summary>
         [TestMethod]
         public void createFood1()
         {
@@ -122,6 +161,9 @@ namespace TestModel
             Assert.AreEqual(world.foodPoint.Keys.Count, 2);
         }
 
+        /// <summary>
+        /// Test that the correct food is made for 99 snakes.
+        /// </summary>
         [TestMethod]
         public void createFoodMore()
         {
@@ -137,6 +179,9 @@ namespace TestModel
             Assert.AreEqual(world.foodPoint.Keys.Count, 198);
         }
 
+        /// <summary>
+        /// Make a snake run into a wall.
+        /// </summary>
        [TestMethod]
        public void killSnake()
         {
@@ -155,6 +200,9 @@ namespace TestModel
 
         }
 
+        /// <summary>
+        /// Have a new snake run into a wall.
+        /// </summary>
         [TestMethod]
         public void killNewSnake()
         {
@@ -169,6 +217,9 @@ namespace TestModel
             Assert.AreEqual(world.snakes.Keys.Count, 0);
         }
 
+        /// <summary>
+        /// Insure that both the head and tail move.
+        /// </summary>
         [TestMethod]
         public void moveHeadAndTail()
         {
@@ -192,6 +243,9 @@ namespace TestModel
             Assert.AreEqual(headX, world.snakes[0].vertices[1].x-1);
         }
 
+        /// <summary>
+        /// Check that the length stays the same after moving.
+        /// </summary>
         [TestMethod]
         public void moveLength()
         {
@@ -206,6 +260,9 @@ namespace TestModel
             Assert.AreEqual(snake.length, StartingLength);
         }
 
+        /// <summary>
+        /// Have the snake eat food.
+        /// </summary>
         [TestMethod]
         public void growSnake1()
         {
@@ -228,6 +285,9 @@ namespace TestModel
             
         }
 
+        /// <summary>
+        ///  Have the snake eat food.
+        /// </summary>
         [TestMethod]
         public void growSnake2()
         {
@@ -250,6 +310,9 @@ namespace TestModel
 
         }
 
+        /// <summary>
+        ///  Have the snake eat food.
+        /// </summary>
         [TestMethod]
         public void growSnake3()
         {
@@ -272,6 +335,9 @@ namespace TestModel
 
         }
 
+        /// <summary>
+        /// / Have the snake eat food.
+        /// </summary>
         [TestMethod]
         public void growSnake()
         {
@@ -285,7 +351,9 @@ namespace TestModel
             Assert.AreEqual(world.snakes[0].vertices[0], new Point(-1, -1));
 
         }
-
+        /// <summary>
+        /// Move the snake in multiple directions
+        /// </summary>
         [TestMethod]
         public void moveSnake1()
         {
@@ -361,6 +429,10 @@ namespace TestModel
             
         }
 
+
+        /// <summary>
+        /// Make a world with no parameters.
+        /// </summary>
         [TestMethod]
         public void makeWorld()
         {
@@ -368,6 +440,9 @@ namespace TestModel
             Assert.AreEqual(world.width, 0);
         }
 
+        /// <summary>
+        /// Change the recycle rate.
+        /// </summary>
         [TestMethod]
         public void changeRecycle()
         {
