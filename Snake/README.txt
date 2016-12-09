@@ -65,5 +65,8 @@ A user can set the 'gamemode' == 1 in the settings.xml if they want to make the 
 8. Kills the snake. Called from move snake if collision
 9. Makes food. Called from create food. Makes food takes in a point and makes food at the point. 
 
+Testing is not complete since we were not about to test everything in the program 
+
 Overall: The idea of the program is to handle server information in the server class and add them to the world object. Then call on the world class to test objects in the world. 
 This is how the server creates the laws of the world. 
+
