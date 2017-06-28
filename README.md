@@ -1,5 +1,4 @@
-# CS3500-Software-Practice
-University of Utah CS3500 Software Practice course assignments
+# University of Utah CS3500 Software Practice.
 
 This course covers
 - Practical exposure to the process of creating large software systems
